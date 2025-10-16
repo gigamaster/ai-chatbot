@@ -486,7 +486,7 @@ export async function updateLocalChatLastContextById({
 //   }
 // }
 
-// Temporary workaroun
+// Temporary workaround
 export async function getLocalMessageCountByUserId({
   id: userId,
   differenceInHours,
@@ -498,7 +498,7 @@ export async function getLocalMessageCountByUserId({
   if (typeof window === 'undefined') {
     // If you're in a production environment, you could throw a more specific error
     if (process.env.NODE_ENV === 'production') {
-      throw new ChatSDKError("not_available:database", "Database operations are not available in client-side environments.");
+      throw new ChatSDKError("bad_request:database", "Database operations are not available in client-side environments.");
     } else {
       // If you're in a development environment, you can return a default message count
       return 0;

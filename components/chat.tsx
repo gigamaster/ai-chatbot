@@ -86,10 +86,18 @@ export function Chat({
       api: "/api/local-chat", // Use local chat API instead of NextAuth chat API
       fetch: fetchWithErrorHandlers,
       prepareSendMessagesRequest(request) {
+        // Get the last message and ensure it has an ID
+        const lastMessage = request.messages.at(-1);
+        const messageWithId = {
+          id: lastMessage?.id || generateUUID(), // Use existing ID or generate new one
+          role: lastMessage?.role || "user",
+          parts: lastMessage?.parts || []
+        };
+        
         return {
           body: {
             id: request.id,
-            message: request.messages.at(-1),
+            message: messageWithId,
             selectedChatModel: currentModelIdRef.current, // Send the actual model name directly
             selectedVisibilityType: visibilityType,
             ...request.body,

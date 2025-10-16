@@ -60,10 +60,7 @@ export const systemPrompt = ({
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
 
-  if (selectedChatModel === "chat-model-reasoning") {
-    return `${regularPrompt}\n\n${requestPrompt}`;
-  }
-
+  // For generic OpenAI-compatible endpoints, use the same prompt for all models
   return `${regularPrompt}
 
 ${requestPrompt}

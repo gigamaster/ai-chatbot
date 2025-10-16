@@ -1,4 +1,4 @@
-export const DEFAULT_CHAT_MODEL: string = "chat-model";
+export const DEFAULT_CHAT_MODEL: string = "default-model";
 
 export type ChatModel = {
   id: string;
@@ -6,18 +6,11 @@ export type ChatModel = {
   description: string;
 };
 
-
-// TODO: this duplicates the provider model defined in settings and generates an error
+// Simplified model list for generic OpenAI-compatible endpoints
 export const chatModels: ChatModel[] = [
   {
-    id: "chat-model",
-    name: "Code Assistant",
-    description: "Advanced model optimized for code understanding and generation",
-  },
-  {
-    id: "chat-model-reasoning",
-    name: "Code Reasoning",
-    description:
-      "Uses advanced chain-of-thought reasoning for complex programming problems",
+    id: "default-model",
+    name: "Default Model",
+    description: "The configured AI model for all operations",
   },
 ];

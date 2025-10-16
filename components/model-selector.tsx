@@ -10,12 +10,7 @@ export function ModelSelector() {
   const [providerInfo, setProviderInfo] = useState<{
     name: string;
     type: string;
-    models: {
-      chat: string;
-      reasoning: string;
-      title: string;
-      artifact: string;
-    };
+    model: string;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -35,12 +30,7 @@ export function ModelSelector() {
         setProviderInfo({
           name: firstProvider.name,
           type: firstProvider.type,
-          models: {
-            chat: firstProvider.models.chatModel,
-            reasoning: firstProvider.models.reasoningModel,
-            title: firstProvider.models.titleModel,
-            artifact: firstProvider.models.artifactModel,
-          }
+          model: firstProvider.model,
         });
       } else {
         // No providers available
@@ -66,28 +56,7 @@ export function ModelSelector() {
         </div>
         
         <div className="space-y-2">
-          <label className="text-sm font-medium">Chat Model</label>
-          <div className="text-sm p-2 bg-muted rounded-md">
-            Loading...
-          </div>
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Reasoning Model</label>
-          <div className="text-sm p-2 bg-muted rounded-md">
-            Loading...
-          </div>
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Title Model</label>
-          <div className="text-sm p-2 bg-muted rounded-md">
-            Loading...
-          </div>
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Artifact Model</label>
+          <label className="text-sm font-medium">Model</label>
           <div className="text-sm p-2 bg-muted rounded-md">
             Loading...
           </div>
@@ -120,30 +89,9 @@ export function ModelSelector() {
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Chat Model</label>
+        <label className="text-sm font-medium">Model</label>
         <div className="text-sm p-2 bg-muted rounded-md">
-          {providerInfo.models.chat}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Reasoning Model</label>
-        <div className="text-sm p-2 bg-muted rounded-md">
-          {providerInfo.models.reasoning}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Title Model</label>
-        <div className="text-sm p-2 bg-muted rounded-md">
-          {providerInfo.models.title}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Artifact Model</label>
-        <div className="text-sm p-2 bg-muted rounded-md">
-          {providerInfo.models.artifact}
+          {providerInfo.model}
         </div>
       </div>
 

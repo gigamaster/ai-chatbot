@@ -1,4 +1,3 @@
-import { gateway } from "@ai-sdk/gateway";
 import { google, createGoogleGenerativeAI } from "@ai-sdk/google";
 import {
   customProvider,
@@ -12,25 +11,15 @@ import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 
 // Provider configuration types
 type ProviderConfig = {
-  chatModel: string;
-  reasoningModel: string;
-  titleModel: string;
-  artifactModel: string;
-};
-
-// Default provider configurations (empty by default)
-const providerConfigs: Record<string, ProviderConfig> = {
-  // No default providers - users must add their own
+  // Use a single model for all purposes to support generic OpenAI endpoints
+  model: string;
 };
 
 // Get provider from environment or return empty config
 const getProviderConfig = (): ProviderConfig => {
   // Return empty config instead of defaulting to XAI
   return {
-    chatModel: "",
-    reasoningModel: "",
-    titleModel: "",
-    artifactModel: "",
+    model: "",
   };
 };
 
@@ -67,58 +56,27 @@ const createProvider = () => {
     } = require("./models.mock");
     return customProvider({
       languageModels: {
-        "chat-model": chatModel,
-        "chat-model-reasoning": reasoningModel,
-        "title-model": titleModel,
-        "artifact-model": artifactModel,
+        "default-model": chatModel,
       },
     });
   }
 
-  const config = getProviderConfig();
-  
-  // Check if we have valid model configurations
-  const hasValidConfig = config.chatModel || config.reasoningModel || config.titleModel || config.artifactModel;
-  
-  if (!hasValidConfig) {
-    // Return a provider with mock models when no valid configuration is available
-    return customProvider({
-      languageModels: {
-        "chat-model": createErrorLanguageModel("No AI provider configured. Please add a provider in Settings > AI Providers."),
-        "chat-model-reasoning": createErrorLanguageModel("No AI provider configured. Please add a provider in Settings > AI Providers."),
-        "title-model": createErrorLanguageModel("No AI provider configured. Please add a provider in Settings > AI Providers."),
-        "artifact-model": createErrorLanguageModel("No AI provider configured. Please add a provider in Settings > AI Providers."),
-      },
-    });
-  }
-  
-  // Use the configured models
+  // For the main provider, we'll create a dynamic provider that resolves models at runtime
   return customProvider({
     languageModels: {
-      "chat-model": gateway.languageModel(config.chatModel),
-      "chat-model-reasoning": wrapLanguageModel({
-        model: gateway.languageModel(config.reasoningModel),
-        middleware: extractReasoningMiddleware({ tagName: "think" }),
-      }),
-      "title-model": gateway.languageModel(config.titleModel),
-      "artifact-model": gateway.languageModel(config.artifactModel),
+      "default-model": createErrorLanguageModel("Provider not initialized. Model will be resolved at runtime."),
     },
   });
 };
 
-export const myProvider = createProvider();
+// myProvider is no longer used - models are resolved dynamically
 
 // Helper function to get model information for UI display
 export const getModelInfo = () => {
   // Return empty/default values instead of defaulting to XAI
   return {
     provider: "",
-    models: {
-      chat: "",
-      reasoning: "",
-      title: "",
-      artifact: "",
-    },
+    model: "",
   };
 };
 
@@ -148,50 +106,22 @@ export const getAllAvailableProviders = async () => {
     const customProviders = await getAllCustomProviders();
     const enabledProviders = customProviders.filter((p: any) => p.isEnabled);
     
-    // Only include custom providers, not the default XAI provider
+    // Only include custom providers
     const providers: Array<{
       id: string;
       name: string;
       type: string;
-      models: ProviderConfig;
+      model: string;
     }> = [];
     
     // Add custom providers
     for (const customProvider of enabledProviders) {
-      // Check if this is a Google Gemini provider
-      if (customProvider.baseUrl.includes('generativelanguage.googleapis.com')) {
-        // For Google Gemini, we'll use the Google provider
-        const modelName = customProvider.model || 'gemini-1.5-pro';
-        
-        const customModels: ProviderConfig = {
-          chatModel: modelName,
-          reasoningModel: modelName,
-          titleModel: modelName,
-          artifactModel: modelName,
-        };
-        
-        providers.push({
-          id: customProvider.id,
-          name: customProvider.name,
-          type: "google",
-          models: customModels
-        });
-      } else {
-        // For other providers, we'll use the same model for all purposes
-        const customModels: ProviderConfig = {
-          chatModel: customProvider.model || "default-model",
-          reasoningModel: customProvider.model || "default-model",
-          titleModel: customProvider.model || "default-model",
-          artifactModel: customProvider.model || "default-model",
-        };
-        
-        providers.push({
-          id: customProvider.id,
-          name: customProvider.name,
-          type: "custom",
-          models: customModels
-        });
-      }
+      providers.push({
+        id: customProvider.id,
+        name: customProvider.name,
+        type: "custom",
+        model: customProvider.model || "default-model",
+      });
     }
     
     // If no custom providers, return an empty array
@@ -224,16 +154,59 @@ export const createLanguageModel = async (modelName: string) => {
         apiKey: provider.apiKey,
         baseURL: provider.baseUrl
       });
-      // Use the provided model name
+      // Use the exact model name saved by the user
       return googleProvider.languageModel(modelName);
     } else {
-      // For other providers, use the gateway
-      // We need to construct the model ID in the format expected by the gateway
-      const modelId = `${provider.baseUrl}|${provider.apiKey}|${modelName}`;
-      return gateway.languageModel(modelId);
+      // For OpenAI-compatible providers, create a direct connection
+      const openaiProvider = createOpenAICompatible({
+        name: provider.name || 'openai-compatible',
+        baseURL: provider.baseUrl,
+        apiKey: provider.apiKey,
+      });
+      // Use the exact model name saved by the user
+      return openaiProvider.languageModel(modelName);
     }
   } catch (error) {
     console.error("Failed to create language model:", error);
     throw new Error("Failed to create language model. Please check your provider configuration.");
+  }
+};
+
+// Function to get a language model for immediate use
+export const getLanguageModel = async () => {
+  try {
+    const customProviders = await getAllCustomProviders();
+    const enabledProviders = customProviders.filter((p: any) => p.isEnabled);
+    
+    if (enabledProviders.length === 0) {
+      throw new Error("No AI provider configured. Please add a provider in Settings > AI Providers.");
+    }
+    
+    // Use the first enabled provider
+    const provider = enabledProviders[0];
+    const modelName = provider.model || "default-model";
+    
+    // Check if this is a Google Gemini provider
+    if (provider.baseUrl.includes('generativelanguage.googleapis.com')) {
+      // Create Google provider with API key
+      const googleProvider = createGoogleGenerativeAI({
+        apiKey: provider.apiKey,
+        baseURL: provider.baseUrl
+      });
+      // Use the exact model name saved by the user
+      return googleProvider.languageModel(modelName);
+    } else {
+      // For OpenAI-compatible providers, create a direct connection
+      const openaiProvider = createOpenAICompatible({
+        name: provider.name || 'openai-compatible',
+        baseURL: provider.baseUrl,
+        apiKey: provider.apiKey,
+      });
+      // Use the exact model name saved by the user
+      return openaiProvider.languageModel(modelName);
+    }
+  } catch (error) {
+    console.error("Failed to get language model:", error);
+    throw new Error("Failed to get language model. Please check your provider configuration.");
   }
 };

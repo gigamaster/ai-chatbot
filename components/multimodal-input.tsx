@@ -313,14 +313,14 @@ function PureAttachmentsButton({
   status: UseChatHelpers<ChatMessage>["status"];
   selectedModelId: string;
 }) {
-  // Check if this is a reasoning model by checking the model name
-  const isReasoningModel = selectedModelId.includes("reasoning") || selectedModelId === "chat-model-reasoning";
+  // For generic OpenAI-compatible endpoints, attachments are always enabled
+  const attachmentsEnabled = true;
 
   return (
     <Button
       className="aspect-square h-8 rounded-lg p-1 transition-colors hover:bg-accent"
       data-testid="attachments-button"
-      disabled={status !== "ready" || isReasoningModel}
+      disabled={status !== "ready" || !attachmentsEnabled}
       onClick={(event) => {
         event.preventDefault();
         fileInputRef.current?.click();
@@ -360,24 +360,16 @@ function PureModelSelectorCompact({
           const provider = providers[0]; // Use the first provider for now
           console.log("First provider:", provider);
           // Add safety checks for provider structure
-          if (provider && provider.models) {
-            const chatModelId = `chat-${provider.id}-${Date.now()}-1`; // Ensure unique ID
-            const reasoningModelId = `reasoning-${provider.id}-${Date.now()}-2`; // Ensure unique ID
+          if (provider && provider.model) {
+            const modelId = `model-${provider.id}-${Date.now()}-1`; // Ensure unique ID
             
             const providerModelsData = [
               {
-                id: chatModelId,
-                name: `${provider.name} - ${provider.models.chatModel || 'Unknown'} (Chat)`,
-                description: `Chat model: ${provider.models.chatModel || 'Unknown'}`,
-                modelName: provider.models.chatModel || 'default-model',
-                type: "chat"
-              },
-              {
-                id: reasoningModelId,
-                name: `${provider.name} - ${provider.models.reasoningModel || 'Unknown'} (Reasoning)`,
-                description: `Reasoning model: ${provider.models.reasoningModel || 'Unknown'}`,
-                modelName: provider.models.reasoningModel || 'default-model',
-                type: "reasoning"
+                id: modelId,
+                name: `${provider.name} - ${provider.model}`,
+                description: `Model: ${provider.model}`,
+                modelName: provider.model,
+                type: "default"
               }
             ];
             
@@ -391,18 +383,11 @@ function PureModelSelectorCompact({
           // Fallback to default models if no providers are configured
           const fallbackModels = [
             {
-              id: "chat-model-default-1",
-              name: "Code Assistant",
-              description: "Advanced model optimized for code understanding and generation",
-              modelName: "chat-model",
-              type: "chat"
-            },
-            {
-              id: "chat-model-reasoning-default-2",
-              name: "Code Reasoning",
-              description: "Uses advanced chain-of-thought reasoning for complex programming problems",
-              modelName: "chat-model-reasoning",
-              type: "reasoning"
+              id: "default-model-1",
+              name: "Default Model",
+              description: "The configured AI model for all operations",
+              modelName: "default-model",
+              type: "default"
             }
           ];
           console.log("Fallback models:", fallbackModels);
@@ -413,18 +398,11 @@ function PureModelSelectorCompact({
         // Fallback to default models on error
         const errorModels = [
           {
-            id: "chat-model-error-1",
-            name: "Code Assistant",
-            description: "Advanced model optimized for code understanding and generation",
-            modelName: "chat-model",
-            type: "chat"
-          },
-          {
-            id: "chat-model-reasoning-error-2",
-            name: "Code Reasoning",
-            description: "Uses advanced chain-of-thought reasoning for complex programming problems",
-            modelName: "chat-model-reasoning",
-            type: "reasoning"
+            id: "default-model-error-1",
+            name: "Default Model",
+            description: "The configured AI model for all operations",
+            modelName: "default-model",
+            type: "default"
           }
         ];
         console.log("Error models:", errorModels);

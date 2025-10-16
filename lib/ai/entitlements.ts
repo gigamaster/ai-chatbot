@@ -1,4 +1,5 @@
-import type { UserType } from "@/app/(auth)/auth"; // TODO: we use local user, so this must be removed
+// Using local user types instead of external auth
+type UserType = "guest" | "regular";
 import type { ChatModel } from "./models";
 
 type Entitlements = {
@@ -14,7 +15,7 @@ export const entitlementsByUserType: Record<UserType, Entitlements> = {
    */
   guest: {
     maxMessagesPerDay: 20,
-    availableChatModelIds: ["chat-model", "chat-model-reasoning"],
+    availableChatModelIds: ["default-model"],
   },
 
   /*
@@ -22,7 +23,7 @@ export const entitlementsByUserType: Record<UserType, Entitlements> = {
    */
   regular: {
     maxMessagesPerDay: 100,
-    availableChatModelIds: ["chat-model", "chat-model-reasoning"],
+    availableChatModelIds: ["default-model"],
   },
 
   /*

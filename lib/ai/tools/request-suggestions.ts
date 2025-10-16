@@ -4,7 +4,7 @@ import { getDocumentById, saveSuggestions } from "@/lib/local-db-queries";
 import type { Suggestion } from "@/lib/local-db";
 import type { ChatMessage } from "@/lib/types";
 import { generateUUID } from "@/lib/utils";
-import { myProvider } from "../providers";
+import { getLanguageModel } from "../providers";
 
 type RequestSuggestionsProps = {
   session: { user: any }; // Simplified session type for local auth
@@ -36,8 +36,11 @@ export const requestSuggestions = ({
         "userId" | "createdAt" | "documentCreatedAt"
       >[] = [];
 
+      // Get the language model dynamically
+      const languageModel = await getLanguageModel();
+      
       const { elementStream } = streamObject({
-        model: myProvider.languageModel("artifact-model"),
+        model: languageModel,
         system:
           "You are a help writing assistant. Given a piece of writing, please offer suggestions to improve the piece of writing and describe the change. It is very important for the edits to contain full sentences instead of just words. Max 5 suggestions.",
         prompt: document.content,
