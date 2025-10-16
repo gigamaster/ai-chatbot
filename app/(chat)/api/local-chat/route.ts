@@ -15,7 +15,7 @@ import type { VisibilityType } from "@/components/visibility-selector";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import type { ChatModel } from "@/lib/ai/models";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
-import { myProvider, createLanguageModel } from "@/lib/ai/providers";
+import { createLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
@@ -102,6 +102,7 @@ export async function POST(request: Request) {
     } else {
       const title = await generateTitleFromUserMessage({
         message,
+        selectedChatModel, // Pass the selected model to generateTitleFromUserMessage
       });
 
       await saveLocalChat({
@@ -157,15 +158,13 @@ export async function POST(request: Request) {
             system: systemPrompt({ selectedChatModel, requestHints }),
             messages: convertToModelMessages(uiMessages),
             stopWhen: stepCountIs(5),
-            experimental_activeTools:
-              selectedChatModel === "chat-model-reasoning"
-                ? []
-                : [
-                    "getWeather",
-                    "createDocument",
-                    "updateDocument",
-                    "requestSuggestions",
-                  ],
+            // For generic OpenAI-compatible endpoints, enable all tools by default
+            experimental_activeTools: [
+              "getWeather",
+              "createDocument",
+              "updateDocument",
+              "requestSuggestions",
+            ],
             experimental_transform: smoothStream({ chunking: "word" }),
             tools: {
               getWeather,

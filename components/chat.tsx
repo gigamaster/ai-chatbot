@@ -33,6 +33,7 @@ import { getChatHistoryPaginationKey } from "./sidebar-history";
 import { toast } from "./toast";
 import type { VisibilityType } from "./visibility-selector";
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
+import { getAllAvailableProviders } from "@/lib/ai/providers";
 
 export function Chat({
   id,
@@ -68,6 +69,28 @@ export function Chat({
   useEffect(() => {
     currentModelIdRef.current = currentModelId;
   }, [currentModelId]);
+
+  // Send provider information to server
+  useEffect(() => {
+    const sendProvidersToServer = async () => {
+      try {
+        const providers = await getAllAvailableProviders();
+        if (providers.length > 0) {
+          await fetch("/api/set-providers", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(providers),
+          });
+        }
+      } catch (error) {
+        console.error("Failed to send providers to server:", error);
+      }
+    };
+
+    sendProvidersToServer();
+  }, []);
 
   const {
     messages,

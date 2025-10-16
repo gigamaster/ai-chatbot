@@ -361,14 +361,13 @@ function PureModelSelectorCompact({
           console.log("First provider:", provider);
           // Add safety checks for provider structure
           if (provider && provider.model) {
-            const modelId = `model-${provider.id}-${Date.now()}-1`; // Ensure unique ID
-            
+            // Create a single model entry with the exact model name saved by the user
             const providerModelsData = [
               {
-                id: modelId,
+                id: `model-${provider.id}`,
                 name: `${provider.name} - ${provider.model}`,
                 description: `Model: ${provider.model}`,
-                modelName: provider.model,
+                modelName: provider.model, // Use the exact model name saved by the user
                 type: "default"
               }
             ];
@@ -383,7 +382,7 @@ function PureModelSelectorCompact({
           // Fallback to default models if no providers are configured
           const fallbackModels = [
             {
-              id: "default-model-1",
+              id: "default-model",
               name: "Default Model",
               description: "The configured AI model for all operations",
               modelName: "default-model",
@@ -398,7 +397,7 @@ function PureModelSelectorCompact({
         // Fallback to default models on error
         const errorModels = [
           {
-            id: "default-model-error-1",
+            id: "default-model-error",
             name: "Default Model",
             description: "The configured AI model for all operations",
             modelName: "default-model",

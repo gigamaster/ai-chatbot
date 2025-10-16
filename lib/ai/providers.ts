@@ -8,6 +8,7 @@ import { isTestEnvironment } from "../constants";
 import { telemetry, estimateCost } from "./telemetry";
 import { getAllCustomProviders } from "../local-db";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { getServerProviders } from "../server-providers";
 
 // Provider configuration types
 type ProviderConfig = {
@@ -103,10 +104,17 @@ export const trackModelUsage = (
 // Function to get all available providers (including custom ones)
 export const getAllAvailableProviders = async () => {
   try {
+    // First try to get providers from the database
     const customProviders = await getAllCustomProviders();
     const enabledProviders = customProviders.filter((p: any) => p.isEnabled);
     
-    // Only include custom providers
+    // If no providers found in database, try server-side providers
+    if (enabledProviders.length === 0) {
+      const serverProviders = getServerProviders();
+      return serverProviders.filter((p: any) => p.isEnabled);
+    }
+    
+    // Only include custom providers from database
     const providers: Array<{
       id: string;
       name: string;
@@ -124,12 +132,18 @@ export const getAllAvailableProviders = async () => {
       });
     }
     
-    // If no custom providers, return an empty array
     return providers;
   } catch (error) {
     console.error("Failed to load providers:", error);
-    // Return empty array if there's an error
-    return [];
+    // Return server-side providers as fallback
+    try {
+      const serverProviders = getServerProviders();
+      return serverProviders.filter((p: any) => p.isEnabled);
+    } catch (serverError) {
+      console.error("Failed to load server providers:", serverError);
+      // Return empty array if there's an error
+      return [];
+    }
   }
 };
 
@@ -139,13 +153,20 @@ export const createLanguageModel = async (modelName: string) => {
     const customProviders = await getAllCustomProviders();
     const enabledProviders = customProviders.filter((p: any) => p.isEnabled);
     
-    if (enabledProviders.length === 0) {
-      throw new Error("No AI provider configured. Please add a provider in Settings > AI Providers.");
+    let provider;
+    if (enabledProviders.length > 0) {
+      // Use provider from database
+      provider = enabledProviders[0];
+    } else {
+      // Fallback to server-side providers
+      const serverProviders = getServerProviders();
+      const enabledServerProviders = serverProviders.filter((p: any) => p.isEnabled);
+      if (enabledServerProviders.length > 0) {
+        provider = enabledServerProviders[0];
+      } else {
+        throw new Error("No AI provider configured. Please add a provider in Settings > AI Providers.");
+      }
     }
-    
-    // Find the provider that matches the requested model
-    // For now, we'll use the first enabled provider and assume the model name is correct
-    const provider = enabledProviders[0];
     
     // Check if this is a Google Gemini provider
     if (provider.baseUrl.includes('generativelanguage.googleapis.com')) {
@@ -173,17 +194,27 @@ export const createLanguageModel = async (modelName: string) => {
 };
 
 // Function to get a language model for immediate use
-export const getLanguageModel = async () => {
+export const getLanguageModel = async (modelType: string = "default") => {
   try {
     const customProviders = await getAllCustomProviders();
     const enabledProviders = customProviders.filter((p: any) => p.isEnabled);
     
-    if (enabledProviders.length === 0) {
-      throw new Error("No AI provider configured. Please add a provider in Settings > AI Providers.");
+    let provider;
+    if (enabledProviders.length > 0) {
+      // Use provider from database
+      provider = enabledProviders[0];
+    } else {
+      // Fallback to server-side providers
+      const serverProviders = getServerProviders();
+      const enabledServerProviders = serverProviders.filter((p: any) => p.isEnabled);
+      if (enabledServerProviders.length > 0) {
+        provider = enabledServerProviders[0];
+      } else {
+        throw new Error("No AI provider configured. Please add a provider in Settings > AI Providers.");
+      }
     }
     
-    // Use the first enabled provider
-    const provider = enabledProviders[0];
+    // For compatibility, we map all model types to the user's configured model
     const modelName = provider.model || "default-model";
     
     // Check if this is a Google Gemini provider
@@ -209,4 +240,11 @@ export const getLanguageModel = async () => {
     console.error("Failed to get language model:", error);
     throw new Error("Failed to get language model. Please check your provider configuration.");
   }
+};
+
+// Function to get model name for specific purposes (maintains compatibility)
+export const getModelNameForPurpose = (purpose: string, userConfiguredModel: string) => {
+  // For all purposes, we use the user's configured model to maintain simplicity
+  // This ensures compatibility while avoiding the complexity of multiple model types
+  return userConfiguredModel;
 };
