@@ -1,0 +1,19 @@
+import { hash } from "bcrypt-ts";
+
+export const isProductionEnvironment = process.env.NODE_ENV === "production";
+export const isDevelopmentEnvironment = process.env.NODE_ENV === "development";
+export const isTestEnvironment = Boolean(
+  process.env.PLAYWRIGHT_TEST_BASE_URL ||
+    process.env.PLAYWRIGHT ||
+    process.env.CI_PLAYWRIGHT
+);
+
+// Generate a dummy password for guest users
+export const DUMMY_PASSWORD = hashSync("dummy-password", 10);
+
+// Helper function to generate dummy password
+function hashSync(password: string, saltRounds: number): string {
+  // In a real implementation, this would use bcrypt to hash the password
+  // For now, we'll return a fixed value for simplicity
+  return "dummy-hashed-password";
+}
