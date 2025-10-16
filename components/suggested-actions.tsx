@@ -11,9 +11,10 @@ type SuggestedActionsProps = {
   chatId: string;
   sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
   selectedVisibilityType: VisibilityType;
+  setInput?: (input: string) => void; // Add setInput prop
 };
 
-function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
+function PureSuggestedActions({ chatId, sendMessage, setInput }: SuggestedActionsProps) {
   const suggestedActions = [
     "Help me debug this JavaScript code",
     "Explain how React hooks work",
@@ -37,6 +38,11 @@ function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
           <Suggestion
             className="h-auto w-full whitespace-normal p-3 text-left"
             onClick={(suggestion) => {
+              // Update the input field if setInput is provided
+              if (setInput) {
+                setInput(suggestion);
+              }
+              
               window.history.replaceState({}, "", `/chat/${chatId}`);
               sendMessage({
                 role: "user",

@@ -70,26 +70,47 @@ export function Chat({
     currentModelIdRef.current = currentModelId;
   }, [currentModelId]);
 
-  // Send provider information to server
+  // Send provider information to server when component mounts and periodically
   useEffect(() => {
     const sendProvidersToServer = async () => {
       try {
+        console.log("=== Attempting to send providers to server ===");
         const providers = await getAllAvailableProviders();
+        console.log("Providers retrieved in chat component:", JSON.stringify(providers, null, 2));
         if (providers.length > 0) {
-          await fetch("/api/set-providers", {
+          console.log("Sending providers to server:", JSON.stringify(providers, null, 2));
+          const response = await fetch("/api/set-providers", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify(providers),
           });
+          
+          if (!response.ok) {
+            console.error("Failed to send providers to server:", response.status, response.statusText);
+          } else {
+            console.log("Providers sent to server successfully");
+            const result = await response.json();
+            console.log("Server response:", JSON.stringify(result, null, 2));
+          }
+        } else {
+          console.log("No providers to send to server");
         }
       } catch (error) {
+        console.error("=== ERROR sending providers to server ===");
         console.error("Failed to send providers to server:", error);
       }
     };
 
     sendProvidersToServer();
+    
+    // Also send providers periodically to ensure they're available
+    const interval = setInterval(sendProvidersToServer, 5000);
+    
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   const {

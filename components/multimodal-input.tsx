@@ -193,6 +193,7 @@ function PureMultimodalInput({
             chatId={chatId}
             selectedVisibilityType={selectedVisibilityType}
             sendMessage={sendMessage}
+            setInput={setInput} // Pass the setInput prop
           />
         )}
 

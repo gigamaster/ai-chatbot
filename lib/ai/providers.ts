@@ -104,14 +104,21 @@ export const trackModelUsage = (
 // Function to get all available providers (including custom ones)
 export const getAllAvailableProviders = async () => {
   try {
+    console.log("getAllAvailableProviders called");
     // First try to get providers from the database
     const customProviders = await getAllCustomProviders();
+    console.log("Custom providers from database:", customProviders);
     const enabledProviders = customProviders.filter((p: any) => p.isEnabled);
+    console.log("Enabled providers from database:", enabledProviders);
     
     // If no providers found in database, try server-side providers
     if (enabledProviders.length === 0) {
+      console.log("No enabled providers from database, checking server providers");
       const serverProviders = getServerProviders();
-      return serverProviders.filter((p: any) => p.isEnabled);
+      console.log("Server providers:", serverProviders);
+      const enabledServerProviders = serverProviders.filter((p: any) => p.isEnabled);
+      console.log("Enabled server providers:", enabledServerProviders);
+      return enabledServerProviders;
     }
     
     // Only include custom providers from database
@@ -120,25 +127,40 @@ export const getAllAvailableProviders = async () => {
       name: string;
       type: string;
       model: string;
+      baseUrl?: string;
+      apiKey?: string;
+      isEnabled?: boolean;
+      createdAt?: string;
+      updatedAt?: string;
     }> = [];
     
-    // Add custom providers
+    // Add custom providers with all required fields
     for (const customProvider of enabledProviders) {
       providers.push({
         id: customProvider.id,
         name: customProvider.name,
         type: "custom",
         model: customProvider.model || "default-model",
+        baseUrl: customProvider.baseUrl,
+        apiKey: customProvider.apiKey,
+        isEnabled: customProvider.isEnabled,
+        createdAt: customProvider.createdAt,
+        updatedAt: customProvider.updatedAt,
       });
     }
     
+    console.log("Returning providers:", providers);
     return providers;
   } catch (error) {
     console.error("Failed to load providers:", error);
     // Return server-side providers as fallback
     try {
+      console.log("Trying server providers as fallback");
       const serverProviders = getServerProviders();
-      return serverProviders.filter((p: any) => p.isEnabled);
+      console.log("Server providers as fallback:", serverProviders);
+      const enabledServerProviders = serverProviders.filter((p: any) => p.isEnabled);
+      console.log("Enabled server providers as fallback:", enabledServerProviders);
+      return enabledServerProviders;
     } catch (serverError) {
       console.error("Failed to load server providers:", serverError);
       // Return empty array if there's an error
@@ -150,34 +172,65 @@ export const getAllAvailableProviders = async () => {
 // Function to create a language model based on provider type
 export const createLanguageModel = async (modelName: string) => {
   try {
+    console.log("=== createLanguageModel called ===");
+    console.log("Model name:", modelName);
+    
     const customProviders = await getAllCustomProviders();
+    console.log("Custom providers:", customProviders);
+    
     const enabledProviders = customProviders.filter((p: any) => p.isEnabled);
+    console.log("Enabled providers:", enabledProviders);
     
     let provider;
     if (enabledProviders.length > 0) {
       // Use provider from database
       provider = enabledProviders[0];
+      console.log("Using provider from database:", provider);
     } else {
       // Fallback to server-side providers
+      console.log("Checking server providers...");
       const serverProviders = getServerProviders();
+      console.log("Server providers:", serverProviders);
+      
       const enabledServerProviders = serverProviders.filter((p: any) => p.isEnabled);
+      console.log("Enabled server providers:", enabledServerProviders);
+      
       if (enabledServerProviders.length > 0) {
         provider = enabledServerProviders[0];
+        console.log("Using provider from server storage:", provider);
       } else {
+        console.log("ERROR: No providers available");
         throw new Error("No AI provider configured. Please add a provider in Settings > AI Providers.");
       }
     }
     
+    // Validate provider structure
+    if (!provider || !provider.baseUrl || !provider.apiKey) {
+      console.log("ERROR: Provider missing required fields:", provider);
+      throw new Error("Provider configuration is incomplete. Please check your provider settings.");
+    }
+    
+    console.log("Provider validated:", {
+      id: provider.id,
+      name: provider.name,
+      baseUrl: provider.baseUrl,
+      hasApiKey: !!provider.apiKey,
+      model: provider.model
+    });
+    
     // Check if this is a Google Gemini provider
     if (provider.baseUrl.includes('generativelanguage.googleapis.com')) {
+      console.log("Creating Google Generative AI provider");
       // Create Google provider with API key
       const googleProvider = createGoogleGenerativeAI({
         apiKey: provider.apiKey,
         baseURL: provider.baseUrl
       });
       // Use the exact model name saved by the user
+      console.log("Creating Google language model with model name:", modelName);
       return googleProvider.languageModel(modelName);
     } else {
+      console.log("Creating OpenAI-compatible provider");
       // For OpenAI-compatible providers, create a direct connection
       const openaiProvider = createOpenAICompatible({
         name: provider.name || 'openai-compatible',
@@ -185,10 +238,18 @@ export const createLanguageModel = async (modelName: string) => {
         apiKey: provider.apiKey,
       });
       // Use the exact model name saved by the user
+      console.log("Creating OpenAI-compatible language model with model name:", modelName);
+      console.log("Provider details:", {
+        name: provider.name,
+        baseURL: provider.baseUrl,
+        hasApiKey: !!provider.apiKey
+      });
       return openaiProvider.languageModel(modelName);
     }
-  } catch (error) {
-    console.error("Failed to create language model:", error);
+  } catch (error: any) {
+    console.error("=== FAILED to create language model ===");
+    console.error("Error:", error);
+    console.error("Error stack:", error.stack);
     throw new Error("Failed to create language model. Please check your provider configuration.");
   }
 };
@@ -196,37 +257,61 @@ export const createLanguageModel = async (modelName: string) => {
 // Function to get a language model for immediate use
 export const getLanguageModel = async (modelType: string = "default") => {
   try {
+    console.log("=== getLanguageModel called ===");
+    console.log("Model type:", modelType);
+    
     const customProviders = await getAllCustomProviders();
+    console.log("Custom providers in getLanguageModel:", customProviders);
+    
     const enabledProviders = customProviders.filter((p: any) => p.isEnabled);
+    console.log("Enabled providers in getLanguageModel:", enabledProviders);
     
     let provider;
     if (enabledProviders.length > 0) {
       // Use provider from database
       provider = enabledProviders[0];
+      console.log("Using provider from database in getLanguageModel:", provider);
     } else {
       // Fallback to server-side providers
+      console.log("Checking server providers in getLanguageModel...");
       const serverProviders = getServerProviders();
+      console.log("Server providers in getLanguageModel:", serverProviders);
+      
       const enabledServerProviders = serverProviders.filter((p: any) => p.isEnabled);
+      console.log("Enabled server providers in getLanguageModel:", enabledServerProviders);
+      
       if (enabledServerProviders.length > 0) {
         provider = enabledServerProviders[0];
+        console.log("Using provider from server storage in getLanguageModel:", provider);
       } else {
+        console.log("ERROR: No providers available in getLanguageModel");
         throw new Error("No AI provider configured. Please add a provider in Settings > AI Providers.");
       }
     }
     
+    // Validate provider structure
+    if (!provider || !provider.baseUrl || !provider.apiKey) {
+      console.log("ERROR: Provider missing required fields in getLanguageModel:", provider);
+      throw new Error("Provider configuration is incomplete. Please check your provider settings.");
+    }
+    
     // For compatibility, we map all model types to the user's configured model
     const modelName = provider.model || "default-model";
+    console.log("Using model name:", modelName);
     
     // Check if this is a Google Gemini provider
     if (provider.baseUrl.includes('generativelanguage.googleapis.com')) {
+      console.log("Creating Google Generative AI provider in getLanguageModel");
       // Create Google provider with API key
       const googleProvider = createGoogleGenerativeAI({
         apiKey: provider.apiKey,
         baseURL: provider.baseUrl
       });
       // Use the exact model name saved by the user
+      console.log("Creating Google language model with model name:", modelName);
       return googleProvider.languageModel(modelName);
     } else {
+      console.log("Creating OpenAI-compatible provider in getLanguageModel");
       // For OpenAI-compatible providers, create a direct connection
       const openaiProvider = createOpenAICompatible({
         name: provider.name || 'openai-compatible',
@@ -234,10 +319,13 @@ export const getLanguageModel = async (modelType: string = "default") => {
         apiKey: provider.apiKey,
       });
       // Use the exact model name saved by the user
+      console.log("Creating OpenAI-compatible language model with model name:", modelName);
       return openaiProvider.languageModel(modelName);
     }
-  } catch (error) {
-    console.error("Failed to get language model:", error);
+  } catch (error: any) {
+    console.error("=== FAILED to get language model ===");
+    console.error("Error:", error);
+    console.error("Error stack:", error.stack);
     throw new Error("Failed to get language model. Please check your provider configuration.");
   }
 };

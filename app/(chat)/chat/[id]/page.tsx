@@ -32,12 +32,11 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
     notFound();
   }
 
-  // Use local authentication instead of NextAuth
+  // Use local authentication - redirect to login if no user
   const localUser = await getLocalUserFromCookies();
 
   if (!localUser) {
-    const redirectUrl = encodeURIComponent(`/chat/${id}`);
-    redirect(`/api/local-guest?redirectUrl=${redirectUrl}`);
+    redirect("/local-login");
   }
 
   // For local auth, check if user is owner of the chat

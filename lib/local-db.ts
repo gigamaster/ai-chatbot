@@ -127,8 +127,13 @@ let dbPromise: ReturnType<typeof openDB<CodemoDB>> | null = null;
 
 // Initialize database only when needed and only in browser environment
 function getDb(): LocalDB {
+  console.log("getDb called");
+  console.log("typeof window:", typeof window);
+  console.log("isBrowser:", isBrowser);
+  
   if (typeof window === 'undefined') {
     // Return a mock database interface for server environments
+    console.log("Returning mock database interface for server environment");
     return {
       put: async (storeName: string, value: any) => {
         // Remove existing item if it exists
@@ -146,6 +151,8 @@ function getDb(): LocalDB {
         return inMemoryDB[storeName].length < initialLength;
       },
       getAll: async (storeName: string) => {
+        console.log("getAll called for store:", storeName);
+        console.log("inMemoryDB[storeName]:", inMemoryDB[storeName]);
         return inMemoryDB[storeName];
       },
       getAllFromIndex: async (storeName: string, indexName: string, key: string) => {
@@ -167,6 +174,7 @@ function getDb(): LocalDB {
   
   if (!dbPromise) {
     // Updated database version to 2 to create the providers object store
+    console.log("Initializing database promise");
     dbPromise = openDB<CodemoDB>('codemo-db', 2, {
       upgrade(db, oldVersion, newVersion, transaction) {
         console.log(`Upgrading database from version ${oldVersion} to ${newVersion}`);
@@ -212,6 +220,7 @@ function getDb(): LocalDB {
     });
   }
   
+  console.log("Returning dbPromise");
   return dbPromise;
 }
 
@@ -697,14 +706,24 @@ export async function getCustomProvider(id: string) {
 export async function getAllCustomProviders() {
   try {
     const db = await getDb();
+    console.log("Getting all custom providers from database");
+    console.log("isBrowser:", isBrowser);
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      return await (db as any).getAll('providers');
+      console.log("Using in-memory storage for server environment");
+      const providers = await (db as any).getAll('providers');
+      console.log("Providers from in-memory storage:", providers);
+      console.log("Type of db:", typeof db);
+      console.log("Db keys:", Object.keys(db as any));
+      return providers;
     }
     
     // For browser environments, use IndexedDB
-    return await db.getAll('providers');
+    console.log("Using IndexedDB for browser environment");
+    const providers = await db.getAll('providers');
+    console.log("Providers from IndexedDB:", providers);
+    return providers;
   } catch (error) {
     console.error('Failed to retrieve providers:', error);
     return [];

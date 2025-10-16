@@ -7,15 +7,23 @@ let serverProviders: any[] = [];
 
 // Function to set server-side providers
 export function setServerProviders(providers: any[]) {
+  console.log("=== setServerProviders called ===");
+  console.log("Setting server providers:", JSON.stringify(providers, null, 2));
   serverProviders = providers;
+  console.log("Server providers set. Current count:", serverProviders.length);
 }
 
 // Function to get server-side providers
 export function getServerProviders() {
+  console.log("=== getServerProviders called ===");
+  console.log("Getting server providers. Current count:", serverProviders.length);
+  console.log("Server providers:", JSON.stringify(serverProviders, null, 2));
   return serverProviders;
 }
 
 // Function to clear server-side providers
 export function clearServerProviders() {
+  console.log("=== clearServerProviders called ===");
   serverProviders = [];
+  console.log("Server providers cleared");
 }
