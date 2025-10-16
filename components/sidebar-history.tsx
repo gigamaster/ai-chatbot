@@ -118,7 +118,7 @@ export function SidebarHistory({ user }: { user: any | undefined }) {
     : false;
 
   const handleDelete = () => {
-    const deletePromise = fetch(`/api/chat?id=${deleteId}`, {
+    const deletePromise = fetch(`/api/local-db?operation=deleteChat&id=${deleteId}`, {
       method: "DELETE",
     });
 
