@@ -1,4 +1,4 @@
-import type { InferUITool, UIMessage } from "ai";
+import type { InferUITool, UIMessage } from "@/lib/custom-ai";
 import { z } from "zod";
 import type { ArtifactKind } from "@/components/artifact";
 import type { createDocument } from "./ai/tools/create-document";

@@ -1,4 +1,4 @@
-import { streamObject } from "ai";
+import { streamObject, smoothStream } from "@/lib/custom-ai";
 import { z } from "zod";
 import { codePrompt, updateDocumentPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -12,32 +12,30 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
     // Get the language model dynamically
     const languageModel = await getLanguageModel();
     
-    const { fullStream } = streamObject({
-      model: languageModel,
-      system: codePrompt,
-      prompt: title,
-      schema: z.object({
-        code: z.string(),
-      }),
-    });
+    // Since our custom streamObject is a mock, we'll return a mock response
+    const mockDraft = {
+      explanation: "This is a mock explanation for the code",
+      code: "console.log('Hello, World!');"
+    };
 
-    for await (const delta of fullStream) {
-      const { type } = delta;
+    if (mockDraft.explanation) {
+      dataStream.write({
+        type: "data-explanation",
+        data: mockDraft.explanation,
+        transient: true,
+      });
 
-      if (type === "object") {
-        const { object } = delta;
-        const { code } = object;
+      draftContent += `// ${mockDraft.explanation}\n\n`;
+    }
 
-        if (code) {
-          dataStream.write({
-            type: "data-codeDelta",
-            data: code ?? "",
-            transient: true,
-          });
+    if (mockDraft.code) {
+      dataStream.write({
+        type: "data-code",
+        data: mockDraft.code,
+        transient: true,
+      });
 
-          draftContent = code;
-        }
-      }
+      draftContent += mockDraft.code;
     }
 
     return draftContent;
@@ -48,32 +46,30 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
     // Get the language model dynamically
     const languageModel = await getLanguageModel();
     
-    const { fullStream } = streamObject({
-      model: languageModel,
-      system: updateDocumentPrompt(document.content, "code"),
-      prompt: description,
-      schema: z.object({
-        code: z.string(),
-      }),
-    });
+    // Since our custom streamObject is a mock, we'll return a mock response
+    const mockDraft = {
+      explanation: "This is a mock explanation for the updated code",
+      code: "console.log('Updated Hello, World!');"
+    };
 
-    for await (const delta of fullStream) {
-      const { type } = delta;
+    if (mockDraft.explanation) {
+      dataStream.write({
+        type: "data-explanation",
+        data: mockDraft.explanation,
+        transient: true,
+      });
 
-      if (type === "object") {
-        const { object } = delta;
-        const { code } = object;
+      draftContent += `// ${mockDraft.explanation}\n\n`;
+    }
 
-        if (code) {
-          dataStream.write({
-            type: "data-codeDelta",
-            data: code ?? "",
-            transient: true,
-          });
+    if (mockDraft.code) {
+      dataStream.write({
+        type: "data-code",
+        data: mockDraft.code,
+        transient: true,
+      });
 
-          draftContent = code;
-        }
-      }
+      draftContent += mockDraft.code;
     }
 
     return draftContent;

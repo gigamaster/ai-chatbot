@@ -1,4 +1,4 @@
-import type { UseChatHelpers } from "@ai-sdk/react";
+import type { UseChatHelpers } from "@/lib/custom-chat";
 import equal from "fast-deep-equal";
 import { AnimatePresence } from "framer-motion";
 import { ArrowDownIcon } from "lucide-react";
@@ -13,11 +13,11 @@ import { PreviewMessage, ThinkingMessage } from "./message";
 
 type MessagesProps = {
   chatId: string;
-  status: UseChatHelpers<ChatMessage>["status"];
+  status: UseChatHelpers["status"];
   votes: Vote[] | undefined;
   messages: ChatMessage[];
-  setMessages: UseChatHelpers<ChatMessage>["setMessages"];
-  regenerate: UseChatHelpers<ChatMessage>["regenerate"];
+  setMessages: UseChatHelpers["setMessages"];
+  regenerate: UseChatHelpers["regenerate"];
   isReadonly: boolean;
   isArtifactVisible: boolean;
   selectedModelId: string;

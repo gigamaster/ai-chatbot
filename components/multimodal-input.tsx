@@ -1,8 +1,7 @@
 "use client";
 
-import type { UseChatHelpers } from "@ai-sdk/react";
 import { Trigger } from "@radix-ui/react-select";
-import type { UIMessage } from "ai";
+import type { UIMessage } from "@/lib/custom-ai";
 import equal from "fast-deep-equal";
 import {
   type ChangeEvent,
@@ -67,13 +66,13 @@ function PureMultimodalInput({
   chatId: string;
   input: string;
   setInput: Dispatch<SetStateAction<string>>;
-  status: UseChatHelpers<ChatMessage>["status"];
+  status: any;
   stop: () => void;
   attachments: Attachment[];
   setAttachments: Dispatch<SetStateAction<Attachment[]>>;
   messages: UIMessage[];
-  setMessages: UseChatHelpers<ChatMessage>["setMessages"];
-  sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
+  setMessages: any;
+  sendMessage: any;
   className?: string;
   selectedVisibilityType: VisibilityType;
   selectedModelId: string;
@@ -311,7 +310,7 @@ function PureAttachmentsButton({
   selectedModelId,
 }: {
   fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
-  status: UseChatHelpers<ChatMessage>["status"];
+  status: any;
   selectedModelId: string;
 }) {
   // For generic OpenAI-compatible endpoints, attachments are always enabled
@@ -355,7 +354,7 @@ function PureModelSelectorCompact({
     const loadProviderModels = async () => {
       try {
         setLoading(true);
-        const providers = await getAllAvailableProviders();
+        const providers: any[] = await getAllAvailableProviders();
         console.log("Providers loaded:", providers);
         if (providers.length > 0) {
           const provider = providers[0]; // Use the first provider for now
@@ -483,7 +482,7 @@ function PureStopButton({
   setMessages,
 }: {
   stop: () => void;
-  setMessages: UseChatHelpers<ChatMessage>["setMessages"];
+  setMessages: any;
 }) {
   return (
     <Button
@@ -492,7 +491,7 @@ function PureStopButton({
       onClick={(event) => {
         event.preventDefault();
         stop();
-        setMessages((messages) => messages);
+        setMessages((messages: any) => messages);
       }}
     >
       <StopIcon size={14} />

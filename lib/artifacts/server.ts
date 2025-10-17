@@ -1,4 +1,4 @@
-import type { UIMessageStreamWriter } from "ai";
+import type { UIMessageStreamWriter } from "@/lib/custom-ai";
 import { z } from "zod";
 import { codeDocumentHandler } from "@/artifacts/code/server";
 import { collabHandlers } from "@/artifacts/collab/server";

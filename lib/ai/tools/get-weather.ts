@@ -1,4 +1,4 @@
-import { tool } from "ai";
+import { tool } from "@/lib/custom-ai";
 import { z } from "zod";
 
 async function geocodeCity(city: string): Promise<{ latitude: number; longitude: number } | null> {
@@ -36,7 +36,7 @@ export const getWeather = tool({
       city: z.string().describe("City name (e.g., 'San Francisco', 'New York', 'London')"),
     }),
   ]),
-  execute: async (input) => {
+  execute: async (input: { latitude: number; longitude: number } | { city: string }) => {
     let latitude: number;
     let longitude: number;
 

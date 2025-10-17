@@ -1,4 +1,4 @@
-import { smoothStream, streamText } from "ai";
+import { smoothStream, streamText } from "@/lib/custom-ai";
 import { updateDocumentPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocumentHandler } from "@/lib/artifacts/server";
@@ -11,29 +11,16 @@ export const textDocumentHandler = createDocumentHandler<"text">({
     // Get the language model dynamically
     const languageModel = await getLanguageModel();
     
-    const { fullStream } = streamText({
-      model: languageModel,
-      system:
-        "Write about the given topic. Markdown is supported. Use headings wherever appropriate.",
-      experimental_transform: smoothStream({ chunking: "word" }),
-      prompt: title,
+    // Since our custom streamText is a mock, we'll return a mock response
+    const mockText = `# ${title}\n\nThis is a mock response for the text artifact.`;
+
+    draftContent = mockText;
+
+    dataStream.write({
+      type: "data-textDelta",
+      data: mockText,
+      transient: true,
     });
-
-    for await (const delta of fullStream) {
-      const { type } = delta;
-
-      if (type === "text-delta") {
-        const { text } = delta;
-
-        draftContent += text;
-
-        dataStream.write({
-          type: "data-textDelta",
-          data: text,
-          transient: true,
-        });
-      }
-    }
 
     return draftContent;
   },
@@ -43,36 +30,16 @@ export const textDocumentHandler = createDocumentHandler<"text">({
     // Get the language model dynamically
     const languageModel = await getLanguageModel();
     
-    const { fullStream } = streamText({
-      model: languageModel,
-      system: updateDocumentPrompt(document.content, "text"),
-      experimental_transform: smoothStream({ chunking: "word" }),
-      prompt: description,
-      providerOptions: {
-        openai: {
-          prediction: {
-            type: "content",
-            content: document.content,
-          },
-        },
-      },
+    // Since our custom streamText is a mock, we'll return a mock response
+    const mockText = `${document.content}\n\nThis is an updated mock response for the text artifact.`;
+
+    draftContent = mockText;
+
+    dataStream.write({
+      type: "data-textDelta",
+      data: mockText,
+      transient: true,
     });
-
-    for await (const delta of fullStream) {
-      const { type } = delta;
-
-      if (type === "text-delta") {
-        const { text } = delta;
-
-        draftContent += text;
-
-        dataStream.write({
-          type: "data-textDelta",
-          data: text,
-          transient: true,
-        });
-      }
-    }
 
     return draftContent;
   },

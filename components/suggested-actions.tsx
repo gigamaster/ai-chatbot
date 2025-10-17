@@ -1,6 +1,6 @@
 "use client";
 
-import type { UseChatHelpers } from "@ai-sdk/react";
+import type { UseChatHelpers } from "@/lib/custom-chat";
 import { motion } from "framer-motion";
 import { memo } from "react";
 import type { ChatMessage } from "@/lib/types";
@@ -9,7 +9,7 @@ import type { VisibilityType } from "./visibility-selector";
 
 type SuggestedActionsProps = {
   chatId: string;
-  sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
+  sendMessage: UseChatHelpers["sendMessage"];
   selectedVisibilityType: VisibilityType;
   setInput?: (input: string) => void; // Add setInput prop
 };
@@ -43,11 +43,12 @@ function PureSuggestedActions({ chatId, sendMessage, setInput }: SuggestedAction
                 setInput(suggestion);
               }
               
+              // DO NOT automatically send the message
+              // Let the user manually trigger the send action
+              // This allows them to edit the message before sending
+              
+              // Update the URL to reflect the chat ID
               window.history.replaceState({}, "", `/chat/${chatId}`);
-              sendMessage({
-                role: "user",
-                parts: [{ type: "text", text: suggestion }],
-              });
             }}
             suggestion={suggestedAction}
           >

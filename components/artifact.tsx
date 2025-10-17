@@ -1,4 +1,4 @@
-import type { UseChatHelpers } from "@ai-sdk/react";
+import type { UseChatHelpers } from "@/lib/custom-chat";
 import { formatDistance } from "date-fns";
 import equal from "fast-deep-equal";
 import { AnimatePresence, motion } from "framer-motion";
@@ -74,15 +74,15 @@ function PureArtifact({
   chatId: string;
   input: string;
   setInput: Dispatch<SetStateAction<string>>;
-  status: UseChatHelpers<ChatMessage>["status"];
-  stop: UseChatHelpers<ChatMessage>["stop"];
+  status: any;
+  stop: any;
   attachments: Attachment[];
   setAttachments: Dispatch<SetStateAction<Attachment[]>>;
-  messages: ChatMessage[];
-  setMessages: UseChatHelpers<ChatMessage>["setMessages"];
+  messages: any;
+  setMessages: any;
   votes: Vote[] | undefined;
-  sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
-  regenerate: UseChatHelpers<ChatMessage>["regenerate"];
+  sendMessage: any;
+  regenerate: any;
   isReadonly: boolean;
   selectedVisibilityType: VisibilityType;
   selectedModelId: string;

@@ -1,6 +1,6 @@
 "use server";
 
-import { generateText, type UIMessage } from "ai";
+import { generateText, type UIMessage } from "@/lib/custom-ai";
 import { cookies } from "next/headers";
 import type { VisibilityType } from "@/components/visibility-selector";
 import { getLanguageModel, createLanguageModel } from "@/lib/ai/providers";

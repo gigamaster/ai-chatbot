@@ -1,4 +1,4 @@
-import type { LanguageModel } from "ai";
+import type { LanguageModel } from "@/lib/custom-ai";
 
 const createMockModel = (name: string = "mock-model"): LanguageModel => {
   return {

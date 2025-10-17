@@ -438,55 +438,7 @@ export async function updateLocalChatLastContextById({
   }
 }
 
-// TODO: fix the missing function for message count
-// function is called and it detects that the environment does not support database operations.
-// This is likely because you're trying to run this function in a client-side environment, 
-// such as the browser, where IndexedDB is not available.
-
-// To fix this error, you need to ensure that this function is only called in an environment where database operations are available. 
-// You can do this by moving the logic for this function to the server-side, where IndexedDB is available.
-// export async function getLocalMessageCountByUserId({
-//   id: userId,
-//   differenceInHours,
-// }: {
-//   id: string;
-//   differenceInHours: number;
-// }) {
-//   // Check if we're in an environment where database operations are available
-//   if (typeof window === 'undefined') {
-//     throw new ChatSDKError("bad_request:database", "Database operations not available");
-//   }
-  
-//   try {
-//     // In a local implementation, we'll need to get all messages and filter by user and time
-//     // This is a simplified implementation
-//     const allChats = await getAllLocalChats(userId);
-//     let messageCount = 0;
-    
-//     // For each chat, get messages and count those within the time window
-//     for (const chat of allChats) {
-//       const messages = await getLocalMessages(chat.id);
-//       const twentyFourHoursAgo = new Date(Date.now() - differenceInHours * 60 * 60 * 1000);
-      
-//       const recentMessages = messages.filter(
-//         (message: any) =>
-//           new Date(message.createdAt) >= twentyFourHoursAgo &&
-//           message.role === "user"
-//       );
-      
-//       messageCount += recentMessages.length;
-//     }
-    
-//     return messageCount;
-//   } catch (_error) {
-//     throw new ChatSDKError(
-//       "bad_request:database",
-//       "Failed to get message count by user id"
-//     );
-//   }
-// }
-
-// Temporary workaround
+// Updated implementation for server-side environments
 export async function getLocalMessageCountByUserId({
   id: userId,
   differenceInHours,
@@ -494,71 +446,64 @@ export async function getLocalMessageCountByUserId({
   id: string;
   differenceInHours: number;
 }) {
-  // Check if we're in an environment where database operations are available
-  if (typeof window === 'undefined') {
-    // If you're in a production environment, you could throw a more specific error
-    if (process.env.NODE_ENV === 'production') {
-      throw new ChatSDKError("bad_request:database", "Database operations are not available in client-side environments.");
-    } else {
-      // If you're in a development environment, you can return a default message count
-      return 0;
+  // Check if we're in a browser environment
+  if (typeof window !== 'undefined') {
+    // Browser environment: Use IndexedDB
+    try {
+      // In a local implementation, we'll need to get all messages and filter by user and time
+      // This is a simplified implementation
+      const allChats = await getAllLocalChats(userId);
+      let messageCount = 0;
+      
+      // For each chat, get messages and count those within the time window
+      for (const chat of allChats) {
+        const messages = await getLocalMessages(chat.id);
+        const twentyFourHoursAgo = new Date(Date.now() - differenceInHours * 60 * 60 * 1000);
+        
+        const recentMessages = messages.filter(
+          (message: any) =>
+            new Date(message.createdAt) >= twentyFourHoursAgo &&
+            message.role === "user"
+        );
+        
+        messageCount += recentMessages.length;
+      }
+      
+      return messageCount;
+    } catch (_error) {
+      throw new ChatSDKError(
+        "bad_request:database",
+        "Failed to get message count by user id"
+      );
+    }
+  } else {
+    // Server environment: Use in-memory storage
+    try {
+      // In a local implementation, we'll need to get all messages and filter by user and time
+      // This is a simplified implementation
+      const allChats = await getAllLocalChats(userId);
+      let messageCount = 0;
+      
+      // For each chat, get messages and count those within the time window
+      for (const chat of allChats) {
+        const messages = await getLocalMessages(chat.id);
+        const twentyFourHoursAgo = new Date(Date.now() - differenceInHours * 60 * 60 * 1000);
+        
+        const recentMessages = messages.filter(
+          (message: any) =>
+            new Date(message.createdAt) >= twentyFourHoursAgo &&
+            message.role === "user"
+        );
+        
+        messageCount += recentMessages.length;
+      }
+      
+      return messageCount;
+    } catch (_error) {
+      throw new ChatSDKError(
+        "bad_request:database",
+        "Failed to get message count by user id"
+      );
     }
   }
-  
-  // In a local implementation, we'll need to get all messages and filter by user and time
-  // This is a simplified implementation
-  const allChats = await getAllLocalChats(userId);
-  let messageCount = 0;
-  
-  // For each chat, get messages and count those within the time window
-  for (const chat of allChats) {
-    const messages = await getLocalMessages(chat.id);
-    const twentyFourHoursAgo = new Date(Date.now() - differenceInHours * 60 * 60 * 1000);
-    
-    const recentMessages = messages.filter(
-      (message: any) =>
-        new Date(message.createdAt) >= twentyFourHoursAgo &&
-        message.role === "user"
-    );
-    
-    messageCount += recentMessages.length;
-  }
-  
-  return messageCount;
 }
-
-// To move the logic for the getLocalMessageCountByUserId function to the server-side, 
-// you'll need to create a new function that performs the same logic but uses the server-side database instead of IndexedDB.
-// Here's an example of how you could modify the getLocalMessageCountByUserId function to use a server-side database:
-
-/* import { Chat } from '../models/chat';
-import { Message } from '../models/message';
-
-export async function getLocalMessageCountByUserId({
-  id: userId,
-  differenceInHours,
-}: {
-  id: string;
-  differenceInHours: number;
-}) {
-  // In a local implementation, we'll need to get all messages and filter by user and time
-  // This is a simplified implementation
-  const allChats = await Chat.find({ userId });
-  let messageCount = 0;
-
-  // For each chat, get messages and count those within the time window
-  for (const chat of allChats) {
-    const messages = await Message.find({ chatId: chat.id });
-    const twentyFourHoursAgo = new Date(Date.now() - differenceInHours * 60 * 60 * 1000);
-
-    const recentMessages = messages.filter(
-      (message: any) =>
-        new Date(message.createdAt) >= twentyFourHoursAgo &&
-        message.role === "user"
-    );
-
-    messageCount += recentMessages.length;
-  }
-
-  return messageCount;
-} */

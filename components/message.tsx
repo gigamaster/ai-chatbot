@@ -1,5 +1,4 @@
 "use client";
-import type { UseChatHelpers } from "@ai-sdk/react";
 import equal from "fast-deep-equal";
 import { motion } from "framer-motion";
 import { memo, useState } from "react";
@@ -39,8 +38,8 @@ const PurePreviewMessage = ({
   message: ChatMessage;
   vote: Vote | undefined;
   isLoading: boolean;
-  setMessages: UseChatHelpers<ChatMessage>["setMessages"];
-  regenerate: UseChatHelpers<ChatMessage>["regenerate"];
+  setMessages: any;
+  regenerate: any;
   isReadonly: boolean;
   requiresScrollPadding: boolean;
 }) => {
@@ -96,8 +95,8 @@ const PurePreviewMessage = ({
               {attachmentsFromMessage.map((attachment) => (
                 <PreviewAttachment
                   attachment={{
-                    name: attachment.filename ?? "file",
-                    contentType: attachment.mediaType,
+                    name: (attachment as any).filename ?? "file",
+                    contentType: (attachment as any).mediaType,
                     url: attachment.url,
                   }}
                   key={attachment.url}
@@ -110,12 +109,12 @@ const PurePreviewMessage = ({
             const { type } = part;
             const key = `message-${message.id}-part-${index}`;
 
-            if (type === "reasoning" && part.text?.trim().length > 0) {
+            if (type === "reasoning" && (part as any).text?.trim().length > 0) {
               return (
                 <MessageReasoning
                   isLoading={isLoading}
                   key={key}
-                  reasoning={part.text}
+                  reasoning={(part as any).text}
                 />
               );
             }
@@ -166,19 +165,19 @@ const PurePreviewMessage = ({
             }
 
             if (type === "tool-getWeather") {
-              const { toolCallId, state } = part;
+              const { toolCallId, state } = part as any;
 
               return (
                 <Tool defaultOpen={true} key={toolCallId}>
                   <ToolHeader state={state} type="tool-getWeather" />
                   <ToolContent>
                     {state === "input-available" && (
-                      <ToolInput input={part.input} />
+                      <ToolInput input={(part as any).input} />
                     )}
                     {state === "output-available" && (
                       <ToolOutput
                         errorText={undefined}
-                        output={<Weather weatherAtLocation={part.output} />}
+                        output={<Weather weatherAtLocation={(part as any).output} />}
                       />
                     )}
                   </ToolContent>
@@ -187,78 +186,202 @@ const PurePreviewMessage = ({
             }
 
             if (type === "tool-createDocument") {
-              const { toolCallId } = part;
+              const { toolCallId } = part as any;
 
-              if (part.output && "error" in part.output) {
+              if ((part as any).output && "error" in (part as any).output) {
                 return (
                   <div
                     className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-500 dark:bg-red-950/50"
                     key={toolCallId}
                   >
-                    Error creating document: {String(part.output.error)}
+                    Error creating document: {String((part as any).output.error)}
                   </div>
                 );
               }
 
               return (
-                <DocumentPreview
-                  isReadonly={isReadonly}
-                  key={toolCallId}
-                  result={part.output}
-                />
+                <Tool defaultOpen={true} key={toolCallId}>
+                  <ToolHeader state="output-available" type="tool-createDocument" />
+                  <ToolContent>
+                    <ToolOutput
+                      errorText={undefined}
+                      output={
+                        <DocumentToolResult
+                          documentId={(part as any).output.id}
+                          kind={(part as any).output.kind}
+                          title={(part as any).output.title}
+                        />
+                      }
+                    />
+                  </ToolContent>
+                </Tool>
               );
             }
 
             if (type === "tool-updateDocument") {
-              const { toolCallId } = part;
+              const { toolCallId } = part as any;
 
-              if (part.output && "error" in part.output) {
+              if ((part as any).output && "error" in (part as any).output) {
                 return (
                   <div
                     className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-500 dark:bg-red-950/50"
                     key={toolCallId}
                   >
-                    Error updating document: {String(part.output.error)}
+                    Error updating document: {String((part as any).output.error)}
                   </div>
                 );
               }
 
               return (
-                <div className="relative" key={toolCallId}>
-                  <DocumentPreview
-                    args={{ ...part.output, isUpdate: true }}
-                    isReadonly={isReadonly}
-                    result={part.output}
+                <Tool defaultOpen={true} key={toolCallId}>
+                  <ToolHeader
+                    state="output-available"
+                    type="tool-updateDocument"
                   />
-                </div>
+                  <ToolContent>
+                    <ToolOutput
+                      errorText={undefined}
+                      output={
+                        <DocumentPreview
+                          args={{ ...(part as any).output, isUpdate: true }}
+                          result={(part as any).output}
+                        />
+                      }
+                    />
+                  </ToolContent>
+                </Tool>
               );
             }
 
             if (type === "tool-requestSuggestions") {
-              const { toolCallId, state } = part;
+              const { toolCallId } = part as any;
+
+              if ((part as any).output && "error" in (part as any).output) {
+                return (
+                  <div
+                    className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-500 dark:bg-red-950/50"
+                    key={toolCallId}
+                  >
+                    Error requesting suggestions:{" "}
+                    {String((part as any).output.error)}
+                  </div>
+                );
+              }
 
               return (
                 <Tool defaultOpen={true} key={toolCallId}>
-                  <ToolHeader state={state} type="tool-requestSuggestions" />
+                  <ToolHeader
+                    state="output-available"
+                    type="tool-requestSuggestions"
+                  />
+                  <ToolContent>
+                    <ToolOutput
+                      errorText={undefined}
+                      output={
+                        <DocumentPreview
+                          args={(part as any).output}
+                          result={(part as any).output}
+                        />
+                      }
+                    />
+                  </ToolContent>
+                </Tool>
+              );
+            }
+
+            if (type === "tool-debugCode") {
+              const { toolCallId, state } = part as any;
+
+              return (
+                <Tool defaultOpen={true} key={toolCallId}>
+                  <ToolHeader state={state} type="tool-debugCode" />
                   <ToolContent>
                     {state === "input-available" && (
-                      <ToolInput input={part.input} />
+                      <ToolInput input={(part as any).input} />
                     )}
                     {state === "output-available" && (
                       <ToolOutput
-                        errorText={undefined}
+                        errorText={
+                          (part as any).output?.success === false
+                            ? (part as any).output?.explanation
+                            : undefined
+                        }
                         output={
-                          "error" in part.output ? (
-                            <div className="rounded border p-2 text-red-500">
-                              Error: {String(part.output.error)}
+                          <div className="flex flex-col gap-2">
+                            <div className="font-medium">
+                              {(part as any).output?.explanation}
                             </div>
-                          ) : (
-                            <DocumentToolResult
-                              isReadonly={isReadonly}
-                              result={part.output}
-                              type="request-suggestions"
-                            />
-                          )
+                            <div className="flex flex-col gap-1">
+                              {(part as any).output?.issues?.map(
+                                (issue: any, index: number) => (
+                                  <div
+                                    className="flex flex-row items-start gap-2 text-sm"
+                                    key={index}
+                                  >
+                                    <div
+                                      className={cn(
+                                        "font-medium",
+                                        issue.type === "error"
+                                          ? "text-red-500"
+                                          : "text-yellow-500"
+                                      )}
+                                    >
+                                      {issue.type === "error"
+                                        ? "Error"
+                                        : "Warning"}
+                                      :
+                                    </div>
+                                    <div>{issue.description}</div>
+                                    {issue.line && (
+                                      <div className="text-muted-foreground">
+                                        (line {issue.line})
+                                      </div>
+                                    )}
+                                    {issue.suggestion && (
+                                      <div className="text-muted-foreground">
+                                        Suggestion: {issue.suggestion}
+                                      </div>
+                                    )}
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        }
+                      />
+                    )}
+                  </ToolContent>
+                </Tool>
+              );
+            }
+
+            if (type === "tool-executeCode") {
+              const { toolCallId, state } = part as any;
+
+              return (
+                <Tool defaultOpen={true} key={toolCallId}>
+                  <ToolHeader state={state} type="tool-executeCode" />
+                  <ToolContent>
+                    {state === "input-available" && (
+                      <ToolInput input={(part as any).input} />
+                    )}
+                    {state === "output-available" && (
+                      <ToolOutput
+                        errorText={
+                          (part as any).output?.success === false
+                            ? (part as any).output?.output
+                            : undefined
+                        }
+                        output={
+                          <div className="flex flex-col gap-2">
+                            <div className="font-medium">
+                              Execution completed in{" "}
+                              {(part as any).output?.executionTime}ms
+                            </div>
+                            <pre className="max-w-full overflow-x-auto rounded-lg bg-muted p-4 text-sm">
+                              {(part as any).output?.output}
+                            </pre>
+                          </div>
                         }
                       />
                     )}
@@ -270,12 +393,12 @@ const PurePreviewMessage = ({
             return null;
           })}
 
-          {!isReadonly && (
+          {message.role === "assistant" && (
             <MessageActions
               chatId={chatId}
-              isLoading={isLoading}
-              key={`action-${message.id}`}
+              isReadonly={isReadonly}
               message={message}
+              regenerate={regenerate}
               setMode={setMode}
               vote={vote}
             />
@@ -286,54 +409,35 @@ const PurePreviewMessage = ({
   );
 };
 
-export const PreviewMessage = memo(
-  PurePreviewMessage,
-  (prevProps, nextProps) => {
-    if (prevProps.isLoading !== nextProps.isLoading) {
-      return false;
-    }
-    if (prevProps.message.id !== nextProps.message.id) {
-      return false;
-    }
-    if (prevProps.requiresScrollPadding !== nextProps.requiresScrollPadding) {
-      return false;
-    }
-    if (!equal(prevProps.message.parts, nextProps.message.parts)) {
-      return false;
-    }
-    if (!equal(prevProps.vote, nextProps.vote)) {
-      return false;
-    }
-
+export const PreviewMessage = memo(PurePreviewMessage, (prevProps, nextProps) => {
+  if (prevProps.isLoading !== nextProps.isLoading) {
     return false;
   }
-);
+  if (!equal(prevProps.message, nextProps.message)) {
+    return false;
+  }
+  if (!equal(prevProps.vote, nextProps.vote)) {
+    return false;
+  }
 
-export const ThinkingMessage = () => {
-  const role = "assistant";
+  return true;
+});
 
+export function ThinkingMessage() {
   return (
     <motion.div
       animate={{ opacity: 1 }}
-      className="group/message w-full"
-      data-role={role}
-      data-testid="message-assistant-loading"
-      exit={{ opacity: 0, transition: { duration: 0.5 } }}
+      className="flex w-full items-start gap-3"
       initial={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
     >
-      <div className="flex items-start justify-start gap-3">
-        <div className="-mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-background ring-1 ring-border">
-          <SparklesIcon size={14} />
-        </div>
+      <div className="-mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-background ring-1 ring-border">
+        <SparklesIcon size={14} />
+      </div>
 
-        <div className="flex w-full flex-col gap-2 md:gap-4">
-          <div className="p-0 text-muted-foreground text-sm">
-            Thinking...
-          </div>
-        </div>
+      <div className="flex flex-col gap-2">
+        <div className="h-2 w-32 animate-pulse rounded-full bg-muted-foreground/20" />
+        <div className="h-2 w-24 animate-pulse rounded-full bg-muted-foreground/20" />
       </div>
     </motion.div>
   );
-};
-
+}

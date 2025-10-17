@@ -35,7 +35,7 @@ interface CustomProviderConfig {
   isEnabled: boolean;
 }
 
-export function ProviderCrudTable() {
+export function ProviderCRUDTable() {
   const [providers, setProviders] = useState<CustomProviderConfig[]>([]);
   const [isAddingProvider, setIsAddingProvider] = useState(false);
   const [editingProvider, setEditingProvider] = useState<CustomProviderConfig | null>(null);
@@ -134,81 +134,11 @@ export function ProviderCrudTable() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">AI Providers</h3>
+        <div className="text-sm text-muted-foreground">
+          {providers.length} provider{providers.length !== 1 ? 's' : ''} configured
+        </div>
         <Button onClick={handleAddProvider}>Add Provider</Button>
       </div>
-
-      {isAddingProvider ? (
-        <div className="border rounded-lg p-4 mb-4">
-          <h4 className="text-md font-medium mb-3">
-            {editingProvider ? "Edit Provider" : "Add New Provider"}
-          </h4>
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label htmlFor="name">Provider Name *</Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g., Groq, Hugging Face"
-                />
-              </div>
-              
-              <div className="space-y-1">
-                <Label htmlFor="baseUrl">Base URL *</Label>
-                <Input
-                  id="baseUrl"
-                  value={baseUrl}
-                  onChange={(e) => setBaseUrl(e.target.value)}
-                  placeholder="https://api.example.com/v1"
-                />
-              </div>
-              
-              <div className="space-y-1 md:col-span-2">
-                <Label htmlFor="apiKey">API Key *</Label>
-                <Input
-                  id="apiKey"
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="Enter your API key"
-                />
-              </div>
-              
-              <div className="space-y-1 md:col-span-2">
-                <Label htmlFor="model">Model (Optional)</Label>
-                <Input
-                  id="model"
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  placeholder="e.g., llama3-8b-8192"
-                />
-              </div>
-              
-              <div className="space-y-1 md:col-span-2 flex items-center">
-                <Switch
-                  id="isEnabled"
-                  checked={isEnabled}
-                  onCheckedChange={setIsEnabled}
-                />
-                <Label htmlFor="isEnabled" className="ml-2">
-                  Enabled
-                </Label>
-              </div>
-            </div>
-            
-            <div className="flex justify-end space-x-2 pt-2">
-              <Button type="button" variant="outline" onClick={resetForm}>
-                Cancel
-              </Button>
-              <Button type="submit">
-                {editingProvider ? "Update Provider" : "Add Provider"}
-              </Button>
-            </div>
-          </form>
-        </div>
-      ) : null}
 
       {providers.length > 0 ? (
         <Table>
@@ -258,7 +188,7 @@ export function ProviderCrudTable() {
         <div className="text-center py-8 text-muted-foreground border rounded-lg">
           <p className="font-medium">No AI providers configured</p>
           <p className="mt-2 text-sm">Add your first OpenAI-compatible provider to get started.</p>
-          <p className="mt-1 text-xs">Examples: Groq, Hugging Face, OpenRouter, DeepSeek, etc.</p>
+          <p className="mt-1 text-xs">Examples: OpenAI, Google Gemini, Groq, Hugging Face, OpenRouter, DeepSeek, etc.</p>
           <div className="mt-4">
             <Button onClick={handleAddProvider}>Add Provider</Button>
           </div>
@@ -266,7 +196,8 @@ export function ProviderCrudTable() {
       )}
 
       <div className="text-xs text-muted-foreground pt-2">
-        Note: All providers must be OpenAI API compatible. Add at least one provider to use the AI features.
+        Note: All providers must be OpenAI API compatible and use the generic OpenAI-compatible interface. 
+        This ensures compatibility with any provider that implements the OpenAI API standard.
       </div>
     </div>
   );

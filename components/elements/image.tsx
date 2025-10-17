@@ -1,4 +1,10 @@
-import type { Experimental_GeneratedImage } from "ai";
+// Define the Experimental_GeneratedImage type since we don't have it in our custom AI package
+type Experimental_GeneratedImage = {
+  base64: string;
+  uint8Array?: Uint8Array;
+  mediaType: string;
+};
+
 import { cn } from "@/lib/utils";
 
 export type ImageProps = Experimental_GeneratedImage & {

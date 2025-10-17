@@ -1,7 +1,5 @@
 "use client";
 
-import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
@@ -21,7 +19,7 @@ import { useArtifactSelector } from "@/hooks/use-artifact";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Vote } from "@/lib/local-db";
-import { ChatSDKError } from "@/lib/errors";
+import { ChatSDKError } from "@/lib/custom-ai";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import type { AppUsage } from "@/lib/usage";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
@@ -34,6 +32,7 @@ import { toast } from "./toast";
 import type { VisibilityType } from "./visibility-selector";
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
 import { getAllAvailableProviders } from "@/lib/ai/providers";
+import { useCustomChat, CustomChatTransport } from "@/lib/custom-chat";
 
 export function Chat({
   id,
@@ -70,7 +69,7 @@ export function Chat({
     currentModelIdRef.current = currentModelId;
   }, [currentModelId]);
 
-  // Send provider information to server when component mounts and periodically
+  // Send provider information to server when component mounts
   useEffect(() => {
     const sendProvidersToServer = async () => {
       try {
@@ -105,12 +104,7 @@ export function Chat({
 
     sendProvidersToServer();
     
-    // Also send providers periodically to ensure they're available
-    const interval = setInterval(sendProvidersToServer, 5000);
-    
-    return () => {
-      clearInterval(interval);
-    };
+    // Remove the periodic sending - it's not needed and just creates noise
   }, []);
 
   const {
@@ -121,24 +115,29 @@ export function Chat({
     stop,
     regenerate,
     resumeStream,
-  } = useChat<ChatMessage>({
+  } = useCustomChat({
     id,
     messages: initialMessages,
     experimental_throttle: 100,
     generateId: generateUUID,
-    transport: new DefaultChatTransport({
+    transport: new CustomChatTransport({
       api: "/api/local-chat", // Use local chat API instead of NextAuth chat API
       fetch: fetchWithErrorHandlers,
       prepareSendMessagesRequest(request) {
+        console.log("=== prepareSendMessagesRequest called ===");
+        console.log("Request:", JSON.stringify(request, null, 2));
+        
         // Get the last message and ensure it has an ID
-        const lastMessage = request.messages.at(-1);
+        const lastMessage = request.message;
         const messageWithId = {
           id: lastMessage?.id || generateUUID(), // Use existing ID or generate new one
           role: lastMessage?.role || "user",
           parts: lastMessage?.parts || []
         };
         
-        return {
+        console.log("Message with ID:", JSON.stringify(messageWithId, null, 2));
+        
+        const requestBody = {
           body: {
             id: request.id,
             message: messageWithId,
@@ -147,6 +146,10 @@ export function Chat({
             ...request.body,
           },
         };
+        
+        console.log("Request body:", JSON.stringify(requestBody, null, 2));
+        
+        return requestBody;
       },
     }),
     onData: (dataPart) => {
@@ -159,6 +162,8 @@ export function Chat({
       mutate(unstable_serialize(getChatHistoryPaginationKey));
     },
     onError: (error) => {
+      console.error("=== useChat onError ===");
+      console.error("Error:", error);
       if (error instanceof ChatSDKError) {
         toast({
           type: "error",
@@ -175,11 +180,7 @@ export function Chat({
 
   useEffect(() => {
     if (query && !hasAppendedQuery) {
-      sendMessage({
-        role: "user" as const,
-        parts: [{ type: "text", text: query }],
-      });
-
+      sendMessage({ text: query });
       setHasAppendedQuery(true);
       window.history.replaceState({}, "", `/chat/${id}`);
     }
@@ -217,7 +218,7 @@ export function Chat({
           regenerate={regenerate}
           selectedModelId={initialChatModel}
           setMessages={setMessages}
-          status={status}
+          status={status as any}
           votes={votes}
         />
 
@@ -235,7 +236,7 @@ export function Chat({
               setAttachments={setAttachments}
               setInput={setInput}
               setMessages={setMessages}
-              status={status}
+              status={status as any}
               stop={stop}
               usage={usage}
             />
@@ -256,7 +257,7 @@ export function Chat({
         setAttachments={setAttachments}
         setInput={setInput}
         setMessages={setMessages}
-        status={status}
+        status={status as any}
         stop={stop}
         votes={votes}
       />

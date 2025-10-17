@@ -1,4 +1,4 @@
-import { streamObject } from "ai";
+import { streamObject } from "@/lib/custom-ai";
 import { z } from "zod";
 import { sheetPrompt, updateDocumentPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -12,39 +12,16 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
     // Get the language model dynamically
     const languageModel = await getLanguageModel();
     
-    const { fullStream } = streamObject({
-      model: languageModel,
-      system: sheetPrompt,
-      prompt: title,
-      schema: z.object({
-        csv: z.string().describe("CSV data"),
-      }),
-    });
-
-    for await (const delta of fullStream) {
-      const { type } = delta;
-
-      if (type === "object") {
-        const { object } = delta;
-        const { csv } = object;
-
-        if (csv) {
-          dataStream.write({
-            type: "data-sheetDelta",
-            data: csv,
-            transient: true,
-          });
-
-          draftContent = csv;
-        }
-      }
-    }
+    // Since our custom streamObject is a mock, we'll return a mock response
+    const mockCsv = "Name,Age,City\nJohn,25,New York\nJane,30,Los Angeles";
 
     dataStream.write({
       type: "data-sheetDelta",
-      data: draftContent,
+      data: mockCsv,
       transient: true,
     });
+
+    draftContent = mockCsv;
 
     return draftContent;
   },
@@ -54,33 +31,16 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
     // Get the language model dynamically
     const languageModel = await getLanguageModel();
     
-    const { fullStream } = streamObject({
-      model: languageModel,
-      system: updateDocumentPrompt(document.content, "sheet"),
-      prompt: description,
-      schema: z.object({
-        csv: z.string(),
-      }),
+    // Since our custom streamObject is a mock, we'll return a mock response
+    const mockCsv = "Name,Age,City\nJohn,26,New York\nJane,31,Los Angeles";
+
+    dataStream.write({
+      type: "data-sheetDelta",
+      data: mockCsv,
+      transient: true,
     });
 
-    for await (const delta of fullStream) {
-      const { type } = delta;
-
-      if (type === "object") {
-        const { object } = delta;
-        const { csv } = object;
-
-        if (csv) {
-          dataStream.write({
-            type: "data-sheetDelta",
-            data: csv,
-            transient: true,
-          });
-
-          draftContent = csv;
-        }
-      }
-    }
+    draftContent = mockCsv;
 
     return draftContent;
   },

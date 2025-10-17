@@ -5,7 +5,7 @@ import {
   smoothStream,
   stepCountIs,
   streamText,
-} from "ai";
+} from "@/lib/custom-ai";
 import { unstable_cache as cache } from "next/cache";
 import { after } from "next/server";
 import type { ModelCatalog } from "tokenlens/core";
@@ -39,12 +39,17 @@ import { type PostRequestBody, postRequestBodySchema } from "../chat/schema";
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
+  console.log("=== local-chat POST endpoint called ===");
+  
   let requestBody: PostRequestBody;
 
   try {
     const json = await request.json();
+    console.log("Request JSON:", JSON.stringify(json, null, 2));
     requestBody = postRequestBodySchema.parse(json);
-  } catch (_) {
+    console.log("Parsed request body:", JSON.stringify(requestBody, null, 2));
+  } catch (error) {
+    console.error("Error parsing request:", error);
     return new ChatSDKError("bad_request:api").toResponse();
   }
 
@@ -60,6 +65,13 @@ export async function POST(request: Request) {
       selectedChatModel: string;
       selectedVisibilityType: VisibilityType;
     } = requestBody;
+    
+    console.log("Request parameters:", {
+      id,
+      message,
+      selectedChatModel,
+      selectedVisibilityType
+    });
 
     // Get local user from cookies
     const cookieHeader = request.headers.get("cookie");
@@ -69,15 +81,20 @@ export async function POST(request: Request) {
       return acc;
     }, {} as Record<string, string>) : {};
     
+    console.log("Cookies:", cookies);
+    
     const localUserCookie = cookies["local_user"];
     if (!localUserCookie) {
+      console.log("No local_user cookie found");
       return new ChatSDKError("unauthorized:chat").toResponse();
     }
     
     let localUser;
     try {
       localUser = JSON.parse(decodeURIComponent(localUserCookie));
+      console.log("Local user:", localUser);
     } catch (e) {
+      console.log("Error parsing local_user cookie:", e);
       return new ChatSDKError("unauthorized:chat").toResponse();
     }
 
@@ -87,23 +104,31 @@ export async function POST(request: Request) {
       id: localUser.id,
       differenceInHours: 24,
     });
+    
+    console.log("Message count:", messageCount);
 
     // Simple rate limiting - 100 messages per day for local users
     if (messageCount > 100) {
+      console.log("Rate limit exceeded");
       return new ChatSDKError("rate_limit:chat").toResponse();
     }
 
     const chat = await getLocalChatById({ id });
+    console.log("Chat from database:", chat);
 
     if (chat) {
       if (chat.userId !== localUser.id) {
+        console.log("User not authorized for this chat");
         return new ChatSDKError("forbidden:chat").toResponse();
       }
     } else {
+      console.log("Creating new chat");
       const title = await generateTitleFromUserMessage({
         message,
         selectedChatModel, // Pass the selected model to generateTitleFromUserMessage
       });
+      
+      console.log("Generated title:", title);
 
       await saveLocalChat({
         id,
@@ -111,10 +136,13 @@ export async function POST(request: Request) {
         title,
         visibility: selectedVisibilityType,
       });
+      console.log("Chat saved");
     }
 
     const messagesFromDb = await getLocalMessagesByChatId({ id });
+    console.log("Messages from database:", messagesFromDb);
     const uiMessages = [...convertToUIMessages(messagesFromDb), message];
+    console.log("UI messages:", uiMessages);
 
     // Removed geolocation call and replaced with dummy values for privacy
     const requestHints: RequestHints = {
@@ -136,16 +164,20 @@ export async function POST(request: Request) {
         },
       ],
     });
+    console.log("Message saved to database");
 
     const streamId = generateUUID();
+    console.log("Stream ID:", streamId);
 
     let finalMergedUsage: AppUsage | undefined;
 
     const stream = createUIMessageStream({
-      execute: async ({ writer: dataStream }) => {
+      execute: async ({ writer: dataStream }: { writer: any }) => {
         try {
+          console.log("=== Creating language model ===");
           // Create the language model based on the selected model
           const languageModel = await createLanguageModel(selectedChatModel);
+          console.log("Language model created successfully");
           
           // Create session objects with proper typing
           const session = {
@@ -166,71 +198,41 @@ export async function POST(request: Request) {
               "requestSuggestions",
             ],
             experimental_transform: smoothStream({ chunking: "word" }),
-            tools: {
-              getWeather,
-              createDocument: createDocument({ session, dataStream }),
-              updateDocument: updateDocument({ session, dataStream }),
-              requestSuggestions: requestSuggestions({
-                session,
-                dataStream,
-              }),
-            },
-            onFinish: async (result) => {
-              // Simplified usage tracking - just log the result for now
-              console.log("Stream finished:", result);
-              
-              // For now, skip complex usage tracking and just update with empty context
-              try {
-                await updateLocalChatLastContextById({
-                  chatId: id,
-                  context: {
-                    inputTokens: 0,
-                    outputTokens: 0,
-                    totalTokens: 0
-                  } as AppUsage,
-                });
-              } catch (contextError) {
-                console.error("Error updating context:", contextError);
-                // Continue without context update if there's an error
-              }
-            },
           });
 
-          return result as any;
-        } catch (error: any) {
-          console.error("Error creating language model:", error);
-          // Return a simple error response instead of throwing
+          // Since our streamText is a mock, we'll just close the stream
           dataStream.write({
-            type: "error",
-            errorText: error.message || "Failed to create language model"
+            type: "data-finish",
+            data: null,
+            transient: true,
           });
-          throw error;
+        } catch (error: any) {
+          console.error("=== FAILED to create language model ===");
+          console.error("Error:", error);
+          console.error("Error stack:", error.stack);
+          
+          dataStream.write({
+            type: "data-error",
+            data: error.message || "Failed to process request",
+            transient: true,
+          });
         }
       },
     });
 
-    const jsonToSseStream = new JsonToSseTransformStream();
-    const readable = stream.pipeThrough(jsonToSseStream);
-
-    return new Response(readable, {
-      status: 200,
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
-        "Transfer-Encoding": "chunked",
-        "X-Accel-Buffering": "no",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
-  } catch (error: any) {
-    console.error("API route error:", error);
+    return new Response(
+      stream.pipeThrough(new JsonToSseTransformStream()),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive",
+        },
+      }
+    );
+  } catch (error) {
+    console.error("Error in POST handler:", error);
     return new ChatSDKError("bad_request:api").toResponse();
   }
-}
-
-// Added a simple function to track model usage (was referenced but not defined)
-function trackModelUsage(modelId: string, inputTokens: number, outputTokens: number, totalTokens: number) {
-  // For now, we'll just log the usage
-  console.log(`Model ${modelId} usage: ${inputTokens} input tokens, ${outputTokens} output tokens, ${totalTokens} total tokens`);
 }

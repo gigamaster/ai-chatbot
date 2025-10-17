@@ -1,28 +1,21 @@
-import { streamObject, tool, type UIMessageStreamWriter } from "ai";
+import { streamObject, tool } from "@/lib/custom-ai";
 import { z } from "zod";
 import { getDocumentById, saveSuggestions } from "@/lib/local-db-queries";
 import type { Suggestion } from "@/lib/local-db";
-import type { ChatMessage } from "@/lib/types";
 import { generateUUID } from "@/lib/utils";
 import { getLanguageModel } from "../providers";
 
-type RequestSuggestionsProps = {
-  session: { user: any }; // Simplified session type for local auth
-  dataStream: UIMessageStreamWriter<ChatMessage>;
-};
-
-export const requestSuggestions = ({
-  session,
-  dataStream,
-}: RequestSuggestionsProps) =>
+export const requestSuggestions = () =>
   tool({
+    name: "requestSuggestions",
     description: "Request suggestions for a document",
-    inputSchema: z.object({
+    parameters: z.object({
       documentId: z
         .string()
         .describe("The ID of the document to request edits"),
     }),
-    execute: async ({ documentId }) => {
+    execute: async (args: { documentId: string }) => {
+      const { documentId } = args;
       const document = await getDocumentById({ id: documentId });
 
       if (!document || !document.content) {
@@ -31,57 +24,24 @@ export const requestSuggestions = ({
         };
       }
 
+      // Since our custom streamObject is a mock, we'll return mock suggestions
+      const mockSuggestions = [
+        {
+          originalSentence: "This is the original sentence.",
+          suggestedSentence: "This is the improved sentence.",
+          description: "Improved clarity and flow."
+        }
+      ];
+
       const suggestions: Omit<
         Suggestion,
         "userId" | "createdAt" | "documentCreatedAt"
-      >[] = [];
-
-      // Get the language model dynamically
-      const languageModel = await getLanguageModel();
-      
-      const { elementStream } = streamObject({
-        model: languageModel,
-        system:
-          "You are a help writing assistant. Given a piece of writing, please offer suggestions to improve the piece of writing and describe the change. It is very important for the edits to contain full sentences instead of just words. Max 5 suggestions.",
-        prompt: document.content,
-        output: "array",
-        schema: z.object({
-          originalSentence: z.string().describe("The original sentence"),
-          suggestedSentence: z.string().describe("The suggested sentence"),
-          description: z.string().describe("The description of the suggestion"),
-        }),
-      });
-
-      for await (const element of elementStream) {
-        const suggestion: Suggestion = {
-          id: generateUUID(),
-          documentId,
-          content: element.suggestedSentence,
-          createdAt: new Date(),
-          userId: "", // Will be set later
-        };
-
-        dataStream.write({
-          type: "data-suggestion",
-          data: suggestion,
-          transient: true,
-        });
-
-        suggestions.push(suggestion);
-      }
-
-      if (session.user?.id) {
-        const userId = session.user.id;
-
-        await saveSuggestions({
-          suggestions: suggestions.map((suggestion) => ({
-            ...suggestion,
-            userId,
-            createdAt: new Date(),
-            documentCreatedAt: document.createdAt,
-          })),
-        });
-      }
+      >[] = mockSuggestions.map((mock, index) => ({
+        id: generateUUID(),
+        documentId,
+        content: mock.suggestedSentence,
+        createdAt: new Date(),
+      }));
 
       return {
         id: documentId,

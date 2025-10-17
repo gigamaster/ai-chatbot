@@ -1,5 +1,4 @@
-import type { UseChatHelpers } from "@ai-sdk/react";
-import type { DataUIPart } from "ai";
+import type { DataUIPart } from "@/lib/custom-ai";
 import type { ComponentType, Dispatch, ReactNode, SetStateAction } from "react";
 import type { Suggestion } from "@/lib/local-db";
 import type { ChatMessage, CustomUIDataTypes } from "@/lib/types";
@@ -24,7 +23,7 @@ type ArtifactAction<M = any> = {
 };
 
 export type ArtifactToolbarContext = {
-  sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
+  sendMessage: any;
 };
 
 export type ArtifactToolbarItem = {

@@ -1,4 +1,3 @@
-import type { UseChatHelpers } from "@ai-sdk/react";
 import equal from "fast-deep-equal";
 import { AnimatePresence, motion } from "framer-motion";
 import { memo } from "react";
@@ -10,11 +9,11 @@ import { PreviewMessage, ThinkingMessage } from "./message";
 
 type ArtifactMessagesProps = {
   chatId: string;
-  status: UseChatHelpers<ChatMessage>["status"];
+  status: any;
   votes: Vote[] | undefined;
   messages: ChatMessage[];
-  setMessages: UseChatHelpers<ChatMessage>["setMessages"];
-  regenerate: UseChatHelpers<ChatMessage>["regenerate"];
+  setMessages: any;
+  regenerate: any;
   isReadonly: boolean;
   artifactStatus: UIArtifact["status"];
 };

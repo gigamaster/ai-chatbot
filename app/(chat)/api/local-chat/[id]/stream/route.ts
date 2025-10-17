@@ -1,4 +1,4 @@
-import { createUIMessageStream, JsonToSseTransformStream } from "ai";
+import { createUIMessageStream, JsonToSseTransformStream } from "@/lib/custom-ai";
 import { differenceInSeconds } from "date-fns";
 import {
   getLocalChatById,
@@ -7,7 +7,6 @@ import {
 import type { Chat } from "@/lib/local-db";
 import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
-import { getStreamContext } from "../../route";
 
 // Helper function to get local user from cookies
 function getLocalUserFromCookies(cookieHeader: string | null) {
@@ -35,12 +34,8 @@ export async function GET(
 ) {
   const { id: chatId } = await params;
 
-  const streamContext = getStreamContext();
+  // Remove streamContext since getStreamContext doesn't exist
   const resumeRequestedAt = new Date();
-
-  if (!streamContext) {
-    return new Response(null, { status: 204 });
-  }
 
   if (!chatId) {
     return new ChatSDKError("bad_request:api").toResponse();
@@ -71,7 +66,7 @@ export async function GET(
   const mostRecentMessage = messages.at(-1);
 
   if (!mostRecentMessage) {
-    const emptyDataStream = createUIMessageStream<ChatMessage>({
+    const emptyDataStream = createUIMessageStream({
       // biome-ignore lint/suspicious/noEmptyBlockStatements: "Needs to exist"
       execute: () => {},
     });
@@ -80,7 +75,7 @@ export async function GET(
   }
 
   if (mostRecentMessage.role !== "assistant") {
-    const emptyDataStream = createUIMessageStream<ChatMessage>({
+    const emptyDataStream = createUIMessageStream({
       // biome-ignore lint/suspicious/noEmptyBlockStatements: "Needs to exist"
       execute: () => {},
     });
@@ -91,7 +86,7 @@ export async function GET(
   const messageCreatedAt = new Date(mostRecentMessage.createdAt);
 
   if (differenceInSeconds(resumeRequestedAt, messageCreatedAt) > 15) {
-    const emptyDataStream = createUIMessageStream<ChatMessage>({
+    const emptyDataStream = createUIMessageStream({
       // biome-ignore lint/suspicious/noEmptyBlockStatements: "Needs to exist"
       execute: () => {},
     });
@@ -99,8 +94,8 @@ export async function GET(
     return new Response(emptyDataStream, { status: 200 });
   }
 
-  const restoredStream = createUIMessageStream<ChatMessage>({
-    execute: ({ writer }) => {
+  const restoredStream = createUIMessageStream({
+    execute: ({ writer }: { writer: any }) => {
       writer.write({
         type: "data-appendMessage",
         data: JSON.stringify(mostRecentMessage),

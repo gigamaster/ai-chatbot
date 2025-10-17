@@ -97,19 +97,6 @@ export type Chat = CodemoDB['chats']['value'];
 export type Vote = CodemoDB['votes']['value'];
 export type Suggestion = CodemoDB['suggestions']['value'];
 
-// Define type for in-memory database
-interface InMemoryDB {
-  put: (storeName: string, value: any) => Promise<any>;
-  get: (storeName: string, key: string) => Promise<any>;
-  delete: (storeName: string, key: string) => Promise<boolean>;
-  getAll: (storeName: string) => Promise<any[]>;
-  getAllFromIndex: (storeName: string, indexName: string, key: string) => Promise<any[]>;
-  clear: (storeName: string) => Promise<void>;
-}
-
-// Type for the database (either IndexedDB or in-memory)
-type LocalDB = ReturnType<typeof openDB<CodemoDB>> | InMemoryDB;
-
 // In-memory storage for server environments
 const inMemoryDB: { [key: string]: any[] } = {
   chats: [],
@@ -122,113 +109,134 @@ const inMemoryDB: { [key: string]: any[] } = {
   providers: []
 };
 
-// Database promise that initializes only when needed
-let dbPromise: ReturnType<typeof openDB<CodemoDB>> | null = null;
-
-// Initialize database only when needed and only in browser environment
-function getDb(): LocalDB {
-  console.log("getDb called");
-  console.log("typeof window:", typeof window);
-  console.log("isBrowser:", isBrowser);
-  
-  if (typeof window === 'undefined') {
-    // Return a mock database interface for server environments
-    console.log("Returning mock database interface for server environment");
-    return {
-      put: async (storeName: string, value: any) => {
-        // Remove existing item if it exists
-        inMemoryDB[storeName] = inMemoryDB[storeName].filter(item => item.id !== value.id);
-        // Add new item
-        inMemoryDB[storeName].push(value);
-        return value.id;
-      },
-      get: async (storeName: string, key: string) => {
-        return inMemoryDB[storeName].find(item => item.id === key) || null;
-      },
-      delete: async (storeName: string, key: string) => {
-        const initialLength = inMemoryDB[storeName].length;
-        inMemoryDB[storeName] = inMemoryDB[storeName].filter(item => item.id !== key);
-        return inMemoryDB[storeName].length < initialLength;
-      },
-      getAll: async (storeName: string) => {
-        console.log("getAll called for store:", storeName);
-        console.log("inMemoryDB[storeName]:", inMemoryDB[storeName]);
-        return inMemoryDB[storeName];
-      },
-      getAllFromIndex: async (storeName: string, indexName: string, key: string) => {
-        // Simple implementation for by-chat index
-        if (indexName === 'by-chat') {
-          return inMemoryDB[storeName].filter(item => item.chatId === key);
-        }
-        // Simple implementation for by-document index
-        if (indexName === 'by-document') {
-          return inMemoryDB[storeName].filter(item => item.documentId === key);
-        }
-        return [];
-      },
-      clear: async (storeName: string) => {
-        inMemoryDB[storeName] = [];
-      }
-    };
-  }
-  
-  if (!dbPromise) {
-    // Updated database version to 2 to create the providers object store
-    console.log("Initializing database promise");
-    dbPromise = openDB<CodemoDB>('codemo-db', 2, {
-      upgrade(db, oldVersion, newVersion, transaction) {
-        console.log(`Upgrading database from version ${oldVersion} to ${newVersion}`);
-        
-        // Create stores for different data types
-        if (!db.objectStoreNames.contains('chats')) {
-          db.createObjectStore('chats', { keyPath: 'id' });
-        }
-        
-        if (!db.objectStoreNames.contains('messages')) {
-          const messageStore = db.createObjectStore('messages', { keyPath: 'id' });
-          messageStore.createIndex('by-chat', 'chatId');
-        }
-        
-        if (!db.objectStoreNames.contains('documents')) {
-          db.createObjectStore('documents', { keyPath: 'id' });
-        }
-        
-        if (!db.objectStoreNames.contains('files')) {
-          db.createObjectStore('files', { keyPath: 'id' });
-        }
-        
-        if (!db.objectStoreNames.contains('suggestions')) {
-          const suggestionStore = db.createObjectStore('suggestions', { keyPath: 'id' });
-          suggestionStore.createIndex('by-document', 'documentId');
-        }
-        
-        if (!db.objectStoreNames.contains('votes')) {
-          const voteStore = db.createObjectStore('votes', { keyPath: ['chatId', 'messageId'] });
-          voteStore.createIndex('by-chat', 'chatId');
-          voteStore.createIndex('by-message', 'messageId');
-        }
-        
-        if (!db.objectStoreNames.contains('users')) {
-          db.createObjectStore('users', { keyPath: 'id' });
-        }
-        
-        // Create providers object store (new in version 2)
-        if (!db.objectStoreNames.contains('providers')) {
-          db.createObjectStore('providers', { keyPath: 'id' });
-        }
-      },
-    });
-  }
-  
-  console.log("Returning dbPromise");
-  return dbPromise;
-}
+// Database instance that initializes only when needed
+let dbInstance: any = null;
 
 // Helper function to determine if we're in a browser environment
 const isBrowser = typeof window !== 'undefined';
 
+// Initialize database only when needed and only in browser environment
+async function getDb() {
+  console.log("getDb called");
+  console.log("typeof window:", typeof window);
+  console.log("isBrowser:", isBrowser);
+  
+  // Always use IndexedDB when in browser environment
+  if (typeof window !== 'undefined') {
+    if (!dbInstance) {
+      // Updated database version to 2 to create the providers object store
+      console.log("Initializing database instance");
+      dbInstance = await openDB<CodemoDB>('codemo-db', 2, {
+        upgrade(db, oldVersion, newVersion, transaction) {
+          console.log(`Upgrading database from version ${oldVersion} to ${newVersion}`);
+          
+          // Create stores for different data types
+          if (!db.objectStoreNames.contains('chats')) {
+            db.createObjectStore('chats', { keyPath: 'id' });
+          }
+          
+          if (!db.objectStoreNames.contains('messages')) {
+            const messageStore = db.createObjectStore('messages', { keyPath: 'id' });
+            messageStore.createIndex('by-chat', 'chatId');
+          }
+          
+          if (!db.objectStoreNames.contains('documents')) {
+            db.createObjectStore('documents', { keyPath: 'id' });
+          }
+          
+          if (!db.objectStoreNames.contains('files')) {
+            db.createObjectStore('files', { keyPath: 'id' });
+          }
+          
+          if (!db.objectStoreNames.contains('suggestions')) {
+            const suggestionStore = db.createObjectStore('suggestions', { keyPath: 'id' });
+            suggestionStore.createIndex('by-document', 'documentId');
+          }
+          
+          if (!db.objectStoreNames.contains('votes')) {
+            const voteStore = db.createObjectStore('votes', { keyPath: ['chatId', 'messageId'] });
+            voteStore.createIndex('by-chat', 'chatId');
+            voteStore.createIndex('by-message', 'messageId');
+          }
+          
+          if (!db.objectStoreNames.contains('users')) {
+            db.createObjectStore('users', { keyPath: 'id' });
+          }
+          
+          // Create providers object store (new in version 2)
+          if (!db.objectStoreNames.contains('providers')) {
+            db.createObjectStore('providers', { keyPath: 'id' });
+          }
+        },
+      });
+    }
+    
+    console.log("Returning dbInstance");
+    return dbInstance;
+  }
+  
+  // For server environments, return in-memory database
+  console.log("Using in-memory database for server environment");
+  return {
+    put: async (storeName: string, value: any) => {
+      if (!inMemoryDB[storeName]) {
+        inMemoryDB[storeName] = [];
+      }
+      
+      // Check if item already exists
+      const existingIndex = inMemoryDB[storeName].findIndex((item: any) => item.id === value.id);
+      if (existingIndex !== -1) {
+        inMemoryDB[storeName][existingIndex] = value;
+      } else {
+        inMemoryDB[storeName].push(value);
+      }
+      
+      return value.id;
+    },
+    
+    get: async (storeName: string, key: string) => {
+      if (!inMemoryDB[storeName]) {
+        return undefined;
+      }
+      
+      return inMemoryDB[storeName].find((item: any) => item.id === key);
+    },
+    
+    delete: async (storeName: string, key: string) => {
+      if (!inMemoryDB[storeName]) {
+        return false;
+      }
+      
+      const initialLength = inMemoryDB[storeName].length;
+      inMemoryDB[storeName] = inMemoryDB[storeName].filter((item: any) => item.id !== key);
+      return inMemoryDB[storeName].length < initialLength;
+    },
+    
+    getAll: async (storeName: string) => {
+      return inMemoryDB[storeName] || [];
+    },
+    
+    getAllFromIndex: async (storeName: string, indexName: string, key: string) => {
+      if (!inMemoryDB[storeName]) {
+        return [];
+      }
+      
+      // Simple implementation for by-chat index
+      if (indexName === 'by-chat') {
+        return inMemoryDB[storeName].filter((item: any) => item.chatId === key);
+      }
+      
+      return [];
+    },
+    
+    clear: async (storeName: string) => {
+      inMemoryDB[storeName] = [];
+    }
+  };
+}
+
 // Type guard to check if we're using IndexedDB
-function isIndexedDB(db: LocalDB): db is ReturnType<typeof openDB<CodemoDB>> {
+function isIndexedDB(db: any): db is ReturnType<typeof openDB<CodemoDB>> {
   return isBrowser && db && typeof db === 'object' && 'transaction' in db;
 }
 
@@ -239,8 +247,9 @@ export async function saveLocalChat(chatData: any) {
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      const result = await (db as any).put('chats', {
+      const result = await db.put('chats', {
         ...chatData,
+        createdAt: chatData.createdAt || new Date(),
         lastModified: new Date().toISOString()
       });
       return result;
@@ -249,6 +258,7 @@ export async function saveLocalChat(chatData: any) {
     // For browser environments, use IndexedDB
     const result = await db.put('chats', {
       ...chatData,
+      createdAt: chatData.createdAt || new Date(),
       lastModified: new Date().toISOString()
     });
     return result;
@@ -264,7 +274,7 @@ export async function getLocalChat(chatId: string) {
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      return await (db as any).get('chats', chatId);
+      return await db.get('chats', chatId);
     }
     
     // For browser environments, use IndexedDB
@@ -281,7 +291,7 @@ export async function deleteLocalChat(chatId: string) {
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      return await (db as any).delete('chats', chatId);
+      return await db.delete('chats', chatId);
     }
     
     // For browser environments, use IndexedDB
@@ -298,7 +308,7 @@ export async function getAllLocalChats(userId: string) {
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      const allChats = await (db as any).getAll('chats');
+      const allChats = await db.getAll('chats');
       return allChats.filter((chat: any) => chat.userId === userId);
     }
     
@@ -318,27 +328,23 @@ export async function saveLocalMessages(chatId: string, messages: any[]) {
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      const store = db as any;
+      // Add chatId to each message if not present
+      const messagesWithChatId = messages.map(message => ({
+        ...message,
+        chatId: message.chatId || chatId
+      }));
       
-      // Clear existing messages for this chat
-      const chatMessages = await store.getAllFromIndex('messages', 'by-chat', chatId);
-      for (const message of chatMessages) {
-        await store.delete('messages', message.id);
-      }
-      
-      // Add new messages
-      for (const message of messages) {
-        await store.put('messages', message);
+      // Save each message
+      for (const message of messagesWithChatId) {
+        await db.put('messages', message);
       }
       
       return true;
     }
     
     // For browser environments, use IndexedDB
-    // Use type assertion to tell TypeScript this is an IndexedDB instance
-    const indexedDb = db as any;
-    if (indexedDb.transaction) {
-      const transaction = indexedDb.transaction('messages', 'readwrite');
+    if (isIndexedDB(db)) {
+      const transaction = (await db).transaction('messages', 'readwrite');
       const store = transaction.objectStore('messages');
       
       // Clear existing messages for this chat
@@ -369,13 +375,11 @@ export async function getLocalMessages(chatId: string) {
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      const messages = await (db as any).getAllFromIndex('messages', 'by-chat', chatId);
-      return messages || [];
+      return await db.getAllFromIndex('messages', 'by-chat', chatId);
     }
     
     // For browser environments, use IndexedDB
-    const messages = await db.getAllFromIndex('messages', 'by-chat', chatId);
-    return messages || [];
+    return await db.getAllFromIndex('messages', 'by-chat', chatId);
   } catch (error) {
     console.error('Failed to retrieve messages:', error);
     return [];
@@ -389,8 +393,9 @@ export async function saveLocalDocument(documentData: any) {
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      const result = await (db as any).put('documents', {
+      const result = await db.put('documents', {
         ...documentData,
+        createdAt: documentData.createdAt || new Date(),
         lastModified: new Date().toISOString()
       });
       return result;
@@ -399,6 +404,7 @@ export async function saveLocalDocument(documentData: any) {
     // For browser environments, use IndexedDB
     const result = await db.put('documents', {
       ...documentData,
+      createdAt: documentData.createdAt || new Date(),
       lastModified: new Date().toISOString()
     });
     return result;
@@ -414,7 +420,7 @@ export async function getLocalDocument(documentId: string) {
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      return await (db as any).get('documents', documentId);
+      return await db.get('documents', documentId);
     }
     
     // For browser environments, use IndexedDB
@@ -432,8 +438,9 @@ export async function saveLocalFile(fileData: any) {
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      const result = await (db as any).put('files', {
+      const result = await db.put('files', {
         ...fileData,
+        createdAt: fileData.createdAt || new Date(),
         lastModified: new Date().toISOString()
       });
       return result;
@@ -442,6 +449,7 @@ export async function saveLocalFile(fileData: any) {
     // For browser environments, use IndexedDB
     const result = await db.put('files', {
       ...fileData,
+      createdAt: fileData.createdAt || new Date(),
       lastModified: new Date().toISOString()
     });
     return result;
@@ -457,7 +465,7 @@ export async function getLocalFile(fileId: string) {
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      return await (db as any).get('files', fileId);
+      return await db.get('files', fileId);
     }
     
     // For browser environments, use IndexedDB
@@ -469,40 +477,30 @@ export async function getLocalFile(fileId: string) {
 }
 
 // Suggestion operations
-export async function saveLocalSuggestions(suggestions: any[]) {
+export async function saveLocalSuggestion(suggestionData: any) {
   try {
     const db = await getDb();
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      const store = db as any;
-      
-      for (const suggestion of suggestions) {
-        await store.put('suggestions', suggestion);
-      }
-      
-      return true;
+      const result = await db.put('suggestions', {
+        ...suggestionData,
+        createdAt: suggestionData.createdAt || new Date(),
+        lastModified: new Date().toISOString()
+      });
+      return result;
     }
     
     // For browser environments, use IndexedDB
-    // Use type assertion to tell TypeScript this is an IndexedDB instance
-    const indexedDb = db as any;
-    if (indexedDb.transaction) {
-      const transaction = indexedDb.transaction('suggestions', 'readwrite');
-      const store = transaction.objectStore('suggestions');
-      
-      for (const suggestion of suggestions) {
-        await store.add(suggestion);
-      }
-      
-      await transaction.done;
-      return true;
-    }
-    
-    return false;
+    const result = await db.put('suggestions', {
+      ...suggestionData,
+      createdAt: suggestionData.createdAt || new Date(),
+      lastModified: new Date().toISOString()
+    });
+    return result;
   } catch (error) {
-    console.error('Failed to save suggestions locally:', error);
-    return false;
+    console.error('Failed to save suggestion locally:', error);
+    return null;
   }
 }
 
@@ -512,13 +510,11 @@ export async function getLocalSuggestions(documentId: string) {
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      const suggestions = await (db as any).getAllFromIndex('suggestions', 'by-document', documentId);
-      return suggestions || [];
+      return await db.getAllFromIndex('suggestions', 'by-document', documentId);
     }
     
     // For browser environments, use IndexedDB
-    const suggestions = await db.getAllFromIndex('suggestions', 'by-document', documentId);
-    return suggestions || [];
+    return await db.getAllFromIndex('suggestions', 'by-document', documentId);
   } catch (error) {
     console.error('Failed to retrieve suggestions:', error);
     return [];
@@ -532,7 +528,7 @@ export async function saveLocalVote(voteData: any) {
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      const result = await (db as any).put('votes', {
+      const result = await db.put('votes', {
         ...voteData,
         lastModified: new Date().toISOString()
       });
@@ -557,13 +553,11 @@ export async function getLocalVotes(chatId: string) {
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      const votes = await (db as any).getAllFromIndex('votes', 'by-chat', chatId);
-      return votes || [];
+      return await db.getAllFromIndex('votes', 'by-chat', chatId);
     }
     
     // For browser environments, use IndexedDB
-    const votes = await db.getAllFromIndex('votes', 'by-chat', chatId);
-    return votes || [];
+    return await db.getAllFromIndex('votes', 'by-chat', chatId);
   } catch (error) {
     console.error('Failed to retrieve votes:', error);
     return [];
@@ -577,45 +571,19 @@ export async function saveLocalUser(userData: any) {
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      // Check if user already exists
-      const existingUser = await (db as any).get('users', userData.id);
-      if (existingUser) {
-        // Update existing user
-        const result = await (db as any).put('users', {
-          ...existingUser,
-          ...userData,
-          lastModified: new Date().toISOString()
-        });
-        return result;
-      } else {
-        // Create new user
-        const result = await (db as any).put('users', {
-          ...userData,
-          lastModified: new Date().toISOString()
-        });
-        return result;
-      }
+      const result = await db.put('users', {
+        ...userData,
+        lastModified: new Date().toISOString()
+      });
+      return result;
     }
     
     // For browser environments, use IndexedDB
-    // Check if user already exists
-    const existingUser = await db.get('users', userData.id);
-    if (existingUser) {
-      // Update existing user
-      const result = await db.put('users', {
-        ...existingUser,
-        ...userData,
-        lastModified: new Date().toISOString()
-      });
-      return result;
-    } else {
-      // Create new user
-      const result = await db.put('users', {
-        ...userData,
-        lastModified: new Date().toISOString()
-      });
-      return result;
-    }
+    const result = await db.put('users', {
+      ...userData,
+      lastModified: new Date().toISOString()
+    });
+    return result;
   } catch (error) {
     console.error('Failed to save user locally:', error);
     return null;
@@ -628,7 +596,7 @@ export async function getLocalUser(userId: string) {
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      return await (db as any).get('users', userId);
+      return await db.get('users', userId);
     }
     
     // For browser environments, use IndexedDB
@@ -639,37 +607,17 @@ export async function getLocalUser(userId: string) {
   }
 }
 
-export async function getLocalUserByEmail(email: string) {
+// Provider operations
+export async function saveLocalProvider(providerData: any) {
   try {
     const db = await getDb();
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      const allUsers = await (db as any).getAll('users');
-      const user = allUsers.find((user: any) => user.email === email) || null;
-      return user;
-    }
-    
-    // For browser environments, use IndexedDB
-    const allUsers = await db.getAll('users');
-    const user = allUsers.find((user: any) => user.email === email) || null;
-    return user;
-  } catch (error) {
-    console.error('Failed to retrieve user by email:', error);
-    return null;
-  }
-}
-
-// Custom Provider operations
-export async function saveCustomProvider(providerData: any) {
-  try {
-    const db = await getDb();
-    
-    // For server environments, use in-memory storage
-    if (!isBrowser) {
-      const result = await (db as any).put('providers', {
+      const result = await db.put('providers', {
         ...providerData,
-        lastModified: new Date().toISOString()
+        createdAt: providerData.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       });
       return result;
     }
@@ -677,7 +625,8 @@ export async function saveCustomProvider(providerData: any) {
     // For browser environments, use IndexedDB
     const result = await db.put('providers', {
       ...providerData,
-      lastModified: new Date().toISOString()
+      createdAt: providerData.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     });
     return result;
   } catch (error) {
@@ -686,96 +635,51 @@ export async function saveCustomProvider(providerData: any) {
   }
 }
 
-export async function getCustomProvider(id: string) {
+export async function getLocalProvider(providerId: string) {
   try {
     const db = await getDb();
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      return await (db as any).get('providers', id);
+      return await db.get('providers', providerId);
     }
     
     // For browser environments, use IndexedDB
-    return await db.get('providers', id);
+    return await db.get('providers', providerId);
   } catch (error) {
     console.error('Failed to retrieve provider:', error);
     return null;
   }
 }
 
-export async function getAllCustomProviders() {
+export async function getAllLocalProviders() {
   try {
     const db = await getDb();
-    console.log("Getting all custom providers from database");
-    console.log("isBrowser:", isBrowser);
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      console.log("Using in-memory storage for server environment");
-      const providers = await (db as any).getAll('providers');
-      console.log("Providers from in-memory storage:", providers);
-      console.log("Type of db:", typeof db);
-      console.log("Db keys:", Object.keys(db as any));
-      return providers;
+      return await db.getAll('providers');
     }
     
     // For browser environments, use IndexedDB
-    console.log("Using IndexedDB for browser environment");
-    const providers = await db.getAll('providers');
-    console.log("Providers from IndexedDB:", providers);
-    return providers;
+    return await db.getAll('providers');
   } catch (error) {
     console.error('Failed to retrieve providers:', error);
     return [];
   }
 }
 
-export async function updateCustomProvider(id: string, updates: any) {
+export async function deleteLocalProvider(providerId: string) {
   try {
     const db = await getDb();
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      const existingProvider = await (db as any).get('providers', id);
-      if (existingProvider) {
-        const result = await (db as any).put('providers', {
-          ...existingProvider,
-          ...updates,
-          lastModified: new Date().toISOString()
-        });
-        return result;
-      }
-      return null;
+      return await db.delete('providers', providerId);
     }
     
     // For browser environments, use IndexedDB
-    const existingProvider = await db.get('providers', id);
-    if (existingProvider) {
-      const result = await db.put('providers', {
-        ...existingProvider,
-        ...updates,
-        lastModified: new Date().toISOString()
-      });
-      return result;
-    }
-    return null;
-  } catch (error) {
-    console.error('Failed to update provider:', error);
-    return null;
-  }
-}
-
-export async function deleteCustomProvider(id: string) {
-  try {
-    const db = await getDb();
-    
-    // For server environments, use in-memory storage
-    if (!isBrowser) {
-      return await (db as any).delete('providers', id);
-    }
-    
-    // For browser environments, use IndexedDB
-    return await db.delete('providers', id);
+    return await db.delete('providers', providerId);
   } catch (error) {
     console.error('Failed to delete provider:', error);
     return false;

@@ -1,4 +1,4 @@
-import type { UIMessage } from "ai";
+import type { UIMessage } from "@/lib/custom-ai";
 import type { ComponentProps, HTMLAttributes } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ToolUIPart } from "ai";
+import type { ToolUIPart } from "@/lib/custom-ai";
 import {
   CheckCircleIcon,
   ChevronDownIcon,
@@ -30,23 +30,24 @@ export const Tool = ({ className, ...props }: ToolProps) => (
 
 export type ToolHeaderProps = {
   type: ToolUIPart["type"];
-  state: ToolUIPart["state"];
+  // Simplify the state since our ToolUIPart doesn't have a state property
+  state: "pending" | "running" | "completed" | "error";
   className?: string;
 };
 
-const getStatusBadge = (status: ToolUIPart["state"]) => {
+const getStatusBadge = (status: "pending" | "running" | "completed" | "error") => {
   const labels = {
-    "input-streaming": "Pending",
-    "input-available": "Running",
-    "output-available": "Completed",
-    "output-error": "Error",
+    "pending": "Pending",
+    "running": "Running",
+    "completed": "Completed",
+    "error": "Error",
   } as const;
 
   const icons = {
-    "input-streaming": <CircleIcon className="size-4" />,
-    "input-available": <ClockIcon className="size-4 animate-pulse" />,
-    "output-available": <CheckCircleIcon className="size-4 text-green-600" />,
-    "output-error": <XCircleIcon className="size-4 text-red-600" />,
+    "pending": <CircleIcon className="size-4" />,
+    "running": <ClockIcon className="size-4 animate-pulse" />,
+    "completed": <CheckCircleIcon className="size-4 text-green-600" />,
+    "error": <XCircleIcon className="size-4 text-red-600" />,
   } as const;
 
   return (
@@ -97,7 +98,8 @@ export const ToolContent = ({ className, ...props }: ToolContentProps) => (
 );
 
 export type ToolInputProps = ComponentProps<"div"> & {
-  input: ToolUIPart["input"];
+  // Simplify since our ToolUIPart doesn't have an input property
+  input: any;
 };
 
 export const ToolInput = ({ className, input, ...props }: ToolInputProps) => (
@@ -113,7 +115,8 @@ export const ToolInput = ({ className, input, ...props }: ToolInputProps) => (
 
 export type ToolOutputProps = ComponentProps<"div"> & {
   output: ReactNode;
-  errorText: ToolUIPart["errorText"];
+  // Simplify since our ToolUIPart doesn't have an errorText property
+  errorText?: string;
 };
 
 export const ToolOutput = ({

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChatStatus } from "ai";
+import type { ChatStatus } from "@/lib/custom-ai";
 import { Loader2Icon, SendIcon, SquareIcon, XIcon } from "lucide-react";
 import type {
   ComponentProps,
