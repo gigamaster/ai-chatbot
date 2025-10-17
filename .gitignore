@@ -2,6 +2,8 @@
 
 /backup
 backup/
+/docs
+docs/
 
 # dependencies
 node_modules
