@@ -94,6 +94,7 @@ export function SidebarHistory({ user }: { user: any | undefined }) {
     setIsValidating(true);
     try {
       const chats = await fetchChatsFromIndexedDB(user.id);
+      console.log("Setting chat history:", chats);
       setChatHistory(chats);
     } catch (error) {
       console.error("Error fetching chats:", error);

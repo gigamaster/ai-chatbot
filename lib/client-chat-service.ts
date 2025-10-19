@@ -94,48 +94,50 @@ async function createSSEStream(response: Response) {
 function getUserId(): string | null {
   try {
     if (typeof window !== 'undefined') {
-      console.log("Getting user ID from browser environment");
       // Try to get user from localStorage first
       const storedUser = localStorage.getItem('local_user');
-      console.log("Stored user in localStorage:", storedUser);
       if (storedUser) {
-        const user = JSON.parse(storedUser);
-        console.log("Found user in localStorage:", user);
-        return user.id;
+        try {
+          const user = JSON.parse(storedUser);
+          if (user && user.id) {
+            return user.id;
+          }
+        } catch (parseError) {
+          console.error("Error parsing user from localStorage:", parseError);
+        }
       }
       
       // If no user in localStorage, check for user cookie
       const cookieString = document.cookie;
-      console.log("Cookie string:", cookieString);
       const cookies = cookieString.split(';').reduce((acc, cookie) => {
         const [name, value] = cookie.trim().split('=');
         acc[name] = value;
         return acc;
       }, {} as Record<string, string>);
       
-      console.log("Parsed cookies:", cookies);
-      
       const userCookie = cookies['local_user'];
-      console.log("User cookie:", userCookie);
       if (userCookie) {
-        const user = JSON.parse(decodeURIComponent(userCookie));
-        console.log("Found user in cookie:", user);
-        return user.id;
+        try {
+          const user = JSON.parse(decodeURIComponent(userCookie));
+          if (user && user.id) {
+            // Save to localStorage for future visits
+            localStorage.setItem('local_user', JSON.stringify(user));
+            return user.id;
+          }
+        } catch (parseError) {
+          console.error("Error parsing user from cookie:", parseError);
+        }
       }
     }
   } catch (error) {
     console.error("Error getting user ID:", error);
   }
-  console.log("No user found");
   return null;
 }
 
 // Client-side chat service
 export class ClientChatService {
   async sendMessages(request: any) {
-    console.log("=== ClientChatService.sendMessages called ===");
-    console.log("Request:", JSON.stringify(request, null, 2));
-    
     try {
       // Validate required fields
       // Handle both request formats: {selectedProviderId, selectedModelId} and {body: {selectedProviderId, selectedModelId}}
@@ -145,10 +147,11 @@ export class ClientChatService {
       const userMessage = request.message;
       const visibilityType = request.selectedVisibilityType || request.body?.selectedVisibilityType || "private";
       
-      console.log("Extracted provider ID:", selectedProviderId);
-      console.log("Extracted model ID:", selectedModelId);
-      console.log("Extracted chat ID:", chatId);
-      console.log("Visibility type:", visibilityType);
+      console.log("=== ClientChatService.sendMessages debug info ===");
+      console.log("Chat ID:", chatId);
+      console.log("Selected Provider ID:", selectedProviderId);
+      console.log("Selected Model ID:", selectedModelId);
+      console.log("Visibility Type:", visibilityType);
       
       if (!selectedProviderId) {
         throw new ChatSDKError("bad_request:chat", "No provider selected");
@@ -168,14 +171,6 @@ export class ClientChatService {
         throw new ChatSDKError("bad_request:chat", `Provider not found: ${selectedProviderId}`);
       }
       
-      console.log("Found provider:", {
-        id: provider.id,
-        name: provider.name,
-        baseUrl: provider.baseUrl ? "[REDACTED]" : "undefined",
-        model: provider.model,
-        hasApiKey: !!provider.apiKey
-      });
-      
       // Validate provider configuration
       if (!provider.baseUrl || !provider.apiKey) {
         throw new ChatSDKError("bad_request:chat", "Provider configuration is incomplete");
@@ -183,25 +178,31 @@ export class ClientChatService {
       
       // Get user ID
       const userId = getUserId();
+      console.log("Retrieved User ID:", userId);
+      
       if (!userId) {
         throw new ChatSDKError("bad_request:chat", "User not authenticated");
       }
       
-      console.log("User ID:", userId);
-      
       // Generate chat title from the first message if this is a new chat
-      const title = await generateTitleFromUserMessage({
-        message: userMessage,
-        selectedChatModel: selectedModelId,
-      });
+      let title = "";
+      try {
+        title = await generateTitleFromUserMessage({
+          message: userMessage,
+          selectedChatModel: selectedModelId,
+        });
+        console.log("Generated title:", title);
+      } catch (titleError) {
+        console.error("Error generating title:", titleError);
+        title = "New Chat";
+      }
       
-      console.log("Generated chat title:", title);
-      console.log("Chat data to save:", {
-        id: chatId,
-        userId: userId,
-        title: title,
-        visibility: visibilityType,
-      });
+      // Ensure we have a valid title
+      if (!title || title.trim() === "") {
+        title = "New Chat";
+      }
+      
+      console.log("Final title to use:", title);
       
       // Save the chat to the database
       try {
@@ -211,18 +212,25 @@ export class ClientChatService {
           title: title,
           visibility: visibilityType,
         });
+        
         const savedChat = await saveLocalChat({
           id: chatId,
           userId: userId,
           title: title,
           visibility: visibilityType,
         });
-        console.log("Chat saved successfully:", savedChat);
+        
+        console.log("Chat saved result:", savedChat);
         
         // Dispatch a custom event to notify that a chat has been saved
         // This will allow the sidebar to refresh its chat history
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('chatSaved', { detail: { chatId, userId } }));
+        }
+        
+        // Also dispatch a general chatSaved event for components that listen to it without details
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('chatSaved'));
         }
       } catch (saveError) {
         console.error("Error saving chat:", saveError);
@@ -253,27 +261,14 @@ export class ClientChatService {
         ? `${baseUrl}${chatCompletionsPath}` 
         : `${baseUrl}/${chatCompletionsPath}`;
       
-      console.log("Making direct API call to provider:", {
-        url: url,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer [REDACTED]'
-        },
-        body: JSON.stringify(payload)
-      });
-      
       const response = await fetch(url, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(payload)
       });
       
-      console.log("Provider API response status:", response.status);
-      
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("Provider API error:", errorText);
         
         // Provide user-friendly error messages
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
@@ -302,9 +297,6 @@ export class ClientChatService {
         },
       });
     } catch (error: any) {
-      console.error("=== ClientChatService.sendMessages error ===");
-      console.error("Error:", error);
-      
       // Re-throw ChatSDKError as-is
       if (error instanceof ChatSDKError) {
         throw error;

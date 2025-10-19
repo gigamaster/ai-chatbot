@@ -117,19 +117,12 @@ const isBrowser = typeof window !== 'undefined';
 
 // Initialize database only when needed and only in browser environment
 async function getDb() {
-  console.log("getDb called");
-  console.log("typeof window:", typeof window);
-  console.log("isBrowser:", isBrowser);
-  
   // Always use IndexedDB when in browser environment
   if (typeof window !== 'undefined') {
     if (!dbInstance) {
       // Updated database version to 2 to create the providers object store
-      console.log("Initializing database instance");
       dbInstance = await openDB<CodemoDB>('codemo-db', 2, {
         upgrade(db, oldVersion, newVersion, transaction) {
-          console.log(`Upgrading database from version ${oldVersion} to ${newVersion}`);
-          
           // Create stores for different data types
           if (!db.objectStoreNames.contains('chats')) {
             db.createObjectStore('chats', { keyPath: 'id' });
@@ -168,10 +161,15 @@ async function getDb() {
             db.createObjectStore('providers', { keyPath: 'id' });
           }
         },
+        blocked() {
+        },
+        blocking() {
+        },
+        terminated() {
+        }
       });
     }
     
-    console.log("Returning dbInstance");
     return dbInstance;
   }
   
@@ -213,7 +211,6 @@ async function getDb() {
     },
     
     getAll: async (storeName: string) => {
-      console.log("inMemoryDB getAll called for store:", storeName, "data:", inMemoryDB[storeName]);
       return inMemoryDB[storeName] || [];
     },
     
@@ -244,28 +241,30 @@ function isIndexedDB(db: any): db is ReturnType<typeof openDB<CodemoDB>> {
 // Chat operations
 export async function saveLocalChat(chatData: any) {
   try {
-    console.log("saveLocalChat called with:", chatData);
+    console.log("saveLocalChat called with data:", chatData);
     const db = await getDb();
     console.log("Database instance:", db);
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
+      console.log("Using in-memory storage (server environment)");
       const result = await db.put('chats', {
         ...chatData,
         createdAt: chatData.createdAt || new Date(),
         lastModified: new Date().toISOString()
       });
-      console.log("Server environment - saved chat:", result);
+      console.log("In-memory save result:", result);
       return result;
     }
     
     // For browser environments, use IndexedDB
+    console.log("Using IndexedDB (browser environment)");
     const result = await db.put('chats', {
       ...chatData,
       createdAt: chatData.createdAt || new Date(),
       lastModified: new Date().toISOString()
     });
-    console.log("Browser environment - saved chat:", result);
+    console.log("IndexedDB save result:", result);
     return result;
   } catch (error) {
     console.error('Failed to save chat locally:', error);
@@ -276,20 +275,16 @@ export async function saveLocalChat(chatData: any) {
 // Add function to retrieve a single chat by ID
 export async function getLocalChat(chatId: string) {
   try {
-    console.log("getLocalChat called with chatId:", chatId);
     const db = await getDb();
-    console.log("Database instance:", db);
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
       const result = await db.get('chats', chatId);
-      console.log("Server environment - retrieved chat:", result);
       return result;
     }
     
     // For browser environments, use IndexedDB
     const result = await db.get('chats', chatId);
-    console.log("Browser environment - retrieved chat:", result);
     return result;
   } catch (error) {
     console.error('Failed to retrieve chat:', error);
@@ -300,20 +295,16 @@ export async function getLocalChat(chatId: string) {
 // Add function to delete a chat by ID
 export async function deleteLocalChat(chatId: string) {
   try {
-    console.log("deleteLocalChat called with chatId:", chatId);
     const db = await getDb();
-    console.log("Database instance:", db);
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
       const result = await db.delete('chats', chatId);
-      console.log("Server environment - deleted chat:", result);
       return result;
     }
     
     // For browser environments, use IndexedDB
     const result = await db.delete('chats', chatId);
-    console.log("Browser environment - deleted chat:", result);
     return result;
   } catch (error) {
     console.error('Failed to delete chat:', error);
@@ -325,27 +316,28 @@ export async function getAllLocalChats(userId: string) {
   try {
     console.log("getAllLocalChats called with userId:", userId);
     const db = await getDb();
-    console.log("Database instance:", db);
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
+      console.log("Using in-memory storage (server environment)");
       const allChats = await db.getAll('chats');
-      console.log("Server environment - all chats:", allChats);
+      console.log("All chats from in-memory:", allChats);
       const filteredChats = allChats.filter((chat: any) => chat.userId === userId);
-      console.log("Server environment - filtered chats:", filteredChats);
+      console.log("Filtered chats for userId:", userId, filteredChats);
       return filteredChats;
     }
     
     // For browser environments, use IndexedDB
+    console.log("Using IndexedDB (browser environment)");
     const allChats = await db.getAll('chats');
-    console.log("Browser environment - all chats:", allChats);
+    console.log("All chats from IndexedDB:", allChats);
     const filteredChats = allChats.filter((chat: any) => {
       console.log(`Comparing chat userId: "${chat.userId}" with requested userId: "${userId}"`);
       const match = chat.userId === userId;
       console.log(`Match result: ${match}`);
       return match;
     });
-    console.log("Browser environment - filtered chats:", filteredChats);
+    console.log("Filtered chats for userId:", userId, filteredChats);
     return filteredChats;
   } catch (error) {
     console.error('Failed to retrieve chats:', error);
@@ -676,7 +668,7 @@ export async function saveLocalProvider(providerData: any) {
     const db = await getDb();
     
     // For server environments, use in-memory storage
-    if (!isBrowser) {
+    if (typeof window === 'undefined') {
       const result = await db.put('providers', {
         ...providerData,
         createdAt: providerData.createdAt || new Date().toISOString(),
@@ -720,7 +712,7 @@ export async function getAllLocalProviders() {
     const db = await getDb();
     
     // For server environments, use in-memory storage
-    if (!isBrowser) {
+    if (typeof window === 'undefined') {
       return await db.getAll('providers');
     }
     

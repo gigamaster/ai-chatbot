@@ -23,16 +23,13 @@ interface DatabaseProvider {
 
 // Get all available providers
 export async function getAllProviders(): Promise<ProviderModel[]> {
-  console.log("getAllProviders called");
   try {
     const providers = await getAllCustomProviders();
-    console.log("Providers from database:", providers?.length || 0);
     // Map database field 'isEnabled' to interface field 'enabled'
     const result = (providers || []).map((provider: DatabaseProvider) => ({
       ...provider,
       enabled: provider.isEnabled
     }));
-    console.log("Mapped providers:", result.length);
     return result;
   } catch (error) {
     console.error("Failed to get providers:", error);
@@ -121,11 +118,8 @@ export async function getProviderModelPairs(): Promise<Array<{
   providerName: string;
   providerId: string;
 }>> {
-  console.log("getProviderModelPairs called");
   const providers = await getAllProviders();
-  console.log("All providers for pairs:", providers.length);
   const enabledProviders = providers.filter(provider => provider.enabled);
-  console.log("Enabled providers for pairs:", enabledProviders.length);
   const result = enabledProviders.map(provider => ({
     id: `provider-model-${provider.id}`,
     name: `${provider.name} - ${provider.model}`,
@@ -133,6 +127,5 @@ export async function getProviderModelPairs(): Promise<Array<{
     providerName: provider.name,
     providerId: provider.id
   }));
-  console.log("Provider model pairs result:", result.length);
   return result;
 }

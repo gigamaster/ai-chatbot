@@ -39,9 +39,7 @@ export function ProviderModelSelector({
   const loadProviderModels = async () => {
     try {
       setLoading(true);
-      console.log("Loading provider model pairs...");
       const pairs = await getProviderModelPairs();
-      console.log("Provider model pairs loaded:", pairs.length);
       setProviderModels(pairs);
     } catch (error) {
       console.error("Failed to load provider models:", error);
@@ -76,16 +74,9 @@ export function ProviderModelSelector({
       <Select
         value={selectedOption?.providerId || ""}
         onValueChange={(providerId) => {
-          console.log("Provider selected:", providerId);
           const option = providerModels.find(opt => opt.providerId === providerId);
           if (option) {
-            console.log("Provider option found:", {
-              providerId: option.providerId,
-              modelName: option.modelName
-            });
             onValueChange?.(option.providerId, option.modelName);
-          } else {
-            console.log("Provider option not found for ID:", providerId);
           }
         }}
         disabled={disabled || providerModels.length === 0}

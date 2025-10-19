@@ -150,8 +150,9 @@ export function ProviderCRUDTable() {
       const success = await saveProvider(providerData);
       if (success) {
         toast.success(editingProvider ? "Provider updated successfully" : "Provider created successfully");
+        // Load providers first to confirm save, then close dialog
+        await loadProviders();
         setIsDialogOpen(false);
-        loadProviders();
       } else {
         toast.error("Failed to save provider");
       }
@@ -312,9 +313,9 @@ export function ProviderCRUDTable() {
                 <AlertDialogCancel type="button" onClick={() => setIsDialogOpen(false)}>
                   Cancel
                 </AlertDialogCancel>
-                <AlertDialogAction type="submit">
+                <Button type="submit">
                   {editingProvider ? "Update" : "Create"}
-                </AlertDialogAction>
+                </Button>
               </AlertDialogFooter>
             </form>
           </AlertDialogContent>
