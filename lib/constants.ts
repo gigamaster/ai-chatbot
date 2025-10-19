@@ -8,9 +8,6 @@ export const isTestEnvironment = Boolean(
     process.env.CI_PLAYWRIGHT
 );
 
-// Generate a dummy password for guest users
-export const DUMMY_PASSWORD = hashSync("dummy-password", 10);
-
 // Helper function to generate dummy password
 function hashSync(password: string, saltRounds: number): string {
   // In a real implementation, this would use bcrypt to hash the password

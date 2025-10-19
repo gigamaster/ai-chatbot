@@ -20,8 +20,9 @@ import {
   getAllCustomProviders, 
   deleteCustomProvider,
   getCustomProvider
-} from "@/lib/local-db";
+} from "@/lib/local-db-queries";
 import { nanoid } from "nanoid";
+import { Loader2 } from "lucide-react";
 
 // Define the provider configuration type
 interface CustomProviderConfig {
@@ -39,6 +40,7 @@ export function ProviderCRUDTable() {
   const [providers, setProviders] = useState<CustomProviderConfig[]>([]);
   const [isAddingProvider, setIsAddingProvider] = useState(false);
   const [editingProvider, setEditingProvider] = useState<CustomProviderConfig | null>(null);
+  const [testingProviderId, setTestingProviderId] = useState<string | null>(null);
   
   // Form state
   const [name, setName] = useState("");
@@ -100,6 +102,39 @@ export function ProviderCRUDTable() {
     }
   };
 
+  const handleTestProvider = async (provider: CustomProviderConfig) => {
+    setTestingProviderId(provider.id);
+    
+    try {
+      // Validate required fields before testing
+      if (!provider.baseUrl || !provider.apiKey) {
+        toast.error("Base URL and API key are required for testing");
+        return;
+      }
+      
+      const response = await fetch("/api/test-provider", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(provider),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success(`Connection successful for ${provider.name}`);
+      } else {
+        toast.error(`Connection failed for ${provider.name}: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("Failed to test provider:", error);
+      toast.error(`Failed to test provider ${provider.name}`);
+    } finally {
+      setTestingProviderId(null);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -140,6 +175,125 @@ export function ProviderCRUDTable() {
         <Button onClick={handleAddProvider}>Add Provider</Button>
       </div>
 
+      {isAddingProvider ? (
+        <form onSubmit={handleSubmit} className="space-y-4 border rounded-lg p-4">
+          <h3 className="text-lg font-medium">
+            {editingProvider ? "Edit Provider" : "Add New Provider"}
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Provider Name *</Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g., OpenAI, Google Gemini"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="baseUrl">Base URL *</Label>
+              <Input
+                id="baseUrl"
+                value={baseUrl}
+                onChange={(e) => setBaseUrl(e.target.value)}
+                placeholder="e.g., https://api.openai.com/v1"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="apiKey">API Key *</Label>
+              <Input
+                id="apiKey"
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="Your API key"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="model">Default Model</Label>
+              <Input
+                id="model"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                placeholder="e.g., gpt-4, gemini-pro"
+              />
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="isEnabled"
+              checked={isEnabled}
+              onCheckedChange={setIsEnabled}
+            />
+            <Label htmlFor="isEnabled">Enable this provider</Label>
+          </div>
+          
+          <div className="flex space-x-2">
+            <Button type="submit">
+              {editingProvider ? "Update Provider" : "Add Provider"}
+            </Button>
+            <Button 
+              type="button" 
+              variant="secondary"
+              onClick={async () => {
+                // Validate required fields before testing
+                if (!name || !baseUrl || !apiKey) {
+                  toast.error("Please fill in all required fields (Name, Base URL, and API Key) before testing");
+                  return;
+                }
+                
+                // Create a temporary provider object with current form values
+                const tempProvider: CustomProviderConfig = {
+                  id: editingProvider?.id || 'new',
+                  name,
+                  baseUrl,
+                  apiKey,
+                  model,
+                  createdAt: editingProvider?.createdAt || new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                  isEnabled: true,
+                };
+                
+                try {
+                  const response = await fetch("/api/test-provider", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(tempProvider),
+                  });
+                  
+                  const result = await response.json();
+                  
+                  if (result.success) {
+                    toast.success(`Connection successful for ${name}`);
+                  } else {
+                    toast.error(`Connection failed for ${name}: ${result.error}`);
+                  }
+                } catch (error) {
+                  console.error("Failed to test provider:", error);
+                  toast.error(`Failed to test provider ${name}`);
+                }
+              }}
+              disabled={!name || !baseUrl || !apiKey}
+            >
+              Test Connection
+            </Button>
+            <Button type="button" variant="outline" onClick={resetForm}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      ) : null}
+
       {providers.length > 0 ? (
         <Table>
           <TableHeader>
@@ -164,21 +318,38 @@ export function ProviderCRUDTable() {
                     <Badge variant="secondary">Disabled</Badge>
                   )}
                 </TableCell>
-                <TableCell className="text-right space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditProvider(provider)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeleteProvider(provider.id)}
-                  >
-                    Delete
-                  </Button>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleTestProvider(provider)}
+                      disabled={testingProviderId === provider.id}
+                    >
+                      {testingProviderId === provider.id ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Testing...
+                        </>
+                      ) : (
+                        "Test"
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditProvider(provider)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteProvider(provider.id)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

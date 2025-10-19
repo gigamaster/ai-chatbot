@@ -19,10 +19,11 @@ import { toast } from "sonner";
 import { 
   saveCustomProvider, 
   getAllCustomProviders, 
-  deleteCustomProvider,
-  getCustomProvider
+  deleteCustomProvider
 } from "@/lib/local-db";
+import { getCustomProvider } from "@/lib/local-db-queries";
 import { nanoid } from "nanoid";
+import { Loader2 } from "lucide-react";
 
 // Define the provider configuration type
 interface CustomProviderConfig {
@@ -40,6 +41,8 @@ export default function ProviderManagementPage() {
   const [providers, setProviders] = useState<CustomProviderConfig[]>([]);
   const [isAddingProvider, setIsAddingProvider] = useState(false);
   const [editingProvider, setEditingProvider] = useState<CustomProviderConfig | null>(null);
+  const [testingProviderId, setTestingProviderId] = useState<string | null>(null);
+  const [testResults, setTestResults] = useState<Record<string, { success: boolean; message: string; error?: string }>>({});
   
   // Form state
   const [name, setName] = useState("");
@@ -129,6 +132,81 @@ export default function ProviderManagementPage() {
     } catch (error) {
       console.error("Failed to save provider:", error);
       toast.error("Failed to save provider");
+    }
+  };
+
+  const handleTestProvider = async (provider: CustomProviderConfig) => {
+    setTestingProviderId(provider.id);
+    
+    try {
+      const response = await fetch("/api/test-provider", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(provider),
+      });
+      
+      const result = await response.json();
+      
+      setTestResults(prev => ({
+        ...prev,
+        [provider.id]: result
+      }));
+      
+      if (result.success) {
+        toast.success(`Connection successful for ${provider.name}`);
+      } else {
+        toast.error(`Connection failed for ${provider.name}: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("Failed to test provider:", error);
+      toast.error(`Failed to test provider ${provider.name}`);
+      setTestResults(prev => ({
+        ...prev,
+        [provider.id]: { success: false, message: "Test failed", error: "Internal error" }
+      }));
+    } finally {
+      setTestingProviderId(null);
+    }
+  };
+
+  const handleTestNewProvider = async () => {
+    // Create a temporary provider object with current form values
+    const tempProvider: CustomProviderConfig = {
+      id: editingProvider?.id || 'new',
+      name,
+      baseUrl,
+      apiKey,
+      model,
+      createdAt: editingProvider?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      isEnabled: true,
+    };
+    
+    setTestingProviderId(tempProvider.id);
+    
+    try {
+      const response = await fetch("/api/test-provider", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(tempProvider),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success(`Connection successful for ${name}`);
+      } else {
+        toast.error(`Connection failed for ${name}: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("Failed to test provider:", error);
+      toast.error(`Failed to test provider ${name}`);
+    } finally {
+      setTestingProviderId(null);
     }
   };
 
@@ -222,9 +300,26 @@ export default function ProviderManagementPage() {
                       <Button type="button" variant="outline" onClick={resetForm}>
                         Cancel
                       </Button>
-                      <Button type="submit">
-                        {editingProvider ? "Update Provider" : "Add Provider"}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button 
+                          type="button" 
+                          variant="default"
+                          onClick={() => handleTestNewProvider()}
+                          disabled={!name || !baseUrl || !apiKey || testingProviderId === 'new'}
+                        >
+                          {testingProviderId === 'new' ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Testing...
+                            </>
+                          ) : (
+                            "Test Connection"
+                          )}
+                        </Button>
+                        <Button type="submit">
+                          {editingProvider ? "Update Provider" : "Add Provider"}
+                        </Button>
+                      </div>
                     </div>
                   </form>
                 </CardContent>
@@ -254,22 +349,49 @@ export default function ProviderManagementPage() {
                         ) : (
                           <Badge variant="secondary">Disabled</Badge>
                         )}
+                        {testResults[provider.id] && (
+                          <div className="mt-1">
+                            {testResults[provider.id].success ? (
+                              <Badge variant="default" className="text-xs">Connected</Badge>
+                            ) : (
+                              <Badge variant="destructive" className="text-xs">Failed</Badge>
+                            )}
+                          </div>
+                        )}
                       </TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditProvider(provider)}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteProvider(provider.id)}
-                        >
-                          Delete
-                        </Button>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button className="mr-2 h-4 w-4 animate-spin">MyButton</Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleTestProvider(provider)}
+                            disabled={testingProviderId === provider.id}
+                          >
+                            {testingProviderId === provider.id ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Testing...
+                              </>
+                            ) : (
+                              "Test"
+                            )}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditProvider(provider)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteProvider(provider.id)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

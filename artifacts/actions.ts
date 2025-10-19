@@ -1,8 +1,8 @@
 "use server";
 
-import { getSuggestionsByDocumentId } from "@/lib/local-db-queries";
+import { getLocalSuggestionsByDocumentId } from "@/lib/local-db-queries";
 
 export async function getSuggestions({ documentId }: { documentId: string }) {
-  const suggestions = await getSuggestionsByDocumentId({ documentId });
+  const suggestions = await getLocalSuggestionsByDocumentId({ id: documentId });
   return suggestions ?? [];
 }

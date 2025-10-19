@@ -45,6 +45,7 @@ import { PreviewAttachment } from "./preview-attachment";
 import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
 import type { VisibilityType } from "./visibility-selector";
+import { testProviderConnection } from "@/app/(chat)/settings/providers/test-provider-action";
 
 function PureMultimodalInput({
   chatId,
@@ -60,6 +61,7 @@ function PureMultimodalInput({
   className,
   selectedVisibilityType,
   selectedModelId,
+  selectedProviderId, // Add selectedProviderId prop
   onModelChange,
   usage,
 }: {
@@ -76,7 +78,8 @@ function PureMultimodalInput({
   className?: string;
   selectedVisibilityType: VisibilityType;
   selectedModelId: string;
-  onModelChange?: (modelId: string) => void;
+  selectedProviderId?: string; // Add selectedProviderId prop
+  onModelChange?: (modelId: string, providerId?: string) => void; // Add providerId parameter
   usage?: AppUsage;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -128,23 +131,103 @@ function PureMultimodalInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
 
-  const submitForm = useCallback(() => {
+  const submitForm = useCallback(async () => {
+    // Validate that we have a selected model
+    if (!selectedModelId) {
+      toast.error("Please select a model before sending a message");
+      return;
+    }
+    
+    // Validate that we have input text
+    if (!input.trim()) {
+      toast.error("Please enter a message before sending");
+      return;
+    }
+    
+    // Get the provider for this model
+    const providers = await getAllAvailableProviders();
+    console.log("Available providers:", JSON.stringify(providers, null, 2));
+    
+    let selectedProvider = null;
+    
+    // If we have a selected provider ID, use that to find the exact provider
+    if (selectedProviderId) {
+      selectedProvider = providers.find((p: any) => p.id === selectedProviderId);
+      console.log("Found provider by selectedProviderId:", selectedProviderId, selectedProvider);
+    }
+    
+    // If we don't have a selected provider ID or didn't find the provider by ID,
+    // fall back to finding by model name (for backward compatibility)
+    if (!selectedProvider) {
+      // Find all providers with this model name
+      const matchingProviders = providers.filter((p: any) => p.model === selectedModelId);
+      console.log("Matching providers for model", selectedModelId, ":", JSON.stringify(matchingProviders, null, 2));
+      
+      if (matchingProviders.length === 0) {
+        toast.error("Selected model not found. Please check your provider configuration.");
+        return;
+      }
+      
+      // If we have multiple providers with the same model name, try to find the one that was selected
+      selectedProvider = matchingProviders[0]; // Default to first one
+      console.log("Using first matching provider:", selectedProvider);
+    }
+    
+    // Validate that we have a provider
+    if (!selectedProvider) {
+      toast.error("No provider configured for the selected model. Please check your provider settings.");
+      return;
+    }
+    
+    // Validate that the provider has the required fields
+    if (!selectedProvider.apiKey) {
+      toast.error("Provider API key is missing. Please check your provider configuration.");
+      return;
+    }
+    
+    if (!selectedProvider.baseUrl) {
+      toast.error("Provider base URL is missing. Please check your provider configuration.");
+      return;
+    }
+    
     window.history.replaceState({}, "", `/chat/${chatId}`);
 
-    sendMessage({
-      role: "user",
-      parts: [
-        ...attachments.map((attachment) => ({
+    // Create parts that match the schema
+    const parts = [];
+    
+    // Add file attachments (if any)
+    for (const attachment of attachments) {
+      // Only add image attachments that match the schema requirements
+      if (attachment.contentType === "image/jpeg" || attachment.contentType === "image/png") {
+        parts.push({
           type: "file" as const,
-          url: attachment.url,
-          name: attachment.name,
           mediaType: attachment.contentType,
-        })),
-        {
-          type: "text",
-          text: input,
-        },
-      ],
+          name: attachment.name,
+          url: attachment.url,
+        });
+      }
+    }
+    
+    // Add the text part
+    parts.push({
+      type: "text" as const,
+      text: input,
+    });
+    
+    // Log the message being sent
+    const messageToSend = {
+      role: "user",
+      parts: parts,
+      // Include provider information in the message
+      providerId: selectedProvider?.id,
+    };
+    
+    console.log("Sending message:", JSON.stringify(messageToSend, null, 2));
+
+    // Pass additional data through the sendMessage function
+    sendMessage(messageToSend, {
+      selectedProviderId: selectedProvider?.id,
+      selectedModelId: selectedModelId
     });
 
     setAttachments([]);
@@ -165,6 +248,8 @@ function PureMultimodalInput({
     width,
     chatId,
     resetHeight,
+    selectedModelId,
+    selectedProviderId // Add selectedProviderId to dependencies
   ]);
 
   const _modelResolver = useMemo(() => {
@@ -200,9 +285,11 @@ function PureMultimodalInput({
         className="rounded-xl border border-border bg-background p-3 shadow-xs transition-all duration-200 focus-within:border-border hover:border-muted-foreground/50"
         onSubmit={(event) => {
           event.preventDefault();
-          if (status !== "ready") {
+          console.log("Form submitted, status:", status);
+          if (status !== "idle" && status !== "error") {
             toast.error("Please wait for the model to finish its response!");
           } else {
+            console.log("Submitting form");
             submitForm();
           }
         }}
@@ -261,6 +348,7 @@ function PureMultimodalInput({
             <ModelSelectorCompact
               onModelChange={onModelChange}
               selectedModelId={selectedModelId}
+              selectedProviderId={selectedProviderId} // Pass selectedProviderId prop
             />
           </PromptInputTools>
 
@@ -297,6 +385,10 @@ export const MultimodalInput = memo(
       return false;
     }
     if (prevProps.selectedModelId !== nextProps.selectedModelId) {
+      return false;
+    }
+    // Add check for selectedProviderId
+    if (prevProps.selectedProviderId !== nextProps.selectedProviderId) {
       return false;
     }
 
@@ -336,76 +428,42 @@ const AttachmentsButton = memo(PureAttachmentsButton);
 
 function PureModelSelectorCompact({
   selectedModelId,
+  selectedProviderId,
   onModelChange,
 }: {
   selectedModelId: string;
-  onModelChange?: (modelId: string) => void;
+  selectedProviderId?: string;
+  onModelChange?: (modelId: string, providerId?: string) => void;
 }) {
-  const [optimisticModelId, setOptimisticModelId] = useState(selectedModelId);
   const [providerModels, setProviderModels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setOptimisticModelId(selectedModelId);
-  }, [selectedModelId]);
-
+  
   // Load provider models
   useEffect(() => {
     const loadProviderModels = async () => {
       try {
         setLoading(true);
         const providers: any[] = await getAllAvailableProviders();
-        console.log("Providers loaded:", providers);
-        if (providers.length > 0) {
-          const provider = providers[0]; // Use the first provider for now
-          console.log("First provider:", provider);
-          // Add safety checks for provider structure
+        
+        // Process all saved providers
+        const allProviderModels: any[] = [];
+        providers.forEach(provider => {
           if (provider && provider.model) {
-            // Create a single model entry with the exact model name saved by the user
-            const providerModelsData = [
-              {
-                id: `model-${provider.id}`,
-                name: `${provider.name} - ${provider.model}`,
-                description: `Model: ${provider.model}`,
-                modelName: provider.model, // Use the exact model name saved by the user
-                type: "default"
-              }
-            ];
-            
-            console.log("Provider models data:", providerModelsData);
-            setProviderModels(providerModelsData);
-          } else {
-            // Fallback if provider structure is invalid
-            throw new Error("Invalid provider structure");
-          }
-        } else {
-          // Fallback to default models if no providers are configured
-          const fallbackModels = [
-            {
-              id: "default-model",
-              name: "Default Model",
-              description: "The configured AI model for all operations",
-              modelName: "default-model",
+            allProviderModels.push({
+              id: `model-${provider.id}`,
+              name: `${provider.name} - ${provider.model}`,
+              description: `Model: ${provider.model}`,
+              modelName: provider.model,
+              providerId: provider.id,
+              providerName: provider.name,
               type: "default"
-            }
-          ];
-          console.log("Fallback models:", fallbackModels);
-          setProviderModels(fallbackModels);
-        }
-      } catch (error) {
-        console.error("Failed to load provider models:", error);
-        // Fallback to default models on error
-        const errorModels = [
-          {
-            id: "default-model-error",
-            name: "Default Model",
-            description: "The configured AI model for all operations",
-            modelName: "default-model",
-            type: "default"
+            });
           }
-        ];
-        console.log("Error models:", errorModels);
-        setProviderModels(errorModels);
+        });
+        
+        setProviderModels(allProviderModels);
+      } catch (error: any) {
+        console.error("Failed to load provider models:", error);
       } finally {
         setLoading(false);
       }
@@ -414,10 +472,19 @@ function PureModelSelectorCompact({
     loadProviderModels();
   }, []);
 
-  // Find the selected model from provider models
-  const selectedModel = providerModels.find(
-    (model) => model.modelName === optimisticModelId
-  );
+  // Find the selected model - prioritize provider ID over model name
+  const selectedModel = useMemo(() => {
+    // First try to find by provider ID
+    if (selectedProviderId) {
+      const model = providerModels.find((model) => model.providerId === selectedProviderId);
+      if (model) {
+        return model;
+      }
+    }
+    
+    // Fall back to finding by model name
+    return providerModels.find((model) => model.modelName === selectedModelId);
+  }, [selectedProviderId, selectedModelId, providerModels]);
 
   if (loading) {
     return (
@@ -430,21 +497,37 @@ function PureModelSelectorCompact({
     );
   }
 
+  if (providerModels.length === 0) {
+    return (
+      <div className="flex h-8 items-center gap-2 rounded-lg border-0 bg-background px-2 text-foreground shadow-none">
+        <CpuIcon size={16} />
+        <span className="hidden font-medium text-xs sm:block">
+          No Valid Providers
+        </span>
+        <a 
+          href="/settings/providers" 
+          className="hidden font-medium text-xs sm:block text-blue-500 hover:underline"
+        >
+          Configure in Settings
+        </a>
+      </div>
+    );
+  }
+
   return (
     <PromptInputModelSelect
       onValueChange={(modelName) => {
-        // Find the model by its unique name (which now includes the type)
+        console.log("Model selected:", modelName);
+        // Find the model by its unique name
         const model = providerModels.find((m) => m.name === modelName);
+        console.log("Found model:", model);
         if (model) {
-          setOptimisticModelId(model.modelName);
-          // Pass the actual model name to the onModelChange callback
-          onModelChange?.(model.modelName);
-          startTransition(() => {
-            saveChatModelAsCookie(model.modelName);
-          });
+          // Pass both the model name and provider ID to the onModelChange callback
+          console.log("Calling onModelChange with:", model.modelName, model.providerId);
+          onModelChange?.(model.modelName, model.providerId);
         }
       }}
-      value={selectedModel?.name}
+      value={selectedModel?.name || ""}
     >
       <Trigger
         className="flex h-8 items-center gap-2 rounded-lg border-0 bg-background px-2 text-foreground shadow-none transition-colors hover:bg-accent focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -458,24 +541,27 @@ function PureModelSelectorCompact({
       </Trigger>
       <PromptInputModelSelectContent className="min-w-[260px] p-0">
         <div className="flex flex-col gap-px">
-          {providerModels.map((model) => {
-            console.log("Rendering model with ID:", model.id, "and name:", model.name);
-            return (
-              <SelectItem key={model.id} value={model.name}>
-                <div className="truncate font-medium text-xs">{model.name}</div>
-                <div className="mt-px truncate text-[10px] text-muted-foreground leading-tight">
-                  {model.description}
-                </div>
-              </SelectItem>
-            );
-          })}
+          {providerModels.map((model) => (
+            <SelectItem key={model.id} value={model.name}>
+              <div className="truncate font-medium text-xs">{model.name}</div>
+              <div className="mt-px truncate text-[10px] text-muted-foreground leading-tight">
+                {model.description}
+              </div>
+            </SelectItem>
+          ))}
         </div>
       </PromptInputModelSelectContent>
     </PromptInputModelSelect>
   );
 }
 
-const ModelSelectorCompact = memo(PureModelSelectorCompact);
+const ModelSelectorCompact = memo(PureModelSelectorCompact, (prevProps, nextProps) => {
+  return (
+    prevProps.selectedModelId === nextProps.selectedModelId &&
+    prevProps.selectedProviderId === nextProps.selectedProviderId &&
+    prevProps.onModelChange === nextProps.onModelChange
+  );
+});
 
 function PureStopButton({
   stop,

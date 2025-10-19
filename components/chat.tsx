@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import { ChatHeader } from "@/components/chat-header";
@@ -23,6 +23,7 @@ import { ChatSDKError } from "@/lib/custom-ai";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import type { AppUsage } from "@/lib/usage";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
+import { saveChatModelAsCookie } from "@/app/(chat)/actions";
 import { Artifact } from "./artifact";
 import { useDataStream } from "./data-stream-provider";
 import { Messages } from "./messages";
@@ -42,6 +43,7 @@ export function Chat({
   isReadonly,
   autoResume,
   initialLastContext,
+  initialProviderId,
 }: {
   id: string;
   initialMessages: ChatMessage[];
@@ -50,6 +52,7 @@ export function Chat({
   isReadonly: boolean;
   autoResume: boolean;
   initialLastContext?: AppUsage;
+  initialProviderId?: string;
 }) {
   const { visibilityType } = useChatVisibility({
     chatId: id,
@@ -63,11 +66,65 @@ export function Chat({
   const [usage, setUsage] = useState<AppUsage | undefined>(initialLastContext);
 
   const [currentModelId, setCurrentModelId] = useState(initialChatModel);
+  const [currentProviderId, setCurrentProviderId] = useState<string | null>(null); // Track selected provider ID
   const currentModelIdRef = useRef(currentModelId);
+  const currentProviderIdRef = useRef(currentProviderId);
 
   useEffect(() => {
     currentModelIdRef.current = currentModelId;
+    console.log("=== Model ID ref updated ===");
+    console.log("currentModelIdRef.current:", currentModelIdRef.current);
   }, [currentModelId]);
+
+  useEffect(() => {
+    currentProviderIdRef.current = currentProviderId;
+    console.log("=== Provider ID ref updated ===");
+    console.log("currentProviderIdRef.current:", currentProviderIdRef.current);
+  }, [currentProviderId]);
+
+  // Initialize provider ID when component mounts
+  useEffect(() => {
+    const initializeProviderId = async () => {
+      try {
+        const providers = await getAllAvailableProviders();
+        console.log("Available providers for initialization:", JSON.stringify(providers, null, 2));
+        
+        // If we have an initial provider ID from props, use that
+        if (initialProviderId) {
+          const provider = providers.find((p: any) => p.id === initialProviderId);
+          if (provider) {
+            console.log("Using initial provider ID:", initialProviderId);
+            setCurrentProviderId(initialProviderId);
+            return;
+          } else {
+            console.log("Initial provider ID not found in available providers");
+          }
+        }
+        
+        // Otherwise, find all providers with the same model name
+        const matchingProviders = providers.filter((p: any) => p.model === initialChatModel);
+        console.log("Matching providers for model", initialChatModel, ":", JSON.stringify(matchingProviders, null, 2));
+        
+        if (matchingProviders.length > 0) {
+          // Use the first one as default
+          console.log("Using first matching provider:", matchingProviders[0].id);
+          setCurrentProviderId(matchingProviders[0].id);
+        } else {
+          console.log("No matching providers found for model:", initialChatModel);
+        }
+      } catch (error) {
+        console.error("Error initializing provider ID:", error);
+      }
+    };
+    
+    initializeProviderId();
+  }, [initialChatModel, initialProviderId]);
+
+  // Log when provider ID changes
+  useEffect(() => {
+    console.log("=== Provider ID changed ===");
+    console.log("currentProviderId:", currentProviderId);
+  }, [currentProviderId]);
 
   // Send provider information to server when component mounts
   useEffect(() => {
@@ -121,7 +178,7 @@ export function Chat({
     experimental_throttle: 100,
     generateId: generateUUID,
     transport: new CustomChatTransport({
-      api: "/api/local-chat", // Use local chat API instead of NextAuth chat API
+      api: "/api/local-chat", // Revert to original local chat API
       fetch: fetchWithErrorHandlers,
       prepareSendMessagesRequest(request) {
         console.log("=== prepareSendMessagesRequest called ===");
@@ -137,18 +194,23 @@ export function Chat({
         
         console.log("Message with ID:", JSON.stringify(messageWithId, null, 2));
         
+        // Ensure we have the current provider ID
+        const providerIdToSend = currentProviderIdRef.current || currentProviderId;
+        console.log("Provider ID to send:", providerIdToSend);
+        
+        // Create the request body that matches the schema
         const requestBody = {
-          body: {
-            id: request.id,
-            message: messageWithId,
-            selectedChatModel: currentModelIdRef.current, // Send the actual model name directly
-            selectedVisibilityType: visibilityType,
-            ...request.body,
-          },
+          id: request.id,
+          message: messageWithId,
+          selectedChatModel: currentModelIdRef.current || currentModelId, // Send the actual model name directly
+          selectedVisibilityType: visibilityType,
+          selectedProviderId: providerIdToSend, // Send the selected provider ID
+          ...request.body,
         };
         
-        console.log("Request body:", JSON.stringify(requestBody, null, 2));
+        console.log("Request body to be sent:", JSON.stringify(requestBody, null, 2));
         
+        // Return the request body directly
         return requestBody;
       },
     }),
@@ -229,8 +291,27 @@ export function Chat({
               chatId={id}
               input={input}
               messages={messages}
-              onModelChange={setCurrentModelId}
+              onModelChange={(modelId: string, providerId?: string) => {
+                console.log("=== onModelChange called ===");
+                console.log("modelId:", modelId);
+                console.log("providerId:", providerId);
+                setCurrentModelId(modelId);
+                if (providerId) {
+                  console.log("Setting currentProviderId to:", providerId);
+                  setCurrentProviderId(providerId);
+                  // Save both model and provider to cookies
+                  startTransition(() => {
+                    saveChatModelAsCookie(modelId, providerId);
+                  });
+                } else {
+                  // Save only model to cookies
+                  startTransition(() => {
+                    saveChatModelAsCookie(modelId);
+                  });
+                }
+              }}
               selectedModelId={currentModelId}
+              selectedProviderId={currentProviderId || undefined} // Pass the selected provider ID or undefined
               selectedVisibilityType={visibilityType}
               sendMessage={sendMessage}
               setAttachments={setAttachments}

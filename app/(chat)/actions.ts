@@ -7,12 +7,15 @@ import { getLanguageModel, createLanguageModel } from "@/lib/ai/providers";
 import {
   deleteChatById,
   getLocalMessagesByChatId,
-  updateChatVisiblityById,
+  updateChatVisibilityById,
 } from "@/lib/local-db-queries";
 
-export async function saveChatModelAsCookie(model: string) {
+export async function saveChatModelAsCookie(model: string, providerId?: string) {
   const cookieStore = await cookies();
   cookieStore.set("chat-model", model);
+  if (providerId) {
+    cookieStore.set("chat-provider", providerId);
+  }
 }
 
 export async function generateTitleFromUserMessage({
@@ -66,5 +69,5 @@ export async function updateChatVisibility({
   chatId: string;
   visibility: VisibilityType;
 }) {
-  await updateChatVisiblityById({ chatId, visibility });
+  await updateChatVisibilityById({ chatId, visibility });
 }

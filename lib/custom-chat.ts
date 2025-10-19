@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import type { ChatMessage } from "@/lib/types";
 import { generateUUID } from "@/lib/utils";
 
-// Custom types to replace Vercel AI SDK types
+// TODO: llm.js types to replace custom types
 export type UseChatHelpers = {
   messages: ChatMessage[];
   setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
@@ -52,37 +52,52 @@ export class CustomChatTransport {
   }
 
   async sendMessages(request: any) {
+    console.log("=== CustomChatTransport.sendMessages called ===");
+    console.log("Request:", JSON.stringify(request, null, 2));
+    
     const preparedRequest = this.prepareSendMessagesRequest(request);
-    return this.fetch(this.api, {
+    console.log("Prepared request:", JSON.stringify(preparedRequest, null, 2));
+    console.log("Request body to send:", JSON.stringify(preparedRequest.body, null, 2));
+    
+    const response = await this.fetch(this.api, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(preparedRequest.body),
     });
+    
+    console.log("API response status:", response.status);
+    console.log("API response headers:", [...response.headers.entries()]);
+    
+    return response;
   }
 }
 
 // Custom hook to replace useChat
 export function useCustomChat(options: UseChatOptions): UseChatHelpers {
   const [messages, setMessages] = useState<ChatMessage[]>(options.messages || []);
-  const [status, setStatus] = useState<"idle" | "loading" | "streaming" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "streaming" | "error" | "submitted">("idle");
   const abortControllerRef = useRef<AbortController | null>(null);
   const messageQueueRef = useRef<any[]>([]);
 
   // Process message queue
   useEffect(() => {
-    if (messageQueueRef.current.length > 0 && status !== "loading" && status !== "streaming") {
+    if (messageQueueRef.current.length > 0 && status !== "loading" && status !== "streaming" && status !== "submitted") {
       const message = messageQueueRef.current.shift();
       if (message) {
-        processMessage(message);
+        processMessage(message.message, message.options);
       }
     }
   }, [status]);
 
-  const processMessage = async (message: any) => {
+  const processMessage = async (message: any, options?: any) => {
     try {
-      setStatus("loading");
+      console.log("=== processMessage called ===");
+      console.log("Message:", JSON.stringify(message, null, 2));
+      console.log("Options:", JSON.stringify(options, null, 2));
+      
+      setStatus("submitted");
       
       // Create user message with proper structure
       const userMessage: ChatMessage = {
@@ -92,19 +107,28 @@ export function useCustomChat(options: UseChatOptions): UseChatHelpers {
         metadata: message.metadata || { createdAt: new Date().toISOString() },
       };
       
+      console.log("User message:", JSON.stringify(userMessage, null, 2));
+      
       setMessages(prev => [...prev, userMessage]);
       
       // Prepare request for API
       const request = {
-        id: options.id,
+        id: options?.id || options?.chatId || options?.body?.id || "default-chat-id",
         message: userMessage,
-        body: {},
+        body: {
+          selectedProviderId: options?.selectedProviderId || options?.body?.selectedProviderId,
+          selectedModelId: options?.selectedModelId || options?.body?.selectedModelId,
+        },
       };
       
+      console.log("Request to send:", JSON.stringify(request, null, 2));
+      
       // Send request to API
-      if (options.transport) {
-        setStatus("streaming");
+      if (options?.transport) {
+        setStatus("loading");
         const response = await options.transport.sendMessages(request);
+        
+        console.log("Response received:", response.status);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -125,6 +149,7 @@ export function useCustomChat(options: UseChatOptions): UseChatHelpers {
         };
         
         setMessages(prev => [...prev, assistantMessage]);
+        setStatus("streaming");
         
         try {
           while (true) {
@@ -147,8 +172,9 @@ export function useCustomChat(options: UseChatOptions): UseChatHelpers {
                 
                 try {
                   const parsed = JSON.parse(data);
-                  if (parsed.choices && parsed.choices[0]) {
-                    const content = parsed.choices[0].delta?.content || '';
+                  // Handle different types of data from our SSE stream
+                  if (parsed.type === "text-delta") {
+                    const content = parsed.textDelta || '';
                     if (content) {
                       // Update assistant message with new content
                       setMessages(prev => {
@@ -166,56 +192,78 @@ export function useCustomChat(options: UseChatOptions): UseChatHelpers {
                       });
                       
                       // Call onData callback if provided
-                      if (options.onData) {
-                        options.onData({ type: "text", content });
+                      if (options?.onData) {
+                        options.onData(parsed);
                       }
                     }
+                  } else if (parsed.type === "data-finish") {
+                    // Stream finished
+                    break;
+                  } else if (parsed.type === "data-error") {
+                    // Handle error from the server
+                    throw new Error(parsed.data || "Unknown error from LLM");
                   }
+                  // Handle other data types as needed
                 } catch (e) {
                   console.warn("Failed to parse SSE data:", data);
+                  // Don't break the stream for parsing errors, just log them
+                  console.error("SSE parsing error:", e);
                 }
               }
             }
           }
+        } catch (streamError) {
+          console.error("Error processing SSE stream:", streamError);
+          // Re-throw the error to be handled by the outer catch block
+          throw streamError;
         } finally {
           reader.releaseLock();
         }
         
         // Call onFinish callback if provided
-        if (options.onFinish) {
+        if (options?.onFinish) {
           options.onFinish();
         }
       }
       
       setStatus("idle");
-    } catch (error) {
+    } catch (error: any) {
+      console.error("=== processMessage caught error ===");
+      console.error("Error:", error);
+      console.error("Error stack:", error.stack);
+      
       setStatus("error");
       console.error("Error processing message:", error);
       
-      // Add error message
+      // Add error message to the chat
       const errorMessage: ChatMessage = {
         id: generateUUID(),
         role: "assistant",
-        parts: [{ type: "text", text: "Sorry, I encountered an error while processing your request." }],
+        parts: [{ type: "text", text: `Sorry, I encountered an error: ${error.message || "Unknown error"}` }],
         metadata: { createdAt: new Date().toISOString() },
       };
       
       setMessages(prev => [...prev, errorMessage]);
       
       // Call onError callback if provided
-      if (options.onError) {
-        options.onError(error as Error);
+      if (options?.onError) {
+        // Make sure we don't throw an error in the error handler
+        try {
+          options.onError(error);
+        } catch (handlerError) {
+          console.error("Error in onError handler:", handlerError);
+        }
       }
     }
   };
 
   const sendMessage = useCallback(async (message?: any, options?: any) => {
     if (message) {
-      messageQueueRef.current.push(message);
-      if (status !== "loading" && status !== "streaming") {
+      messageQueueRef.current.push({ message, options });
+      if (status !== "loading" && status !== "streaming" && status !== "submitted") {
         const msg = messageQueueRef.current.shift();
         if (msg) {
-          await processMessage(msg);
+          await processMessage(msg.message, msg.options);
         }
       }
     }
@@ -238,7 +286,7 @@ export function useCustomChat(options: UseChatOptions): UseChatHelpers {
         if (userMessage.role === "user") {
           // Remove the assistant message and re-send the user message
           const newMessages = prev.slice(0, messageIndex);
-          sendMessage(userMessage);
+          sendMessage(userMessage, options);
           return newMessages;
         }
       }

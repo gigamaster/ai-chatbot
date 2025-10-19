@@ -521,6 +521,22 @@ export async function getLocalSuggestions(documentId: string) {
   }
 }
 
+// Save multiple suggestions
+export async function saveLocalSuggestions(suggestions: any[]) {
+  try {
+    // Save each suggestion individually
+    const results = [];
+    for (const suggestion of suggestions) {
+      const result = await saveLocalSuggestion(suggestion);
+      results.push(result);
+    }
+    return results;
+  } catch (error) {
+    console.error('Failed to save suggestions:', error);
+    return [];
+  }
+}
+
 // Vote operations
 export async function saveLocalVote(voteData: any) {
   try {
@@ -607,6 +623,21 @@ export async function getLocalUser(userId: string) {
   }
 }
 
+// Get user by email
+export async function getLocalUserByEmail(email: string) {
+  try {
+    const db = await getDb();
+
+    // Retrieve all users then find by email
+    const users = await db.getAll('users');
+    const user = (users || []).find((u: any) => u?.email === email);
+    return user || null;
+  } catch (error) {
+    console.error('Failed to retrieve user by email:', error);
+    return null;
+  }
+}
+
 // Provider operations
 export async function saveLocalProvider(providerData: any) {
   try {
@@ -685,3 +716,8 @@ export async function deleteLocalProvider(providerId: string) {
     return false;
   }
 }
+
+// Export functions with different names for compatibility
+export { saveLocalSuggestion as saveCustomProvider };
+export { getAllLocalProviders as getAllCustomProviders };
+export { deleteLocalProvider as deleteCustomProvider };

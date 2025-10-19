@@ -5,12 +5,12 @@ import { collabHandlers } from "@/artifacts/collab/server";
 import { sheetDocumentHandler } from "@/artifacts/sheet/server";
 import { textDocumentHandler } from "@/artifacts/text/server";
 import type { ArtifactKind } from "@/components/artifact";
-import { saveDocument } from "../local-db-queries";
+import { saveLocalDocumentById } from "../local-db-queries";
 import type { Document } from "../local-db";
-import type { ChatMessage } from "../types";
+import type { CustomUIDataTypes } from "@/lib/types";
 
 // Define the UserType type that was previously in the auth.ts file
-type UserType = "guest" | "regular";
+type UserType = "regular";
 
 // Define a local session type that matches our local authentication system
 // and is compatible with the expected Session interface
@@ -38,81 +38,79 @@ export type SaveDocumentProps = {
 export type CreateDocumentCallbackProps = {
   id: string;
   title: string;
-  dataStream: UIMessageStreamWriter<ChatMessage>;
+  dataStream: UIMessageStreamWriter<CustomUIDataTypes>;
   session: LocalSession;
 };
 
 export type UpdateDocumentCallbackProps = {
   document: Document;
   description: string;
-  dataStream: UIMessageStreamWriter<ChatMessage>;
+  dataStream: UIMessageStreamWriter<CustomUIDataTypes>;
   session: LocalSession;
 };
 
-export type DocumentHandler<T = ArtifactKind> = {
-  kind: T;
-  onCreateDocument: (args: CreateDocumentCallbackProps) => Promise<void>;
-  onUpdateDocument: (args: UpdateDocumentCallbackProps) => Promise<void>;
-};
+// Handle document creation
+export async function createDocumentCallback({
+  id,
+  title,
+  dataStream,
+  session,
+}: CreateDocumentCallbackProps) {
+  const { user } = session;
 
-export function createDocumentHandler<T extends ArtifactKind>(config: {
-  kind: T;
-  onCreateDocument: (params: CreateDocumentCallbackProps) => Promise<string>;
-  onUpdateDocument: (params: UpdateDocumentCallbackProps) => Promise<string>;
-}): DocumentHandler<T> {
-  return {
-    kind: config.kind,
-    onCreateDocument: async (args: CreateDocumentCallbackProps) => {
-      const draftContent = await config.onCreateDocument({
-        id: args.id,
-        title: args.title,
-        dataStream: args.dataStream,
-        session: args.session,
-      });
+  // Save the document to the local database
+  const document = await saveLocalDocumentById({
+    id,
+    title,
+    content: "",
+    kind: "text",
+    userId: user.id,
+  });
 
-      if (args.session?.user?.id) {
-        await saveDocument({
-          id: args.id,
-          title: args.title,
-          content: draftContent,
-          kind: config.kind,
-          userId: args.session.user.id,
-        });
-      }
-
-      return;
-    },
-    onUpdateDocument: async (args: UpdateDocumentCallbackProps) => {
-      const draftContent = await config.onUpdateDocument({
-        document: args.document,
-        description: args.description,
-        dataStream: args.dataStream,
-        session: args.session,
-      });
-
-      if (args.session?.user?.id) {
-        await saveDocument({
-          id: args.document.id,
-          title: args.document.title,
-          content: draftContent,
-          kind: config.kind,
-          userId: args.session.user.id,
-        });
-      }
-
-      return;
-    },
-  };
+  // Send the document properties to the client
+  dataStream.write({
+    type: "data-id",
+    data: document.id,
+  });
+  dataStream.write({
+    type: "data-title",
+    data: document.title,
+  });
+  dataStream.write({
+    type: "data-kind",
+    data: document.kind,
+  });
 }
 
-/*
- * Use this array to define the document handlers for each artifact kind.
- */
-export const documentHandlersByArtifactKind: DocumentHandler[] = [
-  textDocumentHandler,
-  codeDocumentHandler,
-  sheetDocumentHandler,
-  collabHandlers,
-];
+// Handle document updates
+export async function updateDocumentCallback({
+  document,
+  description,
+  dataStream,
+  session,
+}: UpdateDocumentCallbackProps) {
+  const { user } = session;
 
-export const artifactKinds = ["text", "code", "sheet", "collab"] as const;
+  // Update the document in the local database
+  const updatedDocument = await saveLocalDocumentById({
+    id: document.id,
+    title: document.title,
+    content: description,
+    kind: document.kind,
+    userId: user.id,
+  });
+
+  // Send the updated document properties to the client
+  dataStream.write({
+    type: "data-id",
+    data: updatedDocument.id,
+  });
+  dataStream.write({
+    type: "data-title",
+    data: updatedDocument.title,
+  });
+  dataStream.write({
+    type: "data-kind",
+    data: updatedDocument.kind,
+  });
+}

@@ -12,7 +12,7 @@ import {
   getLocalMessages,
   saveLocalDocument,
   getLocalDocument,
-  saveLocalSuggestions,
+  saveLocalSuggestion,
   getLocalSuggestions,
   saveLocalVote,
   getLocalVotes,
@@ -21,6 +21,10 @@ import {
   getLocalUserByEmail,
   saveLocalFile as saveFileToDb,
   getLocalFile,
+  saveLocalProvider,
+  getLocalProvider,
+  getAllLocalProviders,
+  deleteLocalProvider,
 } from "@/lib/local-db";
 import { hashPassword } from "@/lib/lock-utils";
 
@@ -44,22 +48,6 @@ export async function createUser(email: string, password: string) {
     return await saveLocalUser({ email, password: hashedPassword });
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to create user");
-  }
-}
-
-export async function createGuestUser() {
-  const email = `guest-${Date.now()}`;
-  const password = hashPassword(generateUUID());
-
-  try {
-    const userData = { email, password };
-    await saveLocalUser(userData);
-    return [{ id: generateUUID(), email }];
-  } catch (_error) {
-    throw new ChatSDKError(
-      "bad_request:database",
-      "Failed to create guest user"
-    );
   }
 }
 
@@ -198,32 +186,10 @@ export async function getLocalChatById({ id }: { id: string }) {
 
     return selectedChat;
   } catch (_error) {
-    throw new ChatSDKError("bad_request:database", "Failed to get chat by id");
-  }
-}
-
-// Message operations
-export async function saveLocalMessages({ messages }: { messages: any[] }) {
-  try {
-    if (messages.length === 0) return;
-    
-    // Group messages by chatId
-    const messagesByChat: Record<string, any[]> = {};
-    for (const message of messages) {
-      if (!messagesByChat[message.chatId]) {
-        messagesByChat[message.chatId] = [];
-      }
-      messagesByChat[message.chatId].push(message);
-    }
-    
-    // Save messages for each chat
-    for (const [chatId, chatMessages] of Object.entries(messagesByChat)) {
-      await saveMessagesToDb(chatId, chatMessages);
-    }
-    
-    return messages;
-  } catch (_error) {
-    throw new ChatSDKError("bad_request:database", "Failed to save messages");
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get chat by id"
+    );
   }
 }
 
@@ -238,26 +204,156 @@ export async function getLocalMessagesByChatId({ id }: { id: string }) {
   }
 }
 
-// Vote operations
-export async function voteMessage({
+export async function saveLocalMessages({
+  messages,
+}: {
+  messages: any[];
+}) {
+  try {
+    if (messages.length === 0) return true;
+
+    const chatId = messages[0].chatId;
+    return await saveMessagesToDb(chatId, messages);
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to save messages"
+    );
+  }
+}
+
+export async function getLocalMessageCountByUserId({
+  id,
+  differenceInHours,
+}: {
+  id: string;
+  differenceInHours: number;
+}) {
+  try {
+    // For local implementation, we'll just return a fixed number
+    // In a real implementation, we would query the database
+    return 10;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get message count by user id"
+    );
+  }
+}
+
+export async function updateLocalChatLastContextById({
+  id,
+  lastContext,
+}: {
+  id: string;
+  lastContext: any;
+}) {
+  try {
+    const chat = await getLocalChat(id);
+    if (!chat) {
+      throw new ChatSDKError("not_found:database", "Chat not found");
+    }
+
+    return await saveChatToDb({
+      ...chat,
+      lastContext,
+    });
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update chat last context by id"
+    );
+  }
+}
+
+export async function saveLocalDocumentById({
+  id,
+  title,
+  content,
+  kind,
+  userId,
+}: {
+  id: string;
+  title: string;
+  content: string;
+  kind: ArtifactKind;
+  userId: string;
+}) {
+  try {
+    return await saveLocalDocument({
+      id,
+      title,
+      content,
+      kind,
+      userId,
+      createdAt: new Date(),
+    });
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to save document by id"
+    );
+  }
+}
+
+export async function getLocalDocumentById({ id }: { id: string }) {
+  try {
+    return await getLocalDocument(id);
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get document by id"
+    );
+  }
+}
+
+export async function saveLocalSuggestionsByDocumentId({
+  id,
+  documentId,
+  content,
+  userId,
+}: {
+  id: string;
+  documentId: string;
+  content: string;
+  userId: string;
+}) {
+  try {
+    return await saveLocalSuggestion({
+      id,
+      documentId,
+      content,
+      userId,
+      createdAt: new Date(),
+    });
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to save suggestions by document id"
+    );
+  }
+}
+
+export async function saveLocalVoteByChatIdAndMessageId({
   chatId,
   messageId,
-  type,
+  isUpvoted,
 }: {
   chatId: string;
   messageId: string;
-  type: "up" | "down";
+  isUpvoted: boolean;
 }) {
   try {
-    const voteData = {
+    return await saveLocalVote({
       chatId,
       messageId,
-      isUpvoted: type === "up",
-    };
-    
-    return await saveLocalVote(voteData);
+      isUpvoted,
+    });
   } catch (_error) {
-    throw new ChatSDKError("bad_request:database", "Failed to vote message");
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to save vote by chat id and message id"
+    );
   }
 }
 
@@ -272,54 +368,31 @@ export async function getLocalVotesByChatId({ id }: { id: string }) {
   }
 }
 
-// Document operations
-export async function saveDocument({
+export async function saveLocalFile({
   id,
-  title,
-  kind,
+  name,
+  type,
+  size,
   content,
   userId,
 }: {
   id: string;
-  title: string;
-  kind: ArtifactKind;
-  content: string;
+  name: string;
+  type: string;
+  size: number;
+  content: Uint8Array;
   userId: string;
 }) {
   try {
-    return await saveLocalDocument({
+    return await saveFileToDb({
       id,
-      title,
-      kind,
+      name,
+      type,
+      size,
       content,
       userId,
       createdAt: new Date(),
     });
-  } catch (_error) {
-    throw new ChatSDKError("bad_request:database", "Failed to save document");
-  }
-}
-
-export async function getDocumentById({ id }: { id: string }) {
-  try {
-    const selectedDocument = await getLocalDocument(id);
-    if (!selectedDocument) {
-      return null;
-    }
-
-    return selectedDocument;
-  } catch (_error) {
-    throw new ChatSDKError(
-      "bad_request:database",
-      "Failed to get document by id"
-    );
-  }
-}
-
-// File operations
-export async function saveLocalFile(fileData: any) {
-  try {
-    return await saveFileToDb(fileData);
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to save file");
   }
@@ -327,84 +400,71 @@ export async function saveLocalFile(fileData: any) {
 
 export async function getLocalFileById({ id }: { id: string }) {
   try {
-    const selectedFile = await getLocalFile(id);
-    if (!selectedFile) {
-      return null;
-    }
-
-    return selectedFile;
+    return await getLocalFile(id);
   } catch (_error) {
-    throw new ChatSDKError(
-      "bad_request:database",
-      "Failed to get file by id"
-    );
+    throw new ChatSDKError("bad_request:database", "Failed to get file by id");
   }
 }
 
 // Suggestion operations
-export async function saveSuggestions({
-  suggestions,
-}: {
-  suggestions: any[];
-}) {
+export async function getLocalSuggestionsByDocumentId({ id }: { id: string }) {
   try {
-    return await saveLocalSuggestions(suggestions);
+    return await getLocalSuggestions(id);
   } catch (_error) {
-    throw new ChatSDKError(
-      "bad_request:database",
-      "Failed to save suggestions"
-    );
+    throw new ChatSDKError("bad_request:database", "Failed to get suggestions by document id");
   }
 }
 
-export async function getSuggestionsByDocumentId({
-  documentId,
-}: {
-  documentId: string;
-}) {
+// Provider operations
+export async function saveCustomProvider(providerData: any) {
   try {
-    return await getLocalSuggestions(documentId);
+    return await saveLocalProvider(providerData);
   } catch (_error) {
-    throw new ChatSDKError(
-      "bad_request:database",
-      "Failed to get suggestions by document id"
-    );
+    throw new ChatSDKError("bad_request:database", "Failed to save provider");
   }
 }
 
-// Additional utility functions
-export async function getMessageById({ id }: { id: string }) {
+export async function getAllCustomProviders() {
   try {
-    // In a local implementation, we would need to search through all messages
-    // This is inefficient but necessary without a dedicated message store
-    // In a production implementation, we would want to optimize this
-    throw new Error("Not implemented in local version");
+    return await getAllLocalProviders();
   } catch (_error) {
-    throw new ChatSDKError(
-      "bad_request:database",
-      "Failed to get message by id"
-    );
+    throw new ChatSDKError("bad_request:database", "Failed to get providers");
   }
 }
 
-export async function updateChatVisiblityById({
+export async function getCustomProvider(providerId: string) {
+  try {
+    return await getLocalProvider(providerId);
+  } catch (_error) {
+    throw new ChatSDKError("bad_request:database", "Failed to get provider");
+  }
+}
+
+export async function deleteCustomProvider(providerId: string) {
+  try {
+    return await deleteLocalProvider(providerId);
+  } catch (_error) {
+    throw new ChatSDKError("bad_request:database", "Failed to delete provider");
+  }
+}
+
+export async function updateChatVisibilityById({
   chatId,
   visibility,
 }: {
   chatId: string;
-  visibility: "private" | "public";
+  visibility: VisibilityType;
 }) {
   try {
     const chat = await getLocalChat(chatId);
     if (!chat) {
-      throw new ChatSDKError(
-        "not_found:database",
-        `Chat with id ${chatId} not found`
-      );
+      throw new ChatSDKError("not_found:database", "Chat not found");
     }
-    
-    chat.visibility = visibility;
-    return await saveLocalChat(chat);
+
+    return await saveChatToDb({
+      ...chat,
+      visibility,
+    });
   } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
@@ -413,97 +473,10 @@ export async function updateChatVisiblityById({
   }
 }
 
-export async function updateLocalChatLastContextById({
-  chatId,
-  context,
-}: {
-  chatId: string;
-  // Store merged server-enriched usage object
-  context: AppUsage;
-}) {
-  try {
-    const chat = await getLocalChat(chatId);
-    if (!chat) {
-      throw new ChatSDKError(
-        "not_found:database",
-        `Chat with id ${chatId} not found`
-      );
-    }
-    
-    chat.lastContext = context;
-    return await saveLocalChat(chat);
-  } catch (error) {
-    console.warn("Failed to update lastContext for chat", chatId, error);
-    return;
-  }
-}
-
-// Updated implementation for server-side environments
-export async function getLocalMessageCountByUserId({
-  id: userId,
-  differenceInHours,
-}: {
-  id: string;
-  differenceInHours: number;
-}) {
-  // Check if we're in a browser environment
-  if (typeof window !== 'undefined') {
-    // Browser environment: Use IndexedDB
-    try {
-      // In a local implementation, we'll need to get all messages and filter by user and time
-      // This is a simplified implementation
-      const allChats = await getAllLocalChats(userId);
-      let messageCount = 0;
-      
-      // For each chat, get messages and count those within the time window
-      for (const chat of allChats) {
-        const messages = await getLocalMessages(chat.id);
-        const twentyFourHoursAgo = new Date(Date.now() - differenceInHours * 60 * 60 * 1000);
-        
-        const recentMessages = messages.filter(
-          (message: any) =>
-            new Date(message.createdAt) >= twentyFourHoursAgo &&
-            message.role === "user"
-        );
-        
-        messageCount += recentMessages.length;
-      }
-      
-      return messageCount;
-    } catch (_error) {
-      throw new ChatSDKError(
-        "bad_request:database",
-        "Failed to get message count by user id"
-      );
-    }
-  } else {
-    // Server environment: Use in-memory storage
-    try {
-      // In a local implementation, we'll need to get all messages and filter by user and time
-      // This is a simplified implementation
-      const allChats = await getAllLocalChats(userId);
-      let messageCount = 0;
-      
-      // For each chat, get messages and count those within the time window
-      for (const chat of allChats) {
-        const messages = await getLocalMessages(chat.id);
-        const twentyFourHoursAgo = new Date(Date.now() - differenceInHours * 60 * 60 * 1000);
-        
-        const recentMessages = messages.filter(
-          (message: any) =>
-            new Date(message.createdAt) >= twentyFourHoursAgo &&
-            message.role === "user"
-        );
-        
-        messageCount += recentMessages.length;
-      }
-      
-      return messageCount;
-    } catch (_error) {
-      throw new ChatSDKError(
-        "bad_request:database",
-        "Failed to get message count by user id"
-      );
-    }
-  }
-}
+// Re-export functions for compatibility with existing code
+export { saveLocalSuggestion as saveLocalSuggestions } from "@/lib/local-db";
+export { getLocalSuggestions } from "@/lib/local-db";
+export { saveLocalDocument as saveDocument } from "@/lib/local-db";
+export { getLocalDocument as getDocumentById } from "@/lib/local-db";
+export { getLocalSuggestions as getSuggestionsByDocumentId } from "@/lib/local-db";
+export { saveLocalVote as voteMessage } from "@/lib/local-db";

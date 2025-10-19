@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       name: provider.name || 'Unknown Provider',
       baseUrl: provider.baseUrl || '',
       apiKey: provider.apiKey || '',
-      model: provider.model || 'default-model',
+      model: provider.model || 'gemini-2.5-flash',
       isEnabled: provider.isEnabled !== undefined ? provider.isEnabled : true,
       createdAt: provider.createdAt || new Date().toISOString(),
       updatedAt: provider.updatedAt || new Date().toISOString(),

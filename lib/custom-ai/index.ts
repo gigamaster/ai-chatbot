@@ -1,4 +1,4 @@
-// Custom AI package to replace the Vercel AI SDK
+// TODO: use package llm.js to replace custom AI package our 'mock'
 export type UIMessagePart<CustomDataTypes = any, ToolType = any> = 
   | { type: "text"; text: string }
   | { type: "file"; url: string; name: string; mediaType: string }
@@ -74,7 +74,41 @@ export class JsonToSseTransformStream extends TransformStream {
   constructor() {
     super({
       transform(chunk, controller) {
-        controller.enqueue(`data: ${JSON.stringify(chunk)}\n\n`);
+        // Handle different chunk types
+        if (typeof chunk === 'string') {
+          // If it's already a string, send it directly
+          controller.enqueue(`data: ${JSON.stringify({ type: "text-delta", textDelta: chunk })}\n\n`);
+        } else if (chunk && typeof chunk === 'object') {
+          // For objects, check if it's already formatted or needs formatting
+          if (chunk.type && (chunk.type === "text-delta" || chunk.type === "data-finish" || chunk.type === "data-error")) {
+            // Already properly formatted
+            controller.enqueue(`data: ${JSON.stringify(chunk)}\n\n`);
+          } else if (chunk.type === "content" && chunk.content) {
+            // Handle content chunks from LLM.js
+            controller.enqueue(`data: ${JSON.stringify({ type: "text-delta", textDelta: chunk.content.toString() })}\n\n`);
+          } else if (chunk.type === "response.output_text.delta" && chunk.delta) {
+            // Handle Google-specific content delta
+            controller.enqueue(`data: ${JSON.stringify({ type: "text-delta", textDelta: chunk.delta.toString() })}\n\n`);
+          } else if ('content' in chunk && chunk.content) {
+            // Handle other content properties
+            controller.enqueue(`data: ${JSON.stringify({ type: "text-delta", textDelta: chunk.content.toString() })}\n\n`);
+          } else if ('textDelta' in chunk && chunk.textDelta) {
+            // Handle textDelta properties
+            controller.enqueue(`data: ${JSON.stringify({ type: "text-delta", textDelta: chunk.textDelta.toString() })}\n\n`);
+          } else if ('text' in chunk && chunk.text) {
+            // Handle text properties
+            controller.enqueue(`data: ${JSON.stringify({ type: "text-delta", textDelta: chunk.text.toString() })}\n\n`);
+          } else if ('delta' in chunk && chunk.delta) {
+            // Handle delta properties
+            controller.enqueue(`data: ${JSON.stringify({ type: "text-delta", textDelta: chunk.delta.toString() })}\n\n`);
+          } else {
+            // For other objects, convert to string representation
+            controller.enqueue(`data: ${JSON.stringify({ type: "text-delta", textDelta: JSON.stringify(chunk) })}\n\n`);
+          }
+        } else {
+          // For other types, convert to string
+          controller.enqueue(`data: ${JSON.stringify({ type: "text-delta", textDelta: String(chunk) })}\n\n`);
+        }
       },
       flush(controller) {
         controller.enqueue('data: [DONE]\n\n');
@@ -84,16 +118,36 @@ export class JsonToSseTransformStream extends TransformStream {
   }
 }
 
-// Mock implementations for the functions that were imported from "ai"
+// Simple stream implementation
 export const createUIMessageStream = (options: any) => {
-  // This is a simplified version - in a real implementation, this would create a proper stream
+  // This creates a proper stream that handles the execution
   return new ReadableStream({
     async start(controller) {
       try {
-        const result = await options.execute({ writer: { write: (data: any) => {} } });
+        // Create a writer that writes to the controller
+        const writer = {
+          write: (data: any) => {
+            // Convert to SSE format and enqueue
+            controller.enqueue(`data: ${JSON.stringify(data)}\n\n`);
+          }
+        };
+        
+        // Execute the provided function with our writer
+        await options.execute({ writer });
+        
+        // Send the DONE signal
+        controller.enqueue('data: [DONE]\n\n');
         controller.close();
       } catch (error) {
-        controller.error(error);
+        console.error("Error in createUIMessageStream:", error);
+        // Send error as SSE format
+        controller.enqueue(`data: ${JSON.stringify({ 
+          type: "data-error", 
+          data: error instanceof Error ? error.message : "Unknown error",
+          transient: true
+        })}\n\n`);
+        controller.enqueue('data: [DONE]\n\n');
+        controller.close();
       }
     }
   });
@@ -128,10 +182,45 @@ export const stepCountIs = (count: number) => {
 };
 
 export const streamText = (options: any) => {
-  // This is a mock implementation
+  console.log("=== streamText called with options ===", JSON.stringify(options, null, 2));
+  
+  // Extract options
+  const { model, system, messages } = options;
+  
+  // Return an object with methods that will handle the streaming
   return {
-    text: async () => "",
-    usage: async () => ({ promptTokens: 0, completionTokens: 0, totalTokens: 0 }),
+    text: async () => {
+      try {
+        // Combine system prompt and messages
+        let fullPrompt = system || "";
+        
+        // Add conversation history
+        messages.forEach((msg: any) => {
+          if (msg.role === "user") {
+            fullPrompt += `\nUser: ${msg.content}`;
+          } else if (msg.role === "assistant") {
+            fullPrompt += `\nAssistant: ${msg.content}`;
+          }
+        });
+        
+        console.log("Full prompt to send to LLM:", fullPrompt);
+        
+        // Get response from the model
+        const response = await model(fullPrompt);
+        return response;
+      } catch (error) {
+        console.error("Error in streamText.text:", error);
+        return "Sorry, I encountered an error while processing your request.";
+      }
+    },
+    usage: async () => {
+      // Mock usage for now
+      return { 
+        promptTokens: 0, 
+        completionTokens: 0, 
+        totalTokens: 0 
+      };
+    },
     finishReason: async () => "stop",
     toolCalls: async () => [],
     rawResponse: async () => undefined,
@@ -205,7 +294,7 @@ export class MockLanguageModelV2 implements LanguageModel {
     }
     
     if (prompt.toLowerCase().includes("code") || prompt.toLowerCase().includes("program")) {
-      return "Here's a simple example:\n\n```javascript\nconsole.log('Hello, World!');\n```\n\nThis is a mock response. In a real implementation, I would provide more detailed code assistance.";
+      return "Here's a simple example:\n\n``javascript\nconsole.log('Hello, World!');\n```\n\nThis is a mock response. In a real implementation, I would provide more detailed code assistance.";
     }
     
     if (prompt.toLowerCase().includes("thank")) {

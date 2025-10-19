@@ -83,7 +83,7 @@ Codemo includes a security feature that allows you to lock the application to pr
 
 1. **Set up a password**:
    - Open the user menu by clicking on your user avatar in the sidebar
-   - If you're a guest user, you'll need to log in or create an account first
+   - You'll need to log in or create an account first
    - When the lock screen appears, enter a new password to set it up
 
 2. **Lock the application**:
