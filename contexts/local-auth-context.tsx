@@ -23,45 +23,47 @@ export function LocalAuthProvider({ children }: { children: ReactNode }) {
   // Load user from localStorage or cookie on mount
   useEffect(() => {
     const loadUser = async () => {
+      console.log("Loading user from localStorage or cookie...");
+      
       try {
-        console.log("Loading user from localStorage or cookie...");
-        
-        // First check localStorage
-        let storedUser = localStorage.getItem("local_user");
-        console.log("Stored user in localStorage:", storedUser);
-        
-        // If not found in localStorage, check for cookie
-        if (!storedUser) {
-          // Try to get user from cookie
-          const cookieUser = document.cookie
-            .split("; ")
-            .find((row) => row.startsWith("local_user="))
-            ?.split("=")[1];
-          console.log("Stored user in cookie:", cookieUser);
+        // Try to get user from localStorage first
+        if (typeof window !== 'undefined') {
+          const storedUser = localStorage.getItem('local_user');
+          if (storedUser) {
+            const user = JSON.parse(storedUser);
+            console.log("Loaded user from localStorage"); // Don't log sensitive data
+            setUser(user);
+            return;
+          }
           
-          if (cookieUser) {
-            try {
-              storedUser = decodeURIComponent(cookieUser);
-              // Sync cookie to localStorage
-              localStorage.setItem("local_user", storedUser);
-              console.log("Synced cookie to localStorage");
-            } catch (e) {
-              console.error("Error parsing cookie user:", e);
-            }
+          // If no user in localStorage, check for user cookie
+          // Parse cookie manually since we're in a client component
+          const cookieString = document.cookie;
+          const cookies = cookieString.split(';').reduce((acc, cookie) => {
+            const [name, value] = cookie.trim().split('=');
+            acc[name] = value;
+            return acc;
+          }, {} as Record<string, string>);
+          
+          const userCookie = cookies['local_user'];
+          
+          if (userCookie) {
+            const user = JSON.parse(decodeURIComponent(userCookie));
+            console.log("Loaded user from cookie"); // Don't log sensitive data
+            
+            // Save to localStorage for future visits
+            localStorage.setItem('local_user', JSON.stringify(user));
+            setUser(user);
+            return;
           }
         }
         
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          console.log("Setting user:", parsedUser);
-          setUser(parsedUser);
-        } else {
-          console.log("No user found");
-        }
+        // No user found - keep user as null (no automatic guest user creation)
+        console.log("No user found, keeping user as null");
       } catch (error) {
-        console.error("Error loading user from localStorage or cookie:", error);
+        console.error("Error loading user:", error);
+        // Keep user as null on error
       } finally {
-        console.log("Finished loading user");
         setLoading(false);
       }
     };
@@ -110,14 +112,16 @@ export function LocalAuthProvider({ children }: { children: ReactNode }) {
       const { registerLocalUser } = await import('@/lib/local-auth');
       const user = await registerLocalUser(email, password);
       
-      console.log("Registration successful, user data:", user);
+      console.log("Registration result:", user ? "Success" : "Failed");
       
-      const userString = JSON.stringify(user);
-      localStorage.setItem("local_user", userString);
-      // Also set cookie for middleware to detect
-      document.cookie = `local_user=${encodeURIComponent(userString)}; path=/;`;
-      setUser(user);
-      return true;
+      if (user) {
+        const userString = JSON.stringify(user);
+        localStorage.setItem("local_user", userString);
+        // Also set cookie for middleware to detect
+        document.cookie = `local_user=${encodeURIComponent(userString)}; path=/;`;
+        setUser(user);
+        return true;
+      }
     } catch (error: any) {
       console.error("Registration error:", error);
       if (error.message === "User already exists") {

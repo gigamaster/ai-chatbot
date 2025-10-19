@@ -141,18 +141,8 @@ export async function getProviderConfig(providerId: string) {
   const providers = getServerProviders() || [];
   const provider = providers.find((p: any) => p.id === providerId);
   
-  // Fix Google base URL to ensure it has the correct format
-  if (provider && provider.baseUrl && provider.baseUrl.includes('generativelanguage.googleapis.com')) {
-    // Ensure it has the correct base URL for Google OpenAI-compatible endpoint
-    if (!provider.baseUrl.endsWith('/v1beta/openai')) {
-      provider.baseUrl = 'https://generativelanguage.googleapis.com/v1beta/openai';
-    }
-    // Remove any trailing slash if present
-    if (provider.baseUrl.endsWith('/')) {
-      provider.baseUrl = provider.baseUrl.slice(0, -1);
-    }
-  }
-  
+  // Return the provider configuration as-is without modification
+  // Providers should be configured with the correct base URL according to their documentation
   return provider || null;
 }
 

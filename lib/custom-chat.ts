@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import type { ChatMessage } from "@/lib/types";
 import { generateUUID } from "@/lib/utils";
+import { clientChatService } from "@/lib/client-chat-service";
 
 // TODO: llm.js types to replace custom types
 export type UseChatHelpers = {
@@ -53,24 +54,74 @@ export class CustomChatTransport {
 
   async sendMessages(request: any) {
     console.log("=== CustomChatTransport.sendMessages called ===");
+    console.log("API endpoint:", this.api);
     console.log("Request:", JSON.stringify(request, null, 2));
     
-    const preparedRequest = this.prepareSendMessagesRequest(request);
-    console.log("Prepared request:", JSON.stringify(preparedRequest, null, 2));
-    console.log("Request body to send:", JSON.stringify(preparedRequest.body, null, 2));
-    
-    const response = await this.fetch(this.api, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(preparedRequest.body),
-    });
-    
-    console.log("API response status:", response.status);
-    console.log("API response headers:", [...response.headers.entries()]);
-    
-    return response;
+    try {
+      // For client-side deployment, use the client chat service directly
+      // instead of making API calls
+      if (this.api === "/api/local-chat") {
+        console.log("Using client-side chat service for GitHub Pages deployment");
+        const preparedRequest = this.prepareSendMessagesRequest(request);
+        console.log("Prepared request:", JSON.stringify(preparedRequest, null, 2));
+        
+        // Use client-side chat service
+        return await clientChatService.sendMessages(preparedRequest);
+      }
+      
+      // Fall back to API call for other endpoints
+      const preparedRequest = this.prepareSendMessagesRequest(request);
+      console.log("Prepared request:", JSON.stringify(preparedRequest, null, 2));
+      
+      const requestBody = JSON.stringify(preparedRequest);
+      console.log("Request body to send:", requestBody);
+      
+      console.log("About to call fetch with:", {
+        url: this.api,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: requestBody,
+      });
+      
+      const response = await this.fetch(this.api, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: requestBody,
+      });
+      
+      console.log("API response received:", response.status);
+      console.log("API response headers:", [...response.headers.entries()]);
+      console.log("API response ok:", response.ok);
+      
+      // If response is not ok, try to parse the error
+      if (!response.ok) {
+        let errorText = "Unknown error";
+        try {
+          const errorData = await response.json();
+          errorText = errorData.message || errorData.error || JSON.stringify(errorData);
+        } catch (e) {
+          try {
+            errorText = await response.text();
+          } catch (e2) {
+            // Ignore
+          }
+        }
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
+      return response;
+    } catch (error: any) {
+      console.error("=== CustomChatTransport.sendMessages error ===");
+      console.error("Error:", error);
+      console.error("Error name:", error.name);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+      throw error;
+    }
   }
 }
 
@@ -80,6 +131,23 @@ export function useCustomChat(options: UseChatOptions): UseChatHelpers {
   const [status, setStatus] = useState<"idle" | "loading" | "streaming" | "error" | "submitted">("idle");
   const abortControllerRef = useRef<AbortController | null>(null);
   const messageQueueRef = useRef<any[]>([]);
+
+  // Store the transport in a ref so it's accessible in processMessage
+  const transportRef = useRef(options.transport);
+  // Store the chat ID so it's accessible in processMessage
+  const chatIdRef = useRef(options.id);
+  
+  // Update transport ref when options.transport changes
+  useEffect(() => {
+    console.log("Updating transport ref");
+    transportRef.current = options.transport;
+  }, [options.transport]);
+  
+  // Update chat ID ref when options.id changes
+  useEffect(() => {
+    console.log("Updating chat ID ref");
+    chatIdRef.current = options.id;
+  }, [options.id]);
 
   // Process message queue
   useEffect(() => {
@@ -113,7 +181,7 @@ export function useCustomChat(options: UseChatOptions): UseChatHelpers {
       
       // Prepare request for API
       const request = {
-        id: options?.id || options?.chatId || options?.body?.id || "default-chat-id",
+        id: options?.id || options?.chatId || options?.body?.id || chatIdRef.current, // Use the hook's id instead of "default-chat-id"
         message: userMessage,
         body: {
           selectedProviderId: options?.selectedProviderId || options?.body?.selectedProviderId,
@@ -124,9 +192,14 @@ export function useCustomChat(options: UseChatOptions): UseChatHelpers {
       console.log("Request to send:", JSON.stringify(request, null, 2));
       
       // Send request to API
-      if (options?.transport) {
+      console.log("Checking if transport is available:", !!transportRef.current);
+      
+      if (transportRef.current) {
+        console.log("Transport is available, calling sendMessages");
         setStatus("loading");
-        const response = await options.transport.sendMessages(request);
+        console.log("About to call transport.sendMessages");
+        const response = await transportRef.current.sendMessages(request);
+        console.log("Transport response received:", response.status);
         
         console.log("Response received:", response.status);
         
@@ -159,58 +232,42 @@ export function useCustomChat(options: UseChatOptions): UseChatHelpers {
               break;
             }
             
-            const chunk = decoder.decode(value);
-            // Parse SSE format
-            const lines = chunk.split('\n');
+            // The client-chat-service already parses the SSE data and enqueues JSON objects
+            // So value is already a parsed JSON object, not raw bytes
+            const parsed = value;
             
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6);
-                if (data === '[DONE]') {
-                  break;
-                }
-                
-                try {
-                  const parsed = JSON.parse(data);
-                  // Handle different types of data from our SSE stream
-                  if (parsed.type === "text-delta") {
-                    const content = parsed.textDelta || '';
-                    if (content) {
-                      // Update assistant message with new content
-                      setMessages(prev => {
-                        const newMessages = [...prev];
-                        const lastMessage = newMessages[newMessages.length - 1];
-                        if (lastMessage.role === "assistant") {
-                          const lastPart = lastMessage.parts[lastMessage.parts.length - 1];
-                          if (lastPart && lastPart.type === "text") {
-                            lastPart.text += content;
-                          } else {
-                            lastMessage.parts.push({ type: "text", text: content });
-                          }
-                        }
-                        return newMessages;
-                      });
-                      
-                      // Call onData callback if provided
-                      if (options?.onData) {
-                        options.onData(parsed);
-                      }
+            // Handle different types of data from our SSE stream
+            if (parsed.type === "text-delta") {
+              const content = parsed.textDelta || '';
+              if (content) {
+                // Update assistant message with new content
+                setMessages(prev => {
+                  const newMessages = [...prev];
+                  const lastMessage = newMessages[newMessages.length - 1];
+                  if (lastMessage.role === "assistant") {
+                    const lastPart = lastMessage.parts[lastMessage.parts.length - 1];
+                    if (lastPart && lastPart.type === "text") {
+                      lastPart.text += content;
+                    } else {
+                      lastMessage.parts.push({ type: "text", text: content });
                     }
-                  } else if (parsed.type === "data-finish") {
-                    // Stream finished
-                    break;
-                  } else if (parsed.type === "data-error") {
-                    // Handle error from the server
-                    throw new Error(parsed.data || "Unknown error from LLM");
                   }
-                  // Handle other data types as needed
-                } catch (e) {
-                  console.warn("Failed to parse SSE data:", data);
-                  // Don't break the stream for parsing errors, just log them
-                  console.error("SSE parsing error:", e);
+                  return newMessages;
+                });
+                
+                // Call onData callback if provided
+                if (options?.onData) {
+                  options.onData(parsed);
                 }
               }
+            } else if (parsed.type === "data-finish") {
+              // Stream finished
+              break;
+            } else if (parsed.type === "data-error") {
+              // Handle error from the server
+              throw new Error(parsed.data || "Unknown error from LLM");
             }
+            // Handle other data types as needed
           }
         } catch (streamError) {
           console.error("Error processing SSE stream:", streamError);
@@ -224,8 +281,13 @@ export function useCustomChat(options: UseChatOptions): UseChatHelpers {
         if (options?.onFinish) {
           options.onFinish();
         }
+      } else {
+        console.log("Transport is not available");
+        console.log("Available options keys:", Object.keys(options || {}));
+        // Log the entire options object to see what's available
+        console.log("Full options object:", options);
       }
-      
+
       setStatus("idle");
     } catch (error: any) {
       console.error("=== processMessage caught error ===");
@@ -258,6 +320,10 @@ export function useCustomChat(options: UseChatOptions): UseChatHelpers {
   };
 
   const sendMessage = useCallback(async (message?: any, options?: any) => {
+    console.log("=== sendMessage called ===");
+    console.log("Message:", JSON.stringify(message, null, 2));
+    console.log("Options:", JSON.stringify(options, null, 2));
+    
     if (message) {
       messageQueueRef.current.push({ message, options });
       if (status !== "loading" && status !== "streaming" && status !== "submitted") {

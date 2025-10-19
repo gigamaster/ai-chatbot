@@ -72,33 +72,44 @@ export function Chat({
 
   useEffect(() => {
     currentModelIdRef.current = currentModelId;
+    console.log("Model ID updated:", currentModelId);
   }, [currentModelId]);
 
   useEffect(() => {
     currentProviderIdRef.current = currentProviderId;
+    console.log("Provider ID updated:", currentProviderId);
   }, [currentProviderId]);
 
   // Initialize provider ID when component mounts
   useEffect(() => {
+    console.log("=== Initializing provider ID ===");
+    console.log("Initial provider ID:", initialProviderId);
+    console.log("Initial chat model:", initialChatModel);
+    
     const initializeProviderId = async () => {
       try {
         const providers = await getAllProviders();
+        console.log("All providers:", providers.length);
         
         // If we have an initial provider ID from props, use that
         if (initialProviderId) {
           const provider = providers.find((p: any) => p.id === initialProviderId);
+          console.log("Found initial provider by ID:", provider ? "Yes" : "No");
           if (provider) {
             setCurrentProviderId(initialProviderId);
+            console.log("Set current provider ID to:", initialProviderId);
             return;
           }
         }
         
         // Otherwise, find all providers with the same model name
         const matchingProviders = providers.filter((p: any) => p.model === initialChatModel);
+        console.log("Matching providers by model:", matchingProviders.length);
         
         if (matchingProviders.length > 0) {
           // Use the first one as default
           setCurrentProviderId(matchingProviders[0].id);
+          console.log("Set current provider ID to first match:", matchingProviders[0].id);
         }
       } catch (error) {
         console.error("Error initializing provider ID:", error);
@@ -125,6 +136,9 @@ export function Chat({
       api: "/api/local-chat",
       fetch: fetchWithErrorHandlers,
       prepareSendMessagesRequest(request) {
+        console.log("=== prepareSendMessagesRequest called ===");
+        console.log("Request:", JSON.stringify(request, null, 2));
+        
         // Get the last message and ensure it has an ID
         const lastMessage = request.message;
         const messageWithId = {
@@ -135,10 +149,17 @@ export function Chat({
         
         // Ensure we have the current provider ID
         const providerIdToSend = currentProviderIdRef.current || currentProviderId;
+        console.log("Current provider ID from ref:", currentProviderIdRef.current);
+        console.log("Current provider ID from state:", currentProviderId);
+        console.log("Provider ID to send:", providerIdToSend);
+        
+        // Use the chat ID from the hook options, not from the request
+        const chatId = id;
+        console.log("Using chat ID:", chatId);
         
         // Create the request body
         const requestBody = {
-          id: request.id,
+          id: chatId, // Use the proper chat ID
           message: messageWithId,
           selectedChatModel: currentModelIdRef.current || currentModelId,
           selectedVisibilityType: visibilityType,
@@ -146,6 +167,7 @@ export function Chat({
           ...request.body,
         };
         
+        console.log("Prepared request body:", JSON.stringify(requestBody, null, 2));
         return requestBody;
       },
     }),
@@ -181,10 +203,7 @@ export function Chat({
     }
   }, [query, sendMessage, hasAppendedQuery, id]);
 
-  const { data: votes } = useSWR<Vote[]>(
-    messages.length >= 2 ? `/api/local-vote?chatId=${id}` : null,
-    fetcher
-  );
+  const votes = undefined; // Disable votes functionality for now
 
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);

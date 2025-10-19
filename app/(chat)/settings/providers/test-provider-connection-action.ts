@@ -34,22 +34,9 @@ export async function testProviderConnection(providerConfig: any) {
       'Authorization': `Bearer ${providerConfig.apiKey}`
     };
     
-    // Special handling for Google provider - ensure correct OpenAI-compatible endpoint
-    let baseUrl = providerConfig.baseUrl;
-    if (baseUrl?.includes('generativelanguage.googleapis.com')) {
-      // Ensure we have the correct base URL for Google OpenAI-compatible endpoint
-      if (!baseUrl.endsWith('/v1beta/openai')) {
-        baseUrl = 'https://generativelanguage.googleapis.com/v1beta/openai';
-      }
-      // Remove any trailing slash if present
-      if (baseUrl.endsWith('/')) {
-        baseUrl = baseUrl.slice(0, -1);
-      }
-    }
-    
-    // Construct the full URL with explicit path separation for clarity
-    // This makes it clear that baseUrl may include a trailing slash
-    // and we're appending the chat completions endpoint
+    // Use the provider's base URL as-is without modification
+    // Split the URL construction for clarity and to follow provider documentation
+    const baseUrl = providerConfig.baseUrl;
     const chatCompletionsPath = 'chat/completions';
     const url = baseUrl.endsWith('/') 
       ? `${baseUrl}${chatCompletionsPath}` 

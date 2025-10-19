@@ -132,6 +132,8 @@ function PureMultimodalInput({
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
 
   const submitForm = useCallback(async () => {
+    console.log("=== submitForm called ===");
+    
     // Validate that we have a selected model
     if (!selectedModelId) {
       toast.error("Please select a model before sending a message");
@@ -144,14 +146,19 @@ function PureMultimodalInput({
       return;
     }
     
+    console.log("Selected model ID:", selectedModelId);
+    console.log("Selected provider ID:", selectedProviderId);
+    
     // Get the provider for this model
     const providers = await getAllProviders();
+    console.log("All providers:", providers.length);
     
     let selectedProvider = null;
     
     // If we have a selected provider ID, use that to find the exact provider
     if (selectedProviderId) {
       selectedProvider = providers.find((p: any) => p.id === selectedProviderId);
+      console.log("Found provider by ID:", selectedProvider ? "Yes" : "No");
     }
     
     // If we don't have a selected provider ID or didn't find the provider by ID,
@@ -159,6 +166,7 @@ function PureMultimodalInput({
     if (!selectedProvider) {
       // Find all providers with this model name
       const matchingProviders = providers.filter((p: any) => p.model === selectedModelId);
+      console.log("Matching providers by model:", matchingProviders.length);
       
       if (matchingProviders.length === 0) {
         toast.error("Selected model not found. Please check your provider configuration.");
@@ -167,6 +175,7 @@ function PureMultimodalInput({
       
       // Use the first one
       selectedProvider = matchingProviders[0];
+      console.log("Using first matching provider:", selectedProvider?.id);
     }
     
     // Validate that we have a provider
@@ -174,6 +183,14 @@ function PureMultimodalInput({
       toast.error("No provider configured for the selected model. Please check your provider settings.");
       return;
     }
+    
+    console.log("Selected provider:", {
+      id: selectedProvider.id,
+      name: selectedProvider.name,
+      model: selectedProvider.model,
+      hasApiKey: !!selectedProvider.apiKey,
+      hasBaseUrl: !!selectedProvider.baseUrl
+    });
     
     // Validate that the provider has the required fields
     if (!selectedProvider.apiKey) {
@@ -209,6 +226,9 @@ function PureMultimodalInput({
       type: "text" as const,
       text: input,
     });
+    
+    console.log("Sending message with provider ID:", selectedProvider?.id);
+    console.log("Sending message with model ID:", selectedModelId);
     
     // Pass additional data through the sendMessage function
     sendMessage({
@@ -334,7 +354,10 @@ function PureMultimodalInput({
         <PromptInputToolbar className="!border-top-0 border-t-0! p-0 shadow-none dark:border-0 dark:border-transparent!">
           <PromptInputTools className="gap-0 sm:gap-0.5">
             <ModelSelectorCompact
-              onModelChange={onModelChange}
+              onModelChange={(modelId, providerId) => {
+                console.log("Model changed:", { modelId, providerId });
+                onModelChange?.(modelId, providerId);
+              }}
               selectedModelId={selectedModelId}
               selectedProviderId={selectedProviderId}
             />
