@@ -1,5 +1,7 @@
 import { getProviderById } from "@/lib/provider-model-service";
 import { ChatSDKError } from "@/lib/errors";
+import { generateTitleFromUserMessage } from "@/app/(chat)/actions";
+import { saveLocalChat } from "@/lib/local-db-queries";
 
 /**
  * Client-side chat service for GitHub Pages deployment
@@ -32,7 +34,8 @@ async function createSSEStream(response: Response) {
       try {
         const { done, value } = await reader.read();
         if (done) {
-          // Send finish signal
+          console.log("Stream done, sending finish signal");
+          // Send finish signal when stream is done
           const finishData = `data: ${JSON.stringify({ type: "data-finish", data: null, transient: true })}\n\n`;
           controller.enqueue(new TextEncoder().encode(finishData));
           controller.close();
@@ -49,7 +52,8 @@ async function createSSEStream(response: Response) {
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
             if (data === '[DONE]') {
-              // Send finish signal
+              console.log("Received [DONE], sending finish signal");
+              // Send finish signal when we get [DONE]
               const finishData = `data: ${JSON.stringify({ type: "data-finish", data: null, transient: true })}\n\n`;
               controller.enqueue(new TextEncoder().encode(finishData));
               controller.close();
@@ -86,6 +90,37 @@ async function createSSEStream(response: Response) {
   });
 }
 
+// Get user ID from local storage or cookie
+function getUserId(): string | null {
+  try {
+    if (typeof window !== 'undefined') {
+      // Try to get user from localStorage first
+      const storedUser = localStorage.getItem('local_user');
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        return user.id;
+      }
+      
+      // If no user in localStorage, check for user cookie
+      const cookieString = document.cookie;
+      const cookies = cookieString.split(';').reduce((acc, cookie) => {
+        const [name, value] = cookie.trim().split('=');
+        acc[name] = value;
+        return acc;
+      }, {} as Record<string, string>);
+      
+      const userCookie = cookies['local_user'];
+      if (userCookie) {
+        const user = JSON.parse(decodeURIComponent(userCookie));
+        return user.id;
+      }
+    }
+  } catch (error) {
+    console.error("Error getting user ID:", error);
+  }
+  return null;
+}
+
 // Client-side chat service
 export class ClientChatService {
   async sendMessages(request: any) {
@@ -97,9 +132,14 @@ export class ClientChatService {
       // Handle both request formats: {selectedProviderId, selectedModelId} and {body: {selectedProviderId, selectedModelId}}
       const selectedProviderId = request.selectedProviderId || request.body?.selectedProviderId;
       const selectedModelId = request.selectedModelId || request.body?.selectedModelId;
+      const chatId = request.id || request.body?.id;
+      const userMessage = request.message;
+      const visibilityType = request.selectedVisibilityType || request.body?.selectedVisibilityType || "private";
       
       console.log("Extracted provider ID:", selectedProviderId);
       console.log("Extracted model ID:", selectedModelId);
+      console.log("Extracted chat ID:", chatId);
+      console.log("Visibility type:", visibilityType);
       
       if (!selectedProviderId) {
         throw new ChatSDKError("bad_request:chat", "No provider selected");
@@ -107,6 +147,10 @@ export class ClientChatService {
       
       if (!selectedModelId) {
         throw new ChatSDKError("bad_request:chat", "No model selected");
+      }
+      
+      if (!chatId) {
+        throw new ChatSDKError("bad_request:chat", "No chat ID provided");
       }
       
       // Get provider configuration directly from IndexedDB
@@ -128,8 +172,38 @@ export class ClientChatService {
         throw new ChatSDKError("bad_request:chat", "Provider configuration is incomplete");
       }
       
+      // Get user ID
+      const userId = getUserId();
+      if (!userId) {
+        throw new ChatSDKError("bad_request:chat", "User not authenticated");
+      }
+      
+      console.log("User ID:", userId);
+      
+      // Generate chat title from the first message if this is a new chat
+      const title = await generateTitleFromUserMessage({
+        message: userMessage,
+        selectedChatModel: selectedModelId,
+      });
+      
+      console.log("Generated chat title:", title);
+      
+      // Save the chat to the database
+      try {
+        await saveLocalChat({
+          id: chatId,
+          userId: userId,
+          title: title,
+          visibility: visibilityType,
+        });
+        console.log("Chat saved successfully");
+      } catch (saveError) {
+        console.error("Error saving chat:", saveError);
+        // Don't throw an error here as the chat functionality should still work
+      }
+      
       // Prepare messages in OpenAI format
-      const messages = convertMessagesToOpenAIFormat([request.message]);
+      const messages = convertMessagesToOpenAIFormat([userMessage]);
       
       // Prepare the request payload
       const payload = {

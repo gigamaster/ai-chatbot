@@ -229,45 +229,75 @@ export function useCustomChat(options: UseChatOptions): UseChatHelpers {
             const { done, value } = await reader.read();
             
             if (done) {
+              console.log("Stream reading done");
               break;
             }
             
-            // The client-chat-service already parses the SSE data and enqueues JSON objects
-            // So value is already a parsed JSON object, not raw bytes
-            const parsed = value;
+            console.log("Received stream value:", value);
             
-            // Handle different types of data from our SSE stream
-            if (parsed.type === "text-delta") {
-              const content = parsed.textDelta || '';
-              if (content) {
-                // Update assistant message with new content
-                setMessages(prev => {
-                  const newMessages = [...prev];
-                  const lastMessage = newMessages[newMessages.length - 1];
-                  if (lastMessage.role === "assistant") {
-                    const lastPart = lastMessage.parts[lastMessage.parts.length - 1];
-                    if (lastPart && lastPart.type === "text") {
-                      lastPart.text += content;
-                    } else {
-                      lastMessage.parts.push({ type: "text", text: content });
-                    }
-                  }
-                  return newMessages;
-                });
+            // Decode the Uint8Array to text
+            const chunk = decoder.decode(value);
+            console.log("Decoded chunk:", chunk);
+            
+            // Parse SSE format
+            const lines = chunk.split('\n');
+            console.log("Lines to process:", lines);
+            
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                console.log("Extracted SSE data:", data);
+                if (data === '[DONE]') {
+                  console.log("Received [DONE] signal");
+                  break;
+                }
                 
-                // Call onData callback if provided
-                if (options?.onData) {
-                  options.onData(parsed);
+                try {
+                  const parsed = JSON.parse(data);
+                  console.log("Parsed SSE data:", parsed);
+                  
+                  // Handle different types of data from our SSE stream
+                  if (parsed.type === "text-delta") {
+                    const content = parsed.textDelta || '';
+                    console.log("Received text delta:", content);
+                    if (content) {
+                      // Update assistant message with new content
+                      setMessages(prev => {
+                        const newMessages = [...prev];
+                        const lastMessage = newMessages[newMessages.length - 1];
+                        if (lastMessage.role === "assistant") {
+                          const lastPart = lastMessage.parts[lastMessage.parts.length - 1];
+                          if (lastPart && lastPart.type === "text") {
+                            lastPart.text += content;
+                          } else {
+                            lastMessage.parts.push({ type: "text", text: content });
+                          }
+                        }
+                        return newMessages;
+                      });
+                      
+                      // Call onData callback if provided
+                      if (options?.onData) {
+                        options.onData(parsed);
+                      }
+                    }
+                  } else if (parsed.type === "data-finish") {
+                    console.log("Received data-finish signal");
+                    // Stream finished
+                    break;
+                  } else if (parsed.type === "data-error") {
+                    console.log("Received data-error signal:", parsed.data);
+                    // Handle error from the server
+                    throw new Error(parsed.data || "Unknown error from LLM");
+                  } else {
+                    console.log("Received unknown data type:", parsed.type);
+                  }
+                } catch (e) {
+                  console.warn("Failed to parse SSE data:", data);
+                  console.error("SSE parsing error:", e);
                 }
               }
-            } else if (parsed.type === "data-finish") {
-              // Stream finished
-              break;
-            } else if (parsed.type === "data-error") {
-              // Handle error from the server
-              throw new Error(parsed.data || "Unknown error from LLM");
             }
-            // Handle other data types as needed
           }
         } catch (streamError) {
           console.error("Error processing SSE stream:", streamError);
