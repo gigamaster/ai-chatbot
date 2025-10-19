@@ -212,8 +212,13 @@ export async function getLocalChatById({ id }: { id: string }) {
 
 export async function getLocalMessagesByChatId({ id }: { id: string }) {
   try {
-    return await getLocalMessages(id);
+    console.log("getLocalMessagesByChatId called with id:", id);
+    const messages = await getLocalMessages(id);
+    console.log("getLocalMessages returned:", messages);
+    console.log("Number of messages found:", messages.length);
+    return messages;
   } catch (_error) {
+    console.error("Error in getLocalMessagesByChatId:", _error);
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get messages by chat id"

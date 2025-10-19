@@ -127,10 +127,66 @@ export class CustomChatTransport {
 
 // Custom hook to replace useChat
 export function useCustomChat(options: UseChatOptions): UseChatHelpers {
-  const [messages, setMessages] = useState<ChatMessage[]>(options.messages || []);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    console.log("Initializing messages state with initial messages:", options.messages);
+    return options.messages || [];
+  });
   const [status, setStatus] = useState<"idle" | "loading" | "streaming" | "error" | "submitted">("idle");
   const abortControllerRef = useRef<AbortController | null>(null);
   const messageQueueRef = useRef<any[]>([]);
+
+  // Log when messages state changes
+  useEffect(() => {
+    console.log("Messages state updated:", messages);
+    // Save messages to IndexedDB whenever they change
+    if (messages.length > 0 && options.id) {
+      saveMessagesToIndexedDB(options.id, messages);
+    }
+  }, [messages, options.id]);
+
+  // Function to save messages to IndexedDB
+  const saveMessagesToIndexedDB = async (chatId: string, messagesToSave: ChatMessage[]) => {
+    try {
+      console.log("Saving messages to IndexedDB for chat:", chatId);
+      // Transform messages to match IndexedDB schema
+      const messagesForDB = messagesToSave.map(message => ({
+        id: message.id,
+        chatId: chatId,
+        role: message.role,
+        parts: message.parts,
+        attachments: [], // TODO: Handle attachments properly
+        createdAt: new Date(message.metadata?.createdAt || Date.now())
+      }));
+      
+      // Import the saveLocalMessages function dynamically to avoid circular dependencies
+      const { saveLocalMessages } = await import('@/lib/local-db-queries');
+      await saveLocalMessages({ messages: messagesForDB });
+      console.log("Messages saved to IndexedDB successfully");
+    } catch (error) {
+      console.error("Error saving messages to IndexedDB:", error);
+    }
+  };
+
+  // Log when initial messages change and update messages state if needed
+  useEffect(() => {
+    console.log("Initial messages from options:", options.messages);
+    // Check if we have new initial messages that are different from current messages
+    if (options.messages && options.messages.length > 0) {
+      // Check if the messages are actually different
+      const areMessagesDifferent = messages.length !== options.messages.length || 
+        !messages.every((msg, index) => 
+          msg.id === options.messages[index].id && 
+          msg.role === options.messages[index].role
+        );
+      
+      if (areMessagesDifferent) {
+        console.log("Setting messages from initial messages");
+        setMessages(options.messages);
+      } else {
+        console.log("Initial messages are the same as current messages, not updating");
+      }
+    }
+  }, [options.messages]);
 
   // Store the transport in a ref so it's accessible in processMessage
   const transportRef = useRef(options.transport);
@@ -365,6 +421,7 @@ export function useCustomChat(options: UseChatOptions): UseChatHelpers {
     }
   }, [status]);
 
+  
   const stop = useCallback(async () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();

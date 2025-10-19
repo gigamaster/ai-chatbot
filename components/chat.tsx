@@ -52,6 +52,17 @@ export function Chat({
   initialLastContext?: AppUsage;
   initialProviderId?: string;
 }) {
+  console.log("Chat component rendered with props:", {
+    id,
+    initialMessages,
+    initialChatModel,
+    initialVisibilityType,
+    isReadonly,
+    autoResume,
+    initialLastContext,
+    initialProviderId,
+  });
+
   const { visibilityType } = useChatVisibility({
     chatId: id,
     initialVisibilityType,
@@ -172,6 +183,11 @@ export function Chat({
       }
     },
   });
+
+  // Log when the custom chat hook messages change
+  useEffect(() => {
+    console.log("Custom chat hook messages updated:", messages);
+  }, [messages]);
 
   const searchParams = useSearchParams();
   const query = searchParams.get("query");

@@ -33,6 +33,15 @@ function PureMessages({
   isReadonly,
   selectedModelId,
 }: MessagesProps) {
+  console.log("Messages component rendered with props:", {
+    chatId,
+    status,
+    votes,
+    messages,
+    isReadonly,
+    selectedModelId,
+  });
+
   const {
     containerRef: messagesContainerRef,
     endRef: messagesEndRef,

@@ -276,15 +276,18 @@ export async function saveLocalChat(chatData: any) {
 export async function getLocalChat(chatId: string) {
   try {
     const db = await getDb();
+    console.log("getLocalChat called with chatId:", chatId);
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
       const result = await db.get('chats', chatId);
+      console.log("getLocalChat (server) returned:", result);
       return result;
     }
     
     // For browser environments, use IndexedDB
     const result = await db.get('chats', chatId);
+    console.log("getLocalChat (browser) returned:", result);
     return result;
   } catch (error) {
     console.error('Failed to retrieve chat:', error);
@@ -349,6 +352,7 @@ export async function getAllLocalChats(userId: string) {
 export async function saveLocalMessages(chatId: string, messages: any[]) {
   try {
     const db = await getDb();
+    console.log("saveLocalMessages called with chatId:", chatId, "messages:", messages);
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
@@ -373,16 +377,19 @@ export async function saveLocalMessages(chatId: string, messages: any[]) {
       
       // Clear existing messages for this chat
       const chatMessages = await store.index('by-chat').getAll(chatId);
+      console.log("Existing messages for chat:", chatMessages);
       for (const message of chatMessages) {
         await store.delete(message.id);
       }
       
       // Add new messages
+      console.log("Saving new messages:", messages);
       for (const message of messages) {
         await store.add(message);
       }
       
       await transaction.done;
+      console.log("Messages saved successfully");
       return true;
     }
     
@@ -396,14 +403,21 @@ export async function saveLocalMessages(chatId: string, messages: any[]) {
 export async function getLocalMessages(chatId: string) {
   try {
     const db = await getDb();
+    console.log("getLocalMessages called with chatId:", chatId);
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      return await db.getAllFromIndex('messages', 'by-chat', chatId);
+      const result = await db.getAllFromIndex('messages', 'by-chat', chatId);
+      console.log("getLocalMessages (server) returned:", result);
+      console.log("Number of messages (server):", result.length);
+      return result;
     }
     
     // For browser environments, use IndexedDB
-    return await db.getAllFromIndex('messages', 'by-chat', chatId);
+    const result = await db.getAllFromIndex('messages', 'by-chat', chatId);
+    console.log("getLocalMessages (browser) returned:", result);
+    console.log("Number of messages (browser):", result.length);
+    return result;
   } catch (error) {
     console.error('Failed to retrieve messages:', error);
     return [];

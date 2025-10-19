@@ -163,7 +163,8 @@ export function sanitizeText(text: string) {
 }
 
 export function convertToUIMessages(messages: any[]): ChatMessage[] {
-  return messages.map((message) => ({
+  console.log("convertToUIMessages called with:", messages);
+  const result = messages.map((message) => ({
     id: message.id,
     role: message.role as 'user' | 'assistant' | 'system',
     parts: message.parts as UIMessagePart<CustomUIDataTypes, ChatTools>[],
@@ -171,6 +172,8 @@ export function convertToUIMessages(messages: any[]): ChatMessage[] {
       createdAt: formatISO(message.createdAt),
     },
   }));
+  console.log("convertToUIMessages result:", result);
+  return result;
 }
 
 export function getTextFromMessage(message: ChatMessage): string {
