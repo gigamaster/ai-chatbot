@@ -8,6 +8,7 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
 } from "react";
 import useSWR from "swr";
 import { useArtifact } from "@/hooks/use-artifact";
@@ -21,6 +22,14 @@ import { FileIcon, FullscreenIcon, ImageIcon, LoaderIcon } from "./icons";
 import { ImageEditor } from "./image-editor";
 import { SpreadsheetEditor } from "./sheet-editor";
 import { Editor } from "./text-editor";
+import { clientDocumentService } from "@/lib/client-document-service";
+
+// Custom fetcher for client document service
+const documentFetcher = async (key: string) => {
+  // Extract document ID from the key (format: client-document-{id})
+  const id = key.replace('client-document-', '');
+  return await clientDocumentService.getDocument(id);
+};
 
 type DocumentPreviewProps = {
   isReadonly: boolean;
@@ -34,12 +43,35 @@ export function DocumentPreview({
   args,
 }: DocumentPreviewProps) {
   const { artifact, setArtifact } = useArtifact();
+  
+  // Replace SWR with direct client-side state management
+  const [documents, setDocuments] = useState<Document[] | null>(null);
+  const [isDocumentsFetching, setIsDocumentsFetching] = useState(false);
+  
+  // Fetch document when result changes
+  useEffect(() => {
+    const fetchDocument = async () => {
+      if (!result) {
+        setDocuments(null);
+        return;
+      }
+      
+      setIsDocumentsFetching(true);
+      try {
+        const docs = await clientDocumentService.getDocument(result.id);
+        setDocuments(docs);
+      } catch (error) {
+        console.error("Failed to fetch document:", error);
+        setDocuments(null);
+      } finally {
+        setIsDocumentsFetching(false);
+      }
+    };
+    
+    fetchDocument();
+  }, [result]);
 
-  const { data: documents, isLoading: isDocumentsFetching } = useSWR<
-    Document[]
-  >(result ? `/api/local-document?id=${result.id}` : null, fetcher);
-
-  const previewDocument = useMemo(() => documents?.[0], [documents]);
+  const previewDocument = documents?.[0];
   const hitboxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

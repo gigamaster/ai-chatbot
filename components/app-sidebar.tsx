@@ -43,21 +43,27 @@ export function AppSidebar({ user }: { user: LocalUser | undefined }) {
   const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
 
-  const handleDeleteAll = () => {
-    const deletePromise = fetch("/api/local-history", {
-      method: "DELETE",
-    });
-
-    toast.promise(deletePromise, {
-      loading: "Deleting all chats...",
-      success: () => {
-        // We no longer use SWR for chat history, so we don't need to mutate it
-        router.push("/");
-        setShowDeleteAllDialog(false);
-        return "All chats deleted successfully";
-      },
-      error: "Failed to delete all chats",
-    });
+  const handleDeleteAll = async () => {
+    if (!user) return;
+    
+    try {
+      // Use client-side service instead of API call
+      const { clientHistoryService } = await import('@/lib/client-history-service');
+      const result = await clientHistoryService.deleteAllChats(user);
+      
+      // Success handling
+      router.push("/");
+      setShowDeleteAllDialog(false);
+      toast.success("All chats deleted successfully");
+      
+      // Dispatch a custom event to refresh the sidebar
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('chatHistoryUpdated'));
+      }
+    } catch (error) {
+      console.error("Failed to delete all chats:", error);
+      toast.error("Failed to delete all chats");
+    }
   };
 
   return (

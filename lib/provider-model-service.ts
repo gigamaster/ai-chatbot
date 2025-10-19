@@ -1,5 +1,5 @@
 import { getAllCustomProviders, getCustomProvider, saveCustomProvider, deleteCustomProvider } from "@/lib/local-db-queries";
-import { testProviderConnection } from "@/app/(chat)/settings/providers/test-provider-connection-action";
+import { testProviderConnection } from "@/lib/client-test-provider";
 
 // Define types - using 'enabled' for consistency with UI, but mapping to 'isEnabled' for database
 export interface ProviderModel {

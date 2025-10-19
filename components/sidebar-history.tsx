@@ -3,7 +3,7 @@
 import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
 import { motion } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
   SidebarGroup,
@@ -77,9 +77,25 @@ const groupChatsByDate = (chats: Chat[]): GroupedChats => {
 
 export function SidebarHistory({ user }: { user: any | undefined }) {
   const { setOpenMobile } = useSidebar();
-  const { id } = useParams();
+  const params = useParams();
   const router = useRouter();
   
+  // Unwrap the params to get the chat ID
+  const [id, setId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    // Handle both Promise and direct object cases
+    if (params instanceof Promise) {
+      params.then((unwrappedParams) => {
+        const chatId = unwrappedParams?.id;
+        setId(Array.isArray(chatId) ? chatId[0] || null : chatId || null);
+      });
+    } else {
+      const chatId = params?.id;
+      setId(Array.isArray(chatId) ? chatId[0] || null : chatId || null);
+    }
+  }, [params]);
+
   // State for chat history
   const [chatHistory, setChatHistory] = useState<Chat[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -129,12 +145,11 @@ export function SidebarHistory({ user }: { user: any | undefined }) {
     if (!deleteId) return;
     
     try {
-      // Delete chat from IndexedDB
-      const response = await fetch(`/api/local-db?operation=deleteChat&id=${deleteId}`, {
-        method: "DELETE",
-      });
+      // Delete chat using client-side service instead of API call
+      const { clientDbService } = await import('@/lib/client-db-service');
+      const result = await clientDbService.deleteChat(deleteId);
       
-      if (response.ok) {
+      if (result.success) {
         // Refresh chat history
         await fetchChats();
         toast.success("Chat deleted successfully");

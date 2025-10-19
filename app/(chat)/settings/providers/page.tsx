@@ -24,6 +24,7 @@ import {
 import { getCustomProvider } from "@/lib/local-db-queries";
 import { nanoid } from "nanoid";
 import { Loader2 } from "lucide-react";
+import { testProviderConnection } from "@/lib/client-test-provider";
 
 // Define the provider configuration type
 interface CustomProviderConfig {
@@ -139,19 +140,16 @@ export default function ProviderManagementPage() {
     setTestingProviderId(provider.id);
     
     try {
-      const response = await fetch("/api/test-provider-connection", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(provider),
-      });
-      
-      const result = await response.json();
+      // Use client-side test function instead of API call
+      const result = await testProviderConnection(provider);
       
       setTestResults(prev => ({
         ...prev,
-        [provider.id]: result
+        [provider.id]: {
+          success: result.success,
+          message: result.message || "",
+          error: result.error
+        }
       }));
       
       if (result.success) {
@@ -187,15 +185,17 @@ export default function ProviderManagementPage() {
     setTestingProviderId(tempProvider.id);
     
     try {
-      const response = await fetch("/api/test-provider-connection", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(tempProvider),
-      });
+      // Use client-side test function instead of API call
+      const result = await testProviderConnection(tempProvider);
       
-      const result = await response.json();
+      setTestResults(prev => ({
+        ...prev,
+        [tempProvider.id]: {
+          success: result.success,
+          message: result.message || "",
+          error: result.error
+        }
+      }));
       
       if (result.success) {
         toast.success(`Connection successful for ${name}`);
