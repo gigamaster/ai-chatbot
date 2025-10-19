@@ -13,288 +13,169 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel,
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
+} from "@/components/ui/alert-dialog";
+import { Trash2, Pencil, Plus, TestTube } from "lucide-react";
 import { toast } from "sonner";
 import { 
-  saveCustomProvider, 
-  getAllCustomProviders, 
-  deleteCustomProvider,
-  getCustomProvider
-} from "@/lib/local-db-queries";
-import { nanoid } from "nanoid";
-import { Loader2 } from "lucide-react";
+  getAllProviders, 
+  saveProvider, 
+  deleteProvider,
+  testProvider
+} from "@/lib/provider-model-service";
+import { ProviderTestButton } from "./provider-test-button";
+import { generateUUID } from "@/lib/utils";
 
-// Define the provider configuration type
-interface CustomProviderConfig {
+interface Provider {
   id: string;
   name: string;
-  baseUrl: string;
   apiKey: string;
+  baseUrl?: string;
   model: string;
-  createdAt: string;
-  updatedAt: string;
-  isEnabled: boolean;
+  enabled: boolean;
 }
 
 export function ProviderCRUDTable() {
-  const [providers, setProviders] = useState<CustomProviderConfig[]>([]);
-  const [isAddingProvider, setIsAddingProvider] = useState(false);
-  const [editingProvider, setEditingProvider] = useState<CustomProviderConfig | null>(null);
-  const [testingProviderId, setTestingProviderId] = useState<string | null>(null);
-  
-  // Form state
-  const [name, setName] = useState("");
-  const [baseUrl, setBaseUrl] = useState("");
-  const [apiKey, setApiKey] = useState("");
-  const [model, setModel] = useState("");
-  const [isEnabled, setIsEnabled] = useState(true);
-
-  // Load providers on component mount
-  useEffect(() => {
-    loadProviders();
-  }, []);
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
+  const [formData, setFormData] = useState<Omit<Provider, "id"> & { id?: string }>({
+    name: "",
+    apiKey: "",
+    baseUrl: "",
+    model: "",
+    enabled: true,
+  });
 
   const loadProviders = async () => {
     try {
-      const providerList = await getAllCustomProviders();
+      setLoading(true);
+      const providerList = await getAllProviders();
       setProviders(providerList);
     } catch (error) {
       console.error("Failed to load providers:", error);
       toast.error("Failed to load providers");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const resetForm = () => {
-    setName("");
-    setBaseUrl("");
-    setApiKey("");
-    setModel("");
-    setIsEnabled(true);
+  useEffect(() => {
+    loadProviders();
+  }, []);
+
+  const handleCreate = () => {
     setEditingProvider(null);
-    setIsAddingProvider(false);
+    setFormData({
+      name: "",
+      apiKey: "",
+      baseUrl: "",
+      model: "",
+      enabled: true,
+    });
+    setIsDialogOpen(true);
   };
 
-  const handleAddProvider = () => {
-    resetForm();
-    setIsAddingProvider(true);
-  };
-
-  const handleEditProvider = (provider: CustomProviderConfig) => {
-    setName(provider.name);
-    setBaseUrl(provider.baseUrl);
-    setApiKey(provider.apiKey);
-    setModel(provider.model);
-    setIsEnabled(provider.isEnabled);
+  const handleEdit = (provider: Provider) => {
     setEditingProvider(provider);
-    setIsAddingProvider(true);
+    setFormData({
+      id: provider.id,
+      name: provider.name || "",
+      apiKey: provider.apiKey || "",
+      baseUrl: provider.baseUrl || "",
+      model: provider.model || "",
+      enabled: provider.enabled !== undefined ? provider.enabled : true,
+    });
+    setIsDialogOpen(true);
   };
 
-  const handleDeleteProvider = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this provider?")) {
-      try {
-        await deleteCustomProvider(id);
+  const handleDelete = async (id: string) => {
+    try {
+      const success = await deleteProvider(id);
+      if (success) {
         toast.success("Provider deleted successfully");
-        loadProviders(); // Refresh the list
-      } catch (error) {
-        console.error("Failed to delete provider:", error);
+        loadProviders();
+      } else {
         toast.error("Failed to delete provider");
       }
+    } catch (error) {
+      console.error("Failed to delete provider:", error);
+      toast.error("Failed to delete provider");
     }
   };
 
-  const handleTestProvider = async (provider: CustomProviderConfig) => {
-    setTestingProviderId(provider.id);
-    
+  const handleToggleEnabled = async (provider: Provider) => {
     try {
-      // Validate required fields before testing
-      if (!provider.baseUrl || !provider.apiKey) {
-        toast.error("Base URL and API key are required for testing");
-        return;
-      }
+      const updatedProvider = {
+        ...provider,
+        enabled: !provider.enabled
+      };
       
-      const response = await fetch("/api/test-provider", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(provider),
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        toast.success(`Connection successful for ${provider.name}`);
+      const success = await saveProvider(updatedProvider);
+      if (success) {
+        toast.success(`Provider ${updatedProvider.enabled ? 'enabled' : 'disabled'} successfully`);
+        loadProviders(); // Refresh the list
       } else {
-        toast.error(`Connection failed for ${provider.name}: ${result.error}`);
+        toast.error("Failed to update provider status");
       }
     } catch (error) {
-      console.error("Failed to test provider:", error);
-      toast.error(`Failed to test provider ${provider.name}`);
-    } finally {
-      setTestingProviderId(null);
+      console.error("Failed to toggle provider status:", error);
+      toast.error("Failed to update provider status");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Basic validation
-    if (!name || !baseUrl || !apiKey) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-    
     try {
-      const providerData: CustomProviderConfig = {
-        id: editingProvider?.id || nanoid(),
-        name,
-        baseUrl,
-        apiKey, // In a real implementation, this would be encrypted
-        model,
-        createdAt: editingProvider?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        isEnabled,
+      const providerData: Provider = {
+        id: editingProvider?.id || generateUUID(),
+        name: formData.name || "",
+        apiKey: formData.apiKey || "",
+        baseUrl: formData.baseUrl || "",
+        model: formData.model || "",
+        enabled: formData.enabled !== undefined ? formData.enabled : true,
       };
       
-      await saveCustomProvider(providerData);
-      toast.success(editingProvider ? "Provider updated successfully" : "Provider added successfully");
-      resetForm();
-      loadProviders(); // Refresh the list
+      const success = await saveProvider(providerData);
+      if (success) {
+        toast.success(editingProvider ? "Provider updated successfully" : "Provider created successfully");
+        setIsDialogOpen(false);
+        loadProviders();
+      } else {
+        toast.error("Failed to save provider");
+      }
     } catch (error) {
       console.error("Failed to save provider:", error);
       toast.error("Failed to save provider");
     }
   };
 
+  if (loading) {
+    return <div>Loading providers...</div>;
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div className="text-sm text-muted-foreground">
-          {providers.length} provider{providers.length !== 1 ? 's' : ''} configured
-        </div>
-        <Button onClick={handleAddProvider}>Add Provider</Button>
+      <div className="flex justify-between">
+        <h3 className="text-lg font-medium">AI Providers</h3>
+        <Button onClick={handleCreate}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Provider
+        </Button>
       </div>
-
-      {isAddingProvider ? (
-        <form onSubmit={handleSubmit} className="space-y-4 border rounded-lg p-4">
-          <h3 className="text-lg font-medium">
-            {editingProvider ? "Edit Provider" : "Add New Provider"}
-          </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Provider Name *</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., OpenAI, Google Gemini"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="baseUrl">Base URL *</Label>
-              <Input
-                id="baseUrl"
-                value={baseUrl}
-                onChange={(e) => setBaseUrl(e.target.value)}
-                placeholder="e.g., https://api.openai.com/v1"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="apiKey">API Key *</Label>
-              <Input
-                id="apiKey"
-                type="password"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="Your API key"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="model">Default Model</Label>
-              <Input
-                id="model"
-                value={model}
-                onChange={(e) => setModel(e.target.value)}
-                placeholder="e.g., gpt-4, gemini-pro"
-              />
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="isEnabled"
-              checked={isEnabled}
-              onCheckedChange={setIsEnabled}
-            />
-            <Label htmlFor="isEnabled">Enable this provider</Label>
-          </div>
-          
-          <div className="flex space-x-2">
-            <Button type="submit">
-              {editingProvider ? "Update Provider" : "Add Provider"}
-            </Button>
-            <Button 
-              type="button" 
-              variant="secondary"
-              onClick={async () => {
-                // Validate required fields before testing
-                if (!name || !baseUrl || !apiKey) {
-                  toast.error("Please fill in all required fields (Name, Base URL, and API Key) before testing");
-                  return;
-                }
-                
-                // Create a temporary provider object with current form values
-                const tempProvider: CustomProviderConfig = {
-                  id: editingProvider?.id || 'new',
-                  name,
-                  baseUrl,
-                  apiKey,
-                  model,
-                  createdAt: editingProvider?.createdAt || new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                  isEnabled: true,
-                };
-                
-                try {
-                  const response = await fetch("/api/test-provider", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(tempProvider),
-                  });
-                  
-                  const result = await response.json();
-                  
-                  if (result.success) {
-                    toast.success(`Connection successful for ${name}`);
-                  } else {
-                    toast.error(`Connection failed for ${name}: ${result.error}`);
-                  }
-                } catch (error) {
-                  console.error("Failed to test provider:", error);
-                  toast.error(`Failed to test provider ${name}`);
-                }
-              }}
-              disabled={!name || !baseUrl || !apiKey}
-            >
-              Test Connection
-            </Button>
-            <Button type="button" variant="outline" onClick={resetForm}>
-              Cancel
-            </Button>
-          </div>
-        </form>
-      ) : null}
-
-      {providers.length > 0 ? (
+      
+      <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -309,67 +190,136 @@ export function ProviderCRUDTable() {
             {providers.map((provider) => (
               <TableRow key={provider.id}>
                 <TableCell className="font-medium">{provider.name}</TableCell>
-                <TableCell>{provider.model || "-"}</TableCell>
-                <TableCell className="max-w-xs truncate">{provider.baseUrl}</TableCell>
+                <TableCell>{provider.model}</TableCell>
+                <TableCell>{provider.baseUrl}</TableCell>
                 <TableCell>
-                  {provider.isEnabled ? (
-                    <Badge variant="default">Enabled</Badge>
-                  ) : (
-                    <Badge variant="secondary">Disabled</Badge>
-                  )}
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      checked={provider.enabled}
+                      onCheckedChange={() => handleToggleEnabled(provider)}
+                    />
+                    <span className={provider.enabled ? "text-green-600" : "text-red-600"}>
+                      {provider.enabled ? "Enabled" : "Disabled"}
+                    </span>
+                  </div>
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
+                    <ProviderTestButton provider={provider} />
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleTestProvider(provider)}
-                      disabled={testingProviderId === provider.id}
+                      onClick={() => handleEdit(provider)}
                     >
-                      {testingProviderId === provider.id ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Testing...
-                        </>
-                      ) : (
-                        "Test"
-                      )}
+                      <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditProvider(provider)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteProvider(provider.id)}
-                    >
-                      Delete
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the provider.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(provider.id)}>
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      ) : (
-        <div className="text-center py-8 text-muted-foreground border rounded-lg">
-          <p className="font-medium">No AI providers configured</p>
-          <p className="mt-2 text-sm">Add your first OpenAI-compatible provider to get started.</p>
-          <p className="mt-1 text-xs">Examples: OpenAI, Google Gemini, Groq, Hugging Face, OpenRouter, DeepSeek, etc.</p>
-          <div className="mt-4">
-            <Button onClick={handleAddProvider}>Add Provider</Button>
+        
+        {providers.length === 0 && (
+          <div className="p-8 text-center text-muted-foreground">
+            No providers configured. Add your first provider to get started.
           </div>
-        </div>
-      )}
-
-      <div className="text-xs text-muted-foreground pt-2">
-        Note: All providers must be OpenAI API compatible and use the generic OpenAI-compatible interface. 
-        This ensures compatibility with any provider that implements the OpenAI API standard.
+        )}
       </div>
+      
+      {isDialogOpen && (
+        <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <AlertDialogContent className="sm:max-w-[425px]">
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {editingProvider ? "Edit Provider" : "Add Provider"}
+              </AlertDialogTitle>
+            </AlertDialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Provider Name</Label>
+                <Input
+                  id="name"
+                  value={formData.name || ""}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="model">Model Name</Label>
+                <Input
+                  id="model"
+                  value={formData.model || ""}
+                  onChange={(e) => setFormData({...formData, model: e.target.value})}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="baseUrl">Base URL</Label>
+                <Input
+                  id="baseUrl"
+                  value={formData.baseUrl || ""}
+                  onChange={(e) => setFormData({...formData, baseUrl: e.target.value})}
+                  placeholder="https://api.openai.com/v1"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="apiKey">API Key</Label>
+                <Input
+                  id="apiKey"
+                  type="password"
+                  value={formData.apiKey || ""}
+                  onChange={(e) => setFormData({...formData, apiKey: e.target.value})}
+                  required
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <Label htmlFor="enabled">Enabled</Label>
+                <Switch
+                  id="enabled"
+                  checked={formData.enabled !== undefined ? formData.enabled : true}
+                  onCheckedChange={(checked) => setFormData({...formData, enabled: checked})}
+                />
+              </div>
+              
+              <AlertDialogFooter>
+                <AlertDialogCancel type="button" onClick={() => setIsDialogOpen(false)}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction type="submit">
+                  {editingProvider ? "Update" : "Create"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </form>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }

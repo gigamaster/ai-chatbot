@@ -139,7 +139,7 @@ export default function ProviderManagementPage() {
     setTestingProviderId(provider.id);
     
     try {
-      const response = await fetch("/api/test-provider", {
+      const response = await fetch("/api/test-provider-connection", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -187,7 +187,7 @@ export default function ProviderManagementPage() {
     setTestingProviderId(tempProvider.id);
     
     try {
-      const response = await fetch("/api/test-provider", {
+      const response = await fetch("/api/test-provider-connection", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -118,19 +118,16 @@ export async function getProviders(): Promise<any[]> {
   // First try to get from server memory
   const serverProviders = getServerProviders();
   if (serverProviders && serverProviders.length > 0) {
-    console.log("DEBUG: Returning providers from server memory:", JSON.stringify(serverProviders, null, 2));
     return serverProviders;
   }
   
   // If server memory is empty, try to get from IndexedDB
-  console.log("DEBUG: Server memory empty, trying IndexedDB");
   try {
-    const { getAllCustomProviders } = await import('./local-db-queries');
-    const indexedDBProviders = await getAllCustomProviders();
-    console.log("DEBUG: Providers from IndexedDB:", JSON.stringify(indexedDBProviders, null, 2));
+    const { getAllProviders } = await import('@/lib/provider-model-service');
+    const indexedDBProviders = await getAllProviders();
     return indexedDBProviders || [];
   } catch (error) {
-    console.error("DEBUG: Failed to get providers from IndexedDB:", error);
+    console.error("Failed to get providers from IndexedDB:", error);
     return [];
   }
 }
@@ -142,12 +139,7 @@ export async function saveProviders(_userId: string, providers: any[]) {
 
 export async function getProviderConfig(providerId: string) {
   const providers = getServerProviders() || [];
-  console.log("=== getProviderConfig called ===");
-  console.log("Looking for provider with ID:", providerId);
-  console.log("Available providers:", JSON.stringify(providers, null, 2));
-  
   const provider = providers.find((p: any) => p.id === providerId);
-  console.log("Found provider:", provider);
   
   // Fix Google base URL to ensure it has the correct format
   if (provider && provider.baseUrl && provider.baseUrl.includes('generativelanguage.googleapis.com')) {
@@ -161,7 +153,6 @@ export async function getProviderConfig(providerId: string) {
     }
   }
   
-  console.log("Returning provider config:", provider);
   return provider || null;
 }
 

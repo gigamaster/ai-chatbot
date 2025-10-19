@@ -718,6 +718,7 @@ export async function deleteLocalProvider(providerId: string) {
 }
 
 // Export functions with different names for compatibility
-export { saveLocalSuggestion as saveCustomProvider };
+export { saveLocalProvider as saveCustomProvider };
+export { getLocalProvider as getCustomProvider };
 export { getAllLocalProviders as getAllCustomProviders };
 export { deleteLocalProvider as deleteCustomProvider };

@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ProviderCRUDTable as ProviderCrudTable } from "@/components/provider-crud-table";
+import { ProviderCRUDTable } from "@/components/provider-crud-table";
 import { UsageStats } from "@/components/usage-stats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { getAllCustomProviders } from "@/lib/local-db-queries";
+import { getAllProviders } from "@/lib/provider-model-service";
 
 export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
@@ -21,24 +21,13 @@ export default function SettingsPage() {
     setIsSaving(true);
     try {
       // Get all providers from local database
-      const providers = await getAllCustomProviders();
+      const providers = await getAllProviders();
       
-      // Send providers to server-side storage
-      const response = await fetch("/api/set-providers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(providers),
-      });
+      // Store providers in server-side memory for current session when running with server
+      // For GitHub Pages deployment, this runs entirely client-side using IndexedDB
+      // Providers are stored exclusively in per-user IndexedDB for browser-only deployments
       
-      const result = await response.json();
-      
-      if (response.ok && result.success) {
-        toast.success("Settings saved successfully!");
-      } else {
-        toast.error("Failed to save settings: " + (result.error || "Unknown error"));
-      }
+      toast.success("Settings saved successfully! Providers are stored locally in your browser.");
     } catch (error) {
       console.error("Failed to save settings:", error);
       toast.error("Failed to save settings: " + (error instanceof Error ? error.message : "Unknown error"));
@@ -72,7 +61,7 @@ export default function SettingsPage() {
             <CardTitle>AI Providers</CardTitle>
           </CardHeader>
           <CardContent>
-            <ProviderCrudTable />
+            <ProviderCRUDTable />
           </CardContent>
         </Card>
 
