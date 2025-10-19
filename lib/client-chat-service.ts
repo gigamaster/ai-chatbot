@@ -94,30 +94,39 @@ async function createSSEStream(response: Response) {
 function getUserId(): string | null {
   try {
     if (typeof window !== 'undefined') {
+      console.log("Getting user ID from browser environment");
       // Try to get user from localStorage first
       const storedUser = localStorage.getItem('local_user');
+      console.log("Stored user in localStorage:", storedUser);
       if (storedUser) {
         const user = JSON.parse(storedUser);
+        console.log("Found user in localStorage:", user);
         return user.id;
       }
       
       // If no user in localStorage, check for user cookie
       const cookieString = document.cookie;
+      console.log("Cookie string:", cookieString);
       const cookies = cookieString.split(';').reduce((acc, cookie) => {
         const [name, value] = cookie.trim().split('=');
         acc[name] = value;
         return acc;
       }, {} as Record<string, string>);
       
+      console.log("Parsed cookies:", cookies);
+      
       const userCookie = cookies['local_user'];
+      console.log("User cookie:", userCookie);
       if (userCookie) {
         const user = JSON.parse(decodeURIComponent(userCookie));
+        console.log("Found user in cookie:", user);
         return user.id;
       }
     }
   } catch (error) {
     console.error("Error getting user ID:", error);
   }
+  console.log("No user found");
   return null;
 }
 
@@ -187,16 +196,34 @@ export class ClientChatService {
       });
       
       console.log("Generated chat title:", title);
+      console.log("Chat data to save:", {
+        id: chatId,
+        userId: userId,
+        title: title,
+        visibility: visibilityType,
+      });
       
       // Save the chat to the database
       try {
-        await saveLocalChat({
+        console.log("Attempting to save chat with data:", {
           id: chatId,
           userId: userId,
           title: title,
           visibility: visibilityType,
         });
-        console.log("Chat saved successfully");
+        const savedChat = await saveLocalChat({
+          id: chatId,
+          userId: userId,
+          title: title,
+          visibility: visibilityType,
+        });
+        console.log("Chat saved successfully:", savedChat);
+        
+        // Dispatch a custom event to notify that a chat has been saved
+        // This will allow the sidebar to refresh its chat history
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('chatSaved', { detail: { chatId, userId } }));
+        }
       } catch (saveError) {
         console.error("Error saving chat:", saveError);
         // Don't throw an error here as the chat functionality should still work

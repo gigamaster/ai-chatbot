@@ -3,7 +3,6 @@
 import { useSearchParams } from "next/navigation";
 import { startTransition, useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
-import { unstable_serialize } from "swr/infinite";
 import { ChatHeader } from "@/components/chat-header";
 import {
   AlertDialog,
@@ -28,7 +27,6 @@ import { Artifact } from "./artifact";
 import { useDataStream } from "./data-stream-provider";
 import { Messages } from "./messages";
 import { MultimodalInput } from "./multimodal-input";
-import { getChatHistoryPaginationKey } from "./sidebar-history";
 import { toast } from "./toast";
 import type { VisibilityType } from "./visibility-selector";
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
@@ -157,7 +155,7 @@ export function Chat({
         const chatId = id;
         console.log("Using chat ID:", chatId);
         
-        // Create the request body
+        // Create Create the request body
         const requestBody = {
           id: chatId, // Use the proper chat ID
           message: messageWithId,
@@ -178,7 +176,10 @@ export function Chat({
       }
     },
     onFinish: () => {
-      mutate(unstable_serialize(getChatHistoryPaginationKey));
+      // Instead, we'll dispatch a custom event to notify the sidebar to refresh
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('chatSaved'));
+      }
     },
     onError: (error) => {
       if (error instanceof ChatSDKError) {

@@ -4,7 +4,8 @@ import { Chat } from "@/components/chat";
 import { DataStreamHandler } from "@/components/data-stream-handler";
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
 import { generateUUID } from "@/lib/utils";
-import { saveLocalChat } from "@/lib/local-db-queries";
+// Remove the import for saveLocalChat since we're not creating the chat here
+// import { saveLocalChat } from "@/lib/local-db-queries";
 
 export default async function Page() {
   // Check for local user in cookies
@@ -30,7 +31,9 @@ export default async function Page() {
   // Generate a new chat ID
   const id = generateUUID();
 
-  // Save the chat immediately when it's created
+  // Remove the chat creation here - let it be created when the user sends the first message
+  // This ensures that the chat is created in the browser where IndexedDB is available
+  /*
   try {
     await saveLocalChat({
       id,
@@ -41,6 +44,7 @@ export default async function Page() {
   } catch (error) {
     console.error("Failed to save chat:", error);
   }
+  */
 
   const modelIdFromCookie = cookieStore.get("chat-model");
   const providerIdFromCookie = cookieStore.get("chat-provider");
