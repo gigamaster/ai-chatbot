@@ -128,6 +128,55 @@ function PureMultimodalInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
 
+  useEffect(() => {
+    const handleFileSelect = async (event: Event) => {
+      const input = event.target as HTMLInputElement;
+      if (input.files && input.files.length > 0) {
+        const files = Array.from(input.files);
+        setUploadQueue(files.map(file => file.name));
+        
+        try {
+          for (const file of files) {
+            // Only process image files
+            if (file.type === "image/jpeg" || file.type === "image/png") {
+              const reader = new FileReader();
+              const fileData = await new Promise<string>((resolve, reject) => {
+                reader.onload = (e) => resolve(e.target?.result as string);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+              });
+              
+              setAttachments(prev => [
+                ...prev,
+                {
+                  url: fileData,
+                  name: file.name,
+                  contentType: file.type,
+                }
+              ]);
+            }
+          }
+        } catch (error) {
+          console.error("Error processing files:", error);
+          toast.error("Failed to process file attachments");
+        } finally {
+          setUploadQueue([]);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+        }
+      }
+    };
+
+    const fileInput = fileInputRef.current;
+    if (fileInput) {
+      fileInput.addEventListener("change", handleFileSelect);
+      return () => {
+        fileInput.removeEventListener("change", handleFileSelect);
+      };
+    }
+  }, [setAttachments]);
+
   const submitForm = useCallback(async () => {
     console.log("=== submitForm called ===");
     
@@ -277,6 +326,15 @@ function PureMultimodalInput({
 
   return (
     <div className={cn("relative flex w-full flex-col gap-4", className)}>
+      {/* Hidden file input element */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png"
+        className="hidden"
+        multiple
+      />
+      
       {messages.length === 0 &&
         attachments.length === 0 &&
         uploadQueue.length === 0 && (
@@ -349,6 +407,11 @@ function PureMultimodalInput({
         </div>
         <PromptInputToolbar className="!border-top-0 border-t-0! p-0 shadow-none dark:border-0 dark:border-transparent!">
           <PromptInputTools className="gap-0 sm:gap-0.5">
+            <AttachmentsButton 
+              fileInputRef={fileInputRef}
+              status={status}
+              selectedModelId={selectedModelId}
+            />
             <ModelSelectorCompact
               onModelChange={(modelId, providerId) => {
                 console.log("Model changed:", { modelId, providerId });
@@ -416,7 +479,7 @@ function PureAttachmentsButton({
     <Button
       className="aspect-square h-8 rounded-lg p-1 transition-colors hover:bg-accent"
       data-testid="attachments-button"
-      disabled={status !== "ready" || !attachmentsEnabled}
+      disabled={(status !== "idle" && status !== "ready") || !attachmentsEnabled}
       onClick={(event) => {
         event.preventDefault();
         fileInputRef.current?.click();
