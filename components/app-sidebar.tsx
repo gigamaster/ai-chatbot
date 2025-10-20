@@ -88,7 +88,7 @@ export function AppSidebar({ user }: { user: LocalUser | undefined }) {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
-                        className="h-8 p-1 md:h-fit md:p-2"
+                        className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500 h-8 p-1 md:h-fit md:p-2"
                         onClick={() => setShowDeleteAllDialog(true)}
                         type="button"
                         variant="ghost"
@@ -104,7 +104,7 @@ export function AppSidebar({ user }: { user: LocalUser | undefined }) {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      className="h-8 p-1 md:h-fit md:p-2"
+                      className="cursor-pointer h-8 p-1 md:h-fit md:p-2"
                       onClick={() => {
                         setOpenMobile(false);
                         router.push("/");

@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { 
   MoreHorizontalIcon, 
+  PencilEditIcon,
   TrashIcon, 
   ShareIcon, 
   LockIcon, 
@@ -65,6 +66,17 @@ const PureChatItem = ({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end" side="bottom">
+
+          {/* we need a function to rename the chat */}
+          <DropdownMenuItem
+            className="cursor-pointer"
+            onSelect={() => onDelete(chat.id)}
+          >
+            <PencilEditIcon />
+            <span>Rename</span>
+          </DropdownMenuItem>
+
+          {/* re-use this dropdown menu sub for download : json, markdown, text */}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger className="cursor-pointer">
               <ShareIcon />

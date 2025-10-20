@@ -31,21 +31,6 @@ export default async function Page() {
   // Generate a new chat ID
   const id = generateUUID();
 
-  // Remove the chat creation here - let it be created when the user sends the first message
-  // This ensures that the chat is created in the browser where IndexedDB is available
-  /*
-  try {
-    await saveLocalChat({
-      id,
-      userId: localUser.id,
-      title: "New Chat",
-      visibility: "private",
-    });
-  } catch (error) {
-    console.error("Failed to save chat:", error);
-  }
-  */
-
   const modelIdFromCookie = cookieStore.get("chat-model");
   const providerIdFromCookie = cookieStore.get("chat-provider");
 
