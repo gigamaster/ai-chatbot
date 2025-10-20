@@ -44,7 +44,6 @@ import {
 import { PreviewAttachment } from "./preview-attachment";
 import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
-import type { VisibilityType } from "./visibility-selector";
 import { ProviderModelSelector } from "./provider-model-selector";
 
 function PureMultimodalInput({
@@ -59,7 +58,6 @@ function PureMultimodalInput({
   setMessages,
   sendMessage,
   className,
-  selectedVisibilityType,
   selectedModelId,
   selectedProviderId,
   onModelChange,
@@ -76,7 +74,6 @@ function PureMultimodalInput({
   setMessages: any;
   sendMessage: any;
   className?: string;
-  selectedVisibilityType: VisibilityType;
   selectedModelId: string;
   selectedProviderId?: string;
   onModelChange?: (modelId: string, providerId?: string) => void;
@@ -285,7 +282,6 @@ function PureMultimodalInput({
         uploadQueue.length === 0 && (
           <SuggestedActions
             chatId={chatId}
-            selectedVisibilityType={selectedVisibilityType}
             sendMessage={sendMessage}
             setInput={setInput}
           />
@@ -390,9 +386,6 @@ export const MultimodalInput = memo(
       return false;
     }
     if (!equal(prevProps.attachments, nextProps.attachments)) {
-      return false;
-    }
-    if (prevProps.selectedVisibilityType !== nextProps.selectedVisibilityType) {
       return false;
     }
     if (prevProps.selectedModelId !== nextProps.selectedModelId) {

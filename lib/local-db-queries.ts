@@ -1,7 +1,6 @@
 import { ChatSDKError } from "@/lib/errors";
 import { generateUUID } from "@/lib/utils";
 import type { ArtifactKind } from "@/components/artifact";
-import type { VisibilityType } from "@/components/visibility-selector";
 import type { AppUsage } from "@/lib/usage";
 import {
   saveLocalChat as saveChatToDb,
@@ -56,20 +55,17 @@ export async function saveLocalChat({
   id,
   userId,
   title,
-  visibility,
 }: {
   id: string;
   userId: string;
   title: string;
-  visibility: VisibilityType;
 }) {
   try {
-    console.log("saveLocalChat called with:", { id, userId, title, visibility });
+    console.log("saveLocalChat called with:", { id, userId, title });
     const result = await saveChatToDb({
       id,
       userId,
       title,
-      visibility,
     });
     console.log("saveChatToDb returned:", result);
     return result;
@@ -467,31 +463,6 @@ export async function deleteCustomProvider(providerId: string) {
     return await deleteLocalProvider(providerId);
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to delete provider");
-  }
-}
-
-export async function updateChatVisibilityById({
-  chatId,
-  visibility,
-}: {
-  chatId: string;
-  visibility: VisibilityType;
-}) {
-  try {
-    const chat = await getLocalChat(chatId);
-    if (!chat) {
-      throw new ChatSDKError("not_found:database", "Chat not found");
-    }
-
-    return await saveChatToDb({
-      ...chat,
-      visibility,
-    });
-  } catch (_error) {
-    throw new ChatSDKError(
-      "bad_request:database",
-      "Failed to update chat visibility by id"
-    );
   }
 }
 

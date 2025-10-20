@@ -24,7 +24,6 @@ export const postRequestBodySchema = z.object({
   }),
   selectedChatModel: z.string(), // Accept any string for the model ID
   selectedProviderId: z.string().optional(), // Optional provider ID for accurate provider selection
-  selectedVisibilityType: z.enum(["public", "private"]),
 });
 
 export type PostRequestBody = z.infer<typeof postRequestBodySchema>;

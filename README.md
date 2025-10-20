@@ -100,7 +100,7 @@ Codemo includes a security feature that allows you to lock the application to pr
 
 Codemo provides access to additional developer tools through the tools menu:
 
-1. Click the code icon in the header (where the visibility selector used to be)
+1. Click the code icon in the header
 2. Choose from the available tools:
    - **Live Code Editor**: Opens an interactive coding environment
    - **Codemo Digital Nomad**: Access tools designed for digital nomads
@@ -112,4 +112,5 @@ Both tools open in a new browser tab for your convenience.
 - Use the chat interface to discuss code with the AI assistant
 - Create and edit code artifacts directly in the chat
 - Execute code snippets to test functionality
+- Export chats as JSON, Markdown, or text files for sharing
 - Collaborate with team members through shared chats (when implemented)

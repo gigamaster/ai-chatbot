@@ -14,7 +14,6 @@ import { PlusIcon, LockIcon } from "@/components/icons";
 
 interface ChatHeaderProps {
   chatId: string;
-  selectedVisibilityType: string;
   isReadonly: boolean;
 }
 
@@ -78,7 +77,6 @@ function PureChatHeader({ isReadonly }: ChatHeaderProps) {
 export const ChatHeader = memo(PureChatHeader, (prevProps, nextProps) => {
   return (
     prevProps.chatId === nextProps.chatId &&
-    prevProps.selectedVisibilityType === nextProps.selectedVisibilityType &&
     prevProps.isReadonly === nextProps.isReadonly
   );
 });

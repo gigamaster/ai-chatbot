@@ -145,13 +145,12 @@ export class ClientChatService {
       const selectedModelId = request.selectedModelId || request.body?.selectedModelId;
       const chatId = request.id || request.body?.id;
       const userMessage = request.message;
-      const visibilityType = request.selectedVisibilityType || request.body?.selectedVisibilityType || "private";
       
       console.log("=== ClientChatService.sendMessages debug info ===");
       console.log("Chat ID:", chatId);
       console.log("Selected Provider ID:", selectedProviderId);
       console.log("Selected Model ID:", selectedModelId);
-      console.log("Visibility Type:", visibilityType);
+      console.log("User Message:", userMessage);
       
       if (!selectedProviderId) {
         throw new ChatSDKError("bad_request:chat", "No provider selected");
@@ -210,14 +209,12 @@ export class ClientChatService {
           id: chatId,
           userId: userId,
           title: title,
-          visibility: visibilityType,
         });
         
         const savedChat = await saveLocalChat({
           id: chatId,
           userId: userId,
           title: title,
-          visibility: visibilityType,
         });
         
         console.log("Chat saved result:", savedChat);

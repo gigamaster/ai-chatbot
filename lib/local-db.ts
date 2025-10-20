@@ -9,7 +9,6 @@ interface CodemoDB extends DBSchema {
       createdAt: Date;
       title: string;
       userId: string;
-      visibility: 'private' | 'public';
       lastContext?: any;
     };
   };

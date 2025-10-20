@@ -64,11 +64,12 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         const isOwner = localUser?.id === chatData.userId;
         console.log("User ID:", localUser?.id, "Chat user ID:", chatData.userId, "Is owner:", isOwner);
         
-        if (chatData.visibility === "private" && !isOwner) {
-          console.log("Access denied for private chat");
-          setError("Access denied");
-          return;
-        }
+        // Remove visibility check since we're removing visibility functionality
+        // if (chatData.visibility === "private" && !isOwner) {
+        //   console.log("Access denied for private chat");
+        //   setError("Access denied");
+        //   return;
+        // }
 
         // Fetch messages from IndexedDB
         console.log("Fetching messages for chat ID:", chatId);
@@ -133,7 +134,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         initialChatModel={DEFAULT_CHAT_MODEL}
         initialLastContext={chat.lastContext ?? undefined}
         initialMessages={messages}
-        initialVisibilityType={chat.visibility}
         isReadonly={!chat.isOwner}
       />
       <DataStreamHandler />

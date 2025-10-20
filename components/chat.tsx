@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useArtifactSelector } from "@/hooks/use-artifact";
 import { useAutoResume } from "@/hooks/use-auto-resume";
-import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Vote } from "@/lib/local-db";
 import { ChatSDKError } from "@/lib/custom-ai";
 import type { Attachment, ChatMessage } from "@/lib/types";
@@ -28,7 +27,6 @@ import { useDataStream } from "./data-stream-provider";
 import { Messages } from "./messages";
 import { MultimodalInput } from "./multimodal-input";
 import { toast } from "./toast";
-import type { VisibilityType } from "./visibility-selector";
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
 import { getAllProviders, getProviderById } from "@/lib/provider-model-service";
 import { useCustomChat, CustomChatTransport } from "@/lib/custom-chat";
@@ -37,7 +35,6 @@ export function Chat({
   id,
   initialMessages,
   initialChatModel,
-  initialVisibilityType,
   isReadonly,
   autoResume,
   initialLastContext,
@@ -46,7 +43,6 @@ export function Chat({
   id: string;
   initialMessages: ChatMessage[];
   initialChatModel: string;
-  initialVisibilityType: VisibilityType;
   isReadonly: boolean;
   autoResume: boolean;
   initialLastContext?: AppUsage;
@@ -56,16 +52,10 @@ export function Chat({
     id,
     initialMessages,
     initialChatModel,
-    initialVisibilityType,
     isReadonly,
     autoResume,
     initialLastContext,
     initialProviderId,
-  });
-
-  const { visibilityType } = useChatVisibility({
-    chatId: id,
-    initialVisibilityType,
   });
 
   const { mutate } = useSWRConfig();
@@ -153,7 +143,6 @@ export function Chat({
           id: chatId, // Use the proper chat ID
           message: messageWithId,
           selectedChatModel: currentModelIdRef.current || currentModelId,
-          selectedVisibilityType: visibilityType,
           selectedProviderId: providerIdToSend,
           ...request.body,
         };
@@ -220,7 +209,6 @@ export function Chat({
         <ChatHeader
           chatId={id}
           isReadonly={isReadonly}
-          selectedVisibilityType={initialVisibilityType}
         />
 
         <Messages
@@ -259,7 +247,6 @@ export function Chat({
               }}
               selectedModelId={currentModelId}
               selectedProviderId={currentProviderId || undefined}
-              selectedVisibilityType={visibilityType}
               sendMessage={sendMessage}
               setAttachments={setAttachments}
               setInput={setInput}
@@ -280,7 +267,6 @@ export function Chat({
         messages={messages}
         regenerate={regenerate}
         selectedModelId={currentModelId}
-        selectedVisibilityType={visibilityType}
         sendMessage={sendMessage}
         setAttachments={setAttachments}
         setInput={setInput}

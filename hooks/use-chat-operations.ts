@@ -16,13 +16,12 @@ import {
   saveLocalVote,
   getLocalVotes
 } from "@/lib/local-db";
-import { 
-  getChatsByUserId, 
+import {
   deleteAllChatsByUserId,
+  getChatsByUserId,
   getLocalChatById,
   getLocalMessagesByChatId
 } from "@/lib/local-db-queries";
-import type { VisibilityType } from "@/components/visibility-selector";
 import type { ArtifactKind } from "@/components/artifact";
 
 export function useChatOperations() {
@@ -34,7 +33,6 @@ export function useChatOperations() {
     id: string;
     userId: string;
     title: string;
-    visibility: VisibilityType;
   }) => {
     setLoading(true);
     setError(null);
