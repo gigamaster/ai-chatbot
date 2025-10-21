@@ -50,16 +50,21 @@ export function AppSidebar({ user }: { user: LocalUser | undefined }) {
       // Use client-side service instead of API call
       const { clientHistoryService } = await import('@/lib/client-history-service');
       const result = await clientHistoryService.deleteAllChats(user);
+      console.log("Delete all chats result:", result);
       
-      // Success handling
-      router.push("/");
-      setShowDeleteAllDialog(false);
-      toast.success("All chats deleted successfully");
+      // Small delay to ensure IndexedDB operation is fully completed
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Dispatch a custom event to refresh the sidebar
       if (typeof window !== 'undefined') {
+        console.log("Dispatching chatHistoryUpdated event");
         window.dispatchEvent(new CustomEvent('chatHistoryUpdated'));
       }
+      
+      // Success handling - after event dispatch
+      router.push("/");
+      setShowDeleteAllDialog(false);
+      toast.success("All chats deleted successfully");
     } catch (error) {
       console.error("Failed to delete all chats:", error);
       toast.error("Failed to delete all chats");
