@@ -164,7 +164,15 @@ export function sanitizeText(text: string) {
 
 export function convertToUIMessages(messages: any[]): ChatMessage[] {
   console.log("convertToUIMessages called with:", messages);
-  const result = messages.map((message) => ({
+  
+  // Sort messages by createdAt timestamp to ensure correct order
+  const sortedMessages = [...messages].sort((a, b) => {
+    const timeA = new Date(a.createdAt).getTime();
+    const timeB = new Date(b.createdAt).getTime();
+    return timeA - timeB;
+  });
+  
+  const result = sortedMessages.map((message) => ({
     id: message.id,
     role: message.role as 'user' | 'assistant' | 'system',
     parts: message.parts as UIMessagePart<CustomUIDataTypes, ChatTools>[],
