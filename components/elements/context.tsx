@@ -101,10 +101,7 @@ function InfoRow({
 
 export const Context = ({ className, usage, ...props }: ContextProps) => {
   const used = usage?.totalTokens ?? 0;
-  const max =
-    usage?.context?.totalMax ??
-    usage?.context?.combinedMax ??
-    usage?.context?.inputMax;
+  const max = undefined; // We don't have context information in our AppUsage type
   const hasMax = typeof max === "number" && Number.isFinite(max) && max > 0;
   const usedPercent = hasMax ? Math.min(100, (used / max) * 100) : 0;
   return (
@@ -137,50 +134,14 @@ export const Context = ({ className, usage, ...props }: ContextProps) => {
             <Progress className="h-2 bg-muted" value={usedPercent} />
           </div>
           <div className="mt-1 space-y-1">
-            {usage?.cachedInputTokens && usage.cachedInputTokens > 0 && (
-              <InfoRow
-                costText={usage?.costUSD?.cacheReadUSD?.toString()}
-                label="Cache Hits"
-                tokens={usage?.cachedInputTokens}
-              />
-            )}
             <InfoRow
-              costText={usage?.costUSD?.inputUSD?.toString()}
               label="Input"
               tokens={usage?.inputTokens}
             />
             <InfoRow
-              costText={usage?.costUSD?.outputUSD?.toString()}
               label="Output"
               tokens={usage?.outputTokens}
             />
-            <InfoRow
-              costText={usage?.costUSD?.reasoningUSD?.toString()}
-              label="Reasoning"
-              tokens={
-                usage?.reasoningTokens && usage.reasoningTokens > 0
-                  ? usage.reasoningTokens
-                  : undefined
-              }
-            />
-            {usage?.costUSD?.totalUSD !== undefined && (
-              <>
-                <Separator className="mt-1" />
-                <div className="flex items-center justify-between pt-1 text-xs">
-                  <span className="text-muted-foreground">Total cost</span>
-                  <div className="flex items-center gap-2 font-mono">
-                    <span className="min-w-[4ch] text-right" />
-                    <span>
-                      {Number.isNaN(
-                        Number.parseFloat(usage.costUSD.totalUSD.toString())
-                      )
-                        ? "—"
-                        : `$${Number.parseFloat(usage.costUSD.totalUSD.toString()).toFixed(6)}`}
-                    </span>
-                  </div>
-                </div>
-              </>
-            )}
           </div>
         </div>
       </DropdownMenuContent>

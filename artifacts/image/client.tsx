@@ -7,13 +7,20 @@ export const imageArtifact = new Artifact({
   kind: "image",
   description: "Useful for image generation",
   onStreamPart: ({ streamPart, setArtifact }) => {
-    if (streamPart.type === "data-imageDelta") {
-      setArtifact((draftArtifact) => ({
-        ...draftArtifact,
-        content: streamPart.data,
-        isVisible: true,
-        status: "streaming",
-      }));
+    if (streamPart.type === "imageDelta") {
+      setArtifact((draftArtifact) => {
+        // Type guard to ensure we're working with the correct type
+        if (typeof streamPart.data === 'string') {
+          return {
+            ...draftArtifact,
+            content: streamPart.data,
+            isVisible: true,
+            status: "streaming",
+          };
+        }
+        // Return the draft artifact unchanged if the data type doesn't match
+        return draftArtifact;
+      });
     }
   },
   content: ImageEditor,

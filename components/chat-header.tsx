@@ -1,16 +1,21 @@
 "use client";
 
-import { memo } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { memo } from "react";
+import { LockIcon, PlusIcon } from "@/components/icons";
 import { SidebarToggle } from "@/components/sidebar-toggle";
 import { ToolsMenu } from "@/components/tools-menu";
-import { useLock } from "@/contexts/lock-context";
-import { useLocalAuth } from "@/contexts/local-auth-context";
+import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useLocalAuth } from "@/contexts/local-auth-context";
+import { useLock } from "@/contexts/lock-context";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { PlusIcon, LockIcon } from "@/components/icons";
 
 interface ChatHeaderProps {
   chatId: string;
@@ -42,31 +47,29 @@ function PureChatHeader({ isReadonly }: ChatHeaderProps) {
         </Button>
       )}
 
-      {!isReadonly && (
-        <ToolsMenu
-          className="order-1 md:order-2"
-        />
-      )}
+      {!isReadonly && <ToolsMenu className="order-1 md:order-2" />}
 
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               className="order-3 hidden h-8 px-2 md:order-2 md:ml-auto md:flex md:h-fit"
-              variant="outline"
+              disabled={!hasPassword}
               onClick={() => {
                 // Lock the application immediately
                 lock();
               }}
               // Only enable if they have a password set
-              disabled={!hasPassword}
+              variant="outline"
             >
               <LockIcon size={16} />
               <span className="md:sr-only">Lock</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            {hasPassword ? "Lock your session" : "Set a password first in the user menu"}
+            {hasPassword
+              ? "Lock your session"
+              : "Set a password first in the user menu"}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

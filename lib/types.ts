@@ -1,6 +1,6 @@
-import type { InferUITool, UIMessage } from "@/lib/custom-ai";
 import { z } from "zod";
 import type { ArtifactKind } from "@/components/artifact";
+import type { InferUITool, UIMessage } from "@/lib/custom-ai";
 import type { createDocument } from "./ai/tools/create-document";
 import type { getWeather } from "./ai/tools/get-weather";
 import type { requestSuggestions } from "./ai/tools/request-suggestions";
@@ -52,7 +52,7 @@ export type CustomUIDataTypes = {
   "data-appendMessage": string; // Add this line
   // Debug tool data types
   "debug-start": { language: string; code: string; error?: string };
-  "debug-result": { 
+  "debug-result": {
     issues: Array<{
       type: string;
       description: string;
@@ -64,7 +64,7 @@ export type CustomUIDataTypes = {
   };
   // Execution tool data types
   "execution-start": { language: string; code: string };
-  "execution-result": { 
+  "execution-result": {
     output: string;
     executionTime: number;
     success: boolean;

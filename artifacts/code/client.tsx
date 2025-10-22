@@ -76,18 +76,25 @@ export const codeArtifact = new Artifact<"code", Metadata>({
     });
   },
   onStreamPart: ({ streamPart, setArtifact }) => {
-    if (streamPart.type === "data-codeDelta") {
-      setArtifact((draftArtifact) => ({
-        ...draftArtifact,
-        content: streamPart.data,
-        isVisible:
-          draftArtifact.status === "streaming" &&
-          draftArtifact.content.length > 300 &&
-          draftArtifact.content.length < 310
-            ? true
-            : draftArtifact.isVisible,
-        status: "streaming",
-      }));
+    if (streamPart.type === "codeDelta") {
+      setArtifact((draftArtifact) => {
+        // Type guard to ensure we're working with the correct type
+        if (typeof streamPart.data === 'string') {
+          return {
+            ...draftArtifact,
+            content: streamPart.data,
+            isVisible:
+              draftArtifact.status === "streaming" &&
+              draftArtifact.content.length > 300 &&
+              draftArtifact.content.length < 310
+                ? true
+                : draftArtifact.isVisible,
+            status: "streaming",
+          };
+        }
+        // Return the draft artifact unchanged if the data type doesn't match
+        return draftArtifact;
+      });
     }
   },
   content: ({ metadata, setMetadata, ...props }) => {

@@ -1,5 +1,4 @@
 "use client";
-import type { UseChatHelpers } from "@/lib/custom-chat";
 import cx from "classnames";
 import {
   AnimatePresence,
@@ -24,6 +23,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import type { UseChatHelpers } from "@/lib/custom-chat";
 import type { ChatMessage } from "@/lib/types";
 import { type ArtifactKind, artifactDefinitions } from "./artifact";
 import type { ArtifactToolbarItem } from "./create-artifact";

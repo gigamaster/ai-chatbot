@@ -1,11 +1,20 @@
 // TODO: use package llm.js to replace custom AI package our 'mock'
-export type UIMessagePart<CustomDataTypes = any, ToolType = any> = 
+export type UIMessagePart<CustomDataTypes = any, ToolType = any> =
   | { type: "text"; text: string }
   | { type: "file"; url: string; name: string; mediaType: string }
   | { type: "image"; url: string; alt?: string }
   | { type: "tool-call"; toolName: string; args: any; toolCallId: string }
-  | { type: "tool-result"; toolName: string; result: any; toolCallId: string; isError?: boolean }
-  | { type: keyof CustomDataTypes; data: CustomDataTypes[keyof CustomDataTypes] };
+  | {
+      type: "tool-result";
+      toolName: string;
+      result: any;
+      toolCallId: string;
+      isError?: boolean;
+    }
+  | {
+      type: keyof CustomDataTypes;
+      data: CustomDataTypes[keyof CustomDataTypes];
+    };
 
 export type UIMessage<Metadata = any, CustomDataTypes = any, ToolType = any> = {
   id: string;
@@ -14,7 +23,12 @@ export type UIMessage<Metadata = any, CustomDataTypes = any, ToolType = any> = {
   metadata?: Metadata;
 };
 
-export type ChatStatus = "idle" | "loading" | "streaming" | "error" | "submitted";
+export type ChatStatus =
+  | "idle"
+  | "loading"
+  | "streaming"
+  | "error"
+  | "submitted";
 
 export type DataUIPart<CustomDataTypes = any> = {
   type: keyof CustomDataTypes;
@@ -30,7 +44,9 @@ export type ToolUIPart<ToolType = any> = {
   isError?: boolean;
 };
 
-export type InferUITool<T> = T extends { toolName: infer ToolName } ? ToolName : never;
+export type InferUITool<T> = T extends { toolName: infer ToolName }
+  ? ToolName
+  : never;
 
 export type UIMessageStreamWriter<CustomDataTypes = any> = {
   write: (part: DataUIPart<CustomDataTypes>) => void;
@@ -48,12 +64,29 @@ export type LanguageModel = {
   doStream: (options: any) => Promise<any>;
 };
 
-export type LanguageModelV2StreamPart<CustomDataTypes = any> = 
+export type LanguageModelV2StreamPart<CustomDataTypes = any> =
   | { type: "text-delta"; textDelta: string }
   | { type: "tool-call"; toolName: string; args: any; toolCallId: string }
-  | { type: "tool-result"; toolName: string; result: any; toolCallId: string; isError?: boolean }
-  | { type: "finish"; finishReason: string; usage: { promptTokens: number; completionTokens: number; totalTokens: number } }
-  | { type: keyof CustomDataTypes; value: CustomDataTypes[keyof CustomDataTypes] };
+  | {
+      type: "tool-result";
+      toolName: string;
+      result: any;
+      toolCallId: string;
+      isError?: boolean;
+    }
+  | {
+      type: "finish";
+      finishReason: string;
+      usage: {
+        promptTokens: number;
+        completionTokens: number;
+        totalTokens: number;
+      };
+    }
+  | {
+      type: keyof CustomDataTypes;
+      value: CustomDataTypes[keyof CustomDataTypes];
+    };
 
 export class ChatSDKError extends Error {
   constructor(message: string) {
@@ -75,45 +108,71 @@ export class JsonToSseTransformStream extends TransformStream {
     super({
       transform(chunk, controller) {
         // Handle different chunk types
-        if (typeof chunk === 'string') {
+        if (typeof chunk === "string") {
           // If it's already a string, send it directly
-          controller.enqueue(`data: ${JSON.stringify({ type: "text-delta", textDelta: chunk })}\n\n`);
-        } else if (chunk && typeof chunk === 'object') {
+          controller.enqueue(
+            `data: ${JSON.stringify({ type: "text-delta", textDelta: chunk })}\n\n`
+          );
+        } else if (chunk && typeof chunk === "object") {
           // For objects, check if it's already formatted or needs formatting
-          if (chunk.type && (chunk.type === "text-delta" || chunk.type === "data-finish" || chunk.type === "data-error")) {
+          if (
+            chunk.type &&
+            (chunk.type === "text-delta" ||
+              chunk.type === "data-finish" ||
+              chunk.type === "data-error")
+          ) {
             // Already properly formatted
             controller.enqueue(`data: ${JSON.stringify(chunk)}\n\n`);
           } else if (chunk.type === "content" && chunk.content) {
             // Handle content chunks from LLM.js
-            controller.enqueue(`data: ${JSON.stringify({ type: "text-delta", textDelta: chunk.content.toString() })}\n\n`);
-          } else if (chunk.type === "response.output_text.delta" && chunk.delta) {
+            controller.enqueue(
+              `data: ${JSON.stringify({ type: "text-delta", textDelta: chunk.content.toString() })}\n\n`
+            );
+          } else if (
+            chunk.type === "response.output_text.delta" &&
+            chunk.delta
+          ) {
             // Handle Google-specific content delta
-            controller.enqueue(`data: ${JSON.stringify({ type: "text-delta", textDelta: chunk.delta.toString() })}\n\n`);
-          } else if ('content' in chunk && chunk.content) {
+            controller.enqueue(
+              `data: ${JSON.stringify({ type: "text-delta", textDelta: chunk.delta.toString() })}\n\n`
+            );
+          } else if ("content" in chunk && chunk.content) {
             // Handle other content properties
-            controller.enqueue(`data: ${JSON.stringify({ type: "text-delta", textDelta: chunk.content.toString() })}\n\n`);
-          } else if ('textDelta' in chunk && chunk.textDelta) {
+            controller.enqueue(
+              `data: ${JSON.stringify({ type: "text-delta", textDelta: chunk.content.toString() })}\n\n`
+            );
+          } else if ("textDelta" in chunk && chunk.textDelta) {
             // Handle textDelta properties
-            controller.enqueue(`data: ${JSON.stringify({ type: "text-delta", textDelta: chunk.textDelta.toString() })}\n\n`);
-          } else if ('text' in chunk && chunk.text) {
+            controller.enqueue(
+              `data: ${JSON.stringify({ type: "text-delta", textDelta: chunk.textDelta.toString() })}\n\n`
+            );
+          } else if ("text" in chunk && chunk.text) {
             // Handle text properties
-            controller.enqueue(`data: ${JSON.stringify({ type: "text-delta", textDelta: chunk.text.toString() })}\n\n`);
-          } else if ('delta' in chunk && chunk.delta) {
+            controller.enqueue(
+              `data: ${JSON.stringify({ type: "text-delta", textDelta: chunk.text.toString() })}\n\n`
+            );
+          } else if ("delta" in chunk && chunk.delta) {
             // Handle delta properties
-            controller.enqueue(`data: ${JSON.stringify({ type: "text-delta", textDelta: chunk.delta.toString() })}\n\n`);
+            controller.enqueue(
+              `data: ${JSON.stringify({ type: "text-delta", textDelta: chunk.delta.toString() })}\n\n`
+            );
           } else {
             // For other objects, convert to string representation
-            controller.enqueue(`data: ${JSON.stringify({ type: "text-delta", textDelta: JSON.stringify(chunk) })}\n\n`);
+            controller.enqueue(
+              `data: ${JSON.stringify({ type: "text-delta", textDelta: JSON.stringify(chunk) })}\n\n`
+            );
           }
         } else {
           // For other types, convert to string
-          controller.enqueue(`data: ${JSON.stringify({ type: "text-delta", textDelta: String(chunk) })}\n\n`);
+          controller.enqueue(
+            `data: ${JSON.stringify({ type: "text-delta", textDelta: String(chunk) })}\n\n`
+          );
         }
       },
       flush(controller) {
-        controller.enqueue('data: [DONE]\n\n');
+        controller.enqueue("data: [DONE]\n\n");
         controller.terminate();
-      }
+      },
     });
   }
 }
@@ -129,51 +188,56 @@ export const createUIMessageStream = (options: any) => {
           write: (data: any) => {
             // Convert to SSE format and enqueue
             controller.enqueue(`data: ${JSON.stringify(data)}\n\n`);
-          }
+          },
         };
-        
+
         // Execute the provided function with our writer
         await options.execute({ writer });
-        
+
         // Send the DONE signal
-        controller.enqueue('data: [DONE]\n\n');
+        controller.enqueue("data: [DONE]\n\n");
         controller.close();
       } catch (error) {
         console.error("Error in createUIMessageStream:", error);
         // Send error as SSE format
-        controller.enqueue(`data: ${JSON.stringify({ 
-          type: "data-error", 
-          data: error instanceof Error ? error.message : "Unknown error",
-          transient: true
-        })}\n\n`);
-        controller.enqueue('data: [DONE]\n\n');
+        controller.enqueue(
+          `data: ${JSON.stringify({
+            type: "data-error",
+            data: error instanceof Error ? error.message : "Unknown error",
+            transient: true,
+          })}\n\n`
+        );
+        controller.enqueue("data: [DONE]\n\n");
         controller.close();
       }
-    }
+    },
   });
 };
 
 export const convertToModelMessages = (uiMessages: UIMessage[]) => {
   // Convert UI messages to model messages
-  return uiMessages.map(msg => ({
+  return uiMessages.map((msg) => ({
     role: msg.role,
-    content: msg.parts.filter(part => part.type === "text").map(part => (part as { type: "text"; text: string }).text).join("\n")
+    content: msg.parts
+      .filter((part) => part.type === "text")
+      .map((part) => (part as { type: "text"; text: string }).text)
+      .join("\n"),
   }));
 };
 
 export const convertToUIMessages = (dbMessages: any[]) => {
   // Convert database messages to UI messages
-  return dbMessages.map(msg => ({
+  return dbMessages.map((msg) => ({
     id: msg.id,
     role: msg.role,
     parts: msg.parts || [{ type: "text", text: msg.content || "" }],
-    metadata: msg.metadata || { createdAt: new Date().toISOString() }
+    metadata: msg.metadata || { createdAt: new Date().toISOString() },
   }));
 };
 
 export const smoothStream = (options?: { chunking?: "word" | "sentence" }) => {
   // This is a mock implementation
-  return undefined;
+  return;
 };
 
 export const stepCountIs = (count: number) => {
@@ -182,18 +246,21 @@ export const stepCountIs = (count: number) => {
 };
 
 export const streamText = (options: any) => {
-  console.log("=== streamText called with options ===", JSON.stringify(options, null, 2));
-  
+  console.log(
+    "=== streamText called with options ===",
+    JSON.stringify(options, null, 2)
+  );
+
   // Extract options
   const { model, system, messages } = options;
-  
+
   // Return an object with methods that will handle the streaming
   return {
     text: async () => {
       try {
         // Combine system prompt and messages
         let fullPrompt = system || "";
-        
+
         // Add conversation history
         messages.forEach((msg: any) => {
           if (msg.role === "user") {
@@ -202,9 +269,9 @@ export const streamText = (options: any) => {
             fullPrompt += `\nAssistant: ${msg.content}`;
           }
         });
-        
+
         console.log("Full prompt to send to LLM:", fullPrompt);
-        
+
         // Get response from the model
         const response = await model(fullPrompt);
         return response;
@@ -215,15 +282,15 @@ export const streamText = (options: any) => {
     },
     usage: async () => {
       // Mock usage for now
-      return { 
-        promptTokens: 0, 
-        completionTokens: 0, 
-        totalTokens: 0 
+      return {
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
       };
     },
     finishReason: async () => "stop",
     toolCalls: async () => [],
-    rawResponse: async () => undefined,
+    rawResponse: async () => {},
   };
 };
 
@@ -231,9 +298,13 @@ export const streamObject = (options: any) => {
   // This is a mock implementation
   return {
     object: async () => ({}),
-    usage: async () => ({ promptTokens: 0, completionTokens: 0, totalTokens: 0 }),
+    usage: async () => ({
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0,
+    }),
     finishReason: async () => "stop",
-    rawResponse: async () => undefined,
+    rawResponse: async () => {},
   };
 };
 
@@ -251,9 +322,9 @@ export const simulateReadableStream = (chunks: any[]) => {
   // This is a mock implementation
   return new ReadableStream({
     start(controller) {
-      chunks.forEach(chunk => controller.enqueue(chunk));
+      chunks.forEach((chunk) => controller.enqueue(chunk));
       controller.close();
-    }
+    },
   });
 };
 
@@ -285,22 +356,28 @@ export class MockLanguageModelV2 implements LanguageModel {
   // Enhanced mock response generation based on input
   private generateMockResponse(prompt: string): string {
     // Simple keyword-based response generation
-    if (prompt.toLowerCase().includes("hello") || prompt.toLowerCase().includes("hi")) {
+    if (
+      prompt.toLowerCase().includes("hello") ||
+      prompt.toLowerCase().includes("hi")
+    ) {
       return "Hello! How can I help you today?";
     }
-    
+
     if (prompt.toLowerCase().includes("weather")) {
       return "I'm a mock AI and don't have access to real weather data. In a real implementation, I would connect to a weather service to provide current conditions.";
     }
-    
-    if (prompt.toLowerCase().includes("code") || prompt.toLowerCase().includes("program")) {
+
+    if (
+      prompt.toLowerCase().includes("code") ||
+      prompt.toLowerCase().includes("program")
+    ) {
       return "Here's a simple example:\n\n``javascript\nconsole.log('Hello, World!');\n```\n\nThis is a mock response. In a real implementation, I would provide more detailed code assistance.";
     }
-    
+
     if (prompt.toLowerCase().includes("thank")) {
       return "You're welcome! Is there anything else I can help you with?";
     }
-    
+
     // Default response for other queries
     return `I'm a mock AI assistant. I received your message: "${prompt}". In a real implementation, I would provide a more detailed and helpful response based on your query.`;
   }
@@ -308,10 +385,14 @@ export class MockLanguageModelV2 implements LanguageModel {
   async generate(options: any) {
     const prompt = options.prompt || "";
     const mockResponse = this.generateMockResponse(prompt);
-    
+
     return {
       text: mockResponse,
-      usage: { promptTokens: prompt.length, completionTokens: mockResponse.length, totalTokens: prompt.length + mockResponse.length },
+      usage: {
+        promptTokens: prompt.length,
+        completionTokens: mockResponse.length,
+        totalTokens: prompt.length + mockResponse.length,
+      },
       finishReason: "stop",
       toolCalls: [],
     };
@@ -320,10 +401,14 @@ export class MockLanguageModelV2 implements LanguageModel {
   async doGenerate(options: any) {
     const prompt = options.prompt || "";
     const mockResponse = this.generateMockResponse(prompt);
-    
+
     return {
       text: mockResponse,
-      usage: { promptTokens: prompt.length, completionTokens: mockResponse.length, totalTokens: prompt.length + mockResponse.length },
+      usage: {
+        promptTokens: prompt.length,
+        completionTokens: mockResponse.length,
+        totalTokens: prompt.length + mockResponse.length,
+      },
       finishReason: "stop",
       toolCalls: [],
     };
@@ -332,45 +417,45 @@ export class MockLanguageModelV2 implements LanguageModel {
   async doStream(options: any) {
     const prompt = options.prompt || "";
     const mockResponse = this.generateMockResponse(prompt);
-    
+
     const stream = new ReadableStream({
       start(controller) {
         // Split response into chunks for streaming
         const chunks = mockResponse.split(" ");
         let index = 0;
-        
+
         const sendChunk = () => {
           if (index < chunks.length) {
-            controller.enqueue({ 
-              type: "text-delta", 
-              textDelta: chunks[index] + (index < chunks.length - 1 ? " " : "") 
+            controller.enqueue({
+              type: "text-delta",
+              textDelta: chunks[index] + (index < chunks.length - 1 ? " " : ""),
             });
             index++;
             setTimeout(sendChunk, 100); // Simulate delay between chunks
           } else {
-            controller.enqueue({ 
-              type: "finish", 
-              finishReason: "stop", 
-              usage: { 
-                promptTokens: prompt.length, 
-                completionTokens: mockResponse.length, 
-                totalTokens: prompt.length + mockResponse.length 
-              } 
+            controller.enqueue({
+              type: "finish",
+              finishReason: "stop",
+              usage: {
+                promptTokens: prompt.length,
+                completionTokens: mockResponse.length,
+                totalTokens: prompt.length + mockResponse.length,
+              },
             });
             controller.close();
           }
         };
-        
+
         sendChunk();
-      }
+      },
     });
 
     return {
       stream,
-      usage: async () => ({ 
-        promptTokens: prompt.length, 
-        completionTokens: mockResponse.length, 
-        totalTokens: prompt.length + mockResponse.length 
+      usage: async () => ({
+        promptTokens: prompt.length,
+        completionTokens: mockResponse.length,
+        totalTokens: prompt.length + mockResponse.length,
       }),
       finishReason: async () => "stop",
       toolCalls: async () => [],

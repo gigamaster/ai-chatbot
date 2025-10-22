@@ -1,31 +1,31 @@
-import { ChatSDKError } from "@/lib/errors";
-import { generateUUID } from "@/lib/utils";
 import type { ArtifactKind } from "@/components/artifact";
-import type { AppUsage } from "@/lib/usage";
+import { ChatSDKError } from "@/lib/errors";
 import {
-  saveLocalChat as saveChatToDb,
-  getLocalChat,
   deleteLocalChat,
+  deleteLocalProvider,
   getAllLocalChats,
-  saveLocalMessages as saveMessagesToDb,
-  getLocalMessages,
-  saveLocalDocument,
+  getAllLocalProviders,
+  getLocalChat,
   getLocalDocument,
-  saveLocalSuggestion,
+  getLocalFile,
+  getLocalMessages,
+  getLocalProvider,
   getLocalSuggestions,
-  saveLocalVote,
-  getLocalVotes,
-  saveLocalUser,
   getLocalUser,
   getLocalUserByEmail,
+  getLocalVotes,
+  saveLocalChat as saveChatToDb,
   saveLocalFile as saveFileToDb,
-  getLocalFile,
+  saveLocalDocument,
   saveLocalProvider,
-  getLocalProvider,
-  getAllLocalProviders,
-  deleteLocalProvider,
+  saveLocalSuggestion,
+  saveLocalUser,
+  saveLocalVote,
+  saveLocalMessages as saveMessagesToDb,
 } from "@/lib/local-db";
 import { hashPassword } from "@/lib/lock-utils";
+import type { AppUsage } from "@/lib/usage";
+import { generateUUID } from "@/lib/utils";
 
 // User operations
 export async function getUser(email: string) {
@@ -123,55 +123,69 @@ export async function getChatsByUserId({
   endingBefore: string | null;
 }) {
   try {
-    console.log("getChatsByUserId called with:", { id, limit, startingAfter, endingBefore });
+    console.log("getChatsByUserId called with:", {
+      id,
+      limit,
+      startingAfter,
+      endingBefore,
+    });
     const allChats = await getAllLocalChats(id);
     console.log("getAllLocalChats returned:", allChats);
-    
+
     // Sort chats by createdAt in descending order (newest first)
-    const sortedChats = allChats.sort((a: any, b: any) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    const sortedChats = allChats.sort(
+      (a: any, b: any) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
     console.log("Sorted chats:", sortedChats);
-    
+
     // Apply pagination
     let filteredChats = sortedChats;
-    
+
     if (startingAfter) {
-      const startingChat = sortedChats.find((chat: any) => chat.id === startingAfter);
+      const startingChat = sortedChats.find(
+        (chat: any) => chat.id === startingAfter
+      );
       if (!startingChat) {
         throw new ChatSDKError(
           "not_found:database",
           `Chat with id ${startingAfter} not found`
         );
       }
-      
+
       // Filter chats that were created after the starting chat
-      filteredChats = sortedChats.filter((chat: any) => 
-        new Date(chat.createdAt).getTime() > new Date(startingChat.createdAt).getTime()
+      filteredChats = sortedChats.filter(
+        (chat: any) =>
+          new Date(chat.createdAt).getTime() >
+          new Date(startingChat.createdAt).getTime()
       );
     } else if (endingBefore) {
-      const endingChat = sortedChats.find((chat: any) => chat.id === endingBefore);
+      const endingChat = sortedChats.find(
+        (chat: any) => chat.id === endingBefore
+      );
       if (!endingChat) {
         throw new ChatSDKError(
           "not_found:database",
           `Chat with id ${endingBefore} not found`
         );
       }
-      
+
       // Filter chats that were created before the ending chat
-      filteredChats = sortedChats.filter((chat: any) => 
-        new Date(chat.createdAt).getTime() < new Date(endingChat.createdAt).getTime()
+      filteredChats = sortedChats.filter(
+        (chat: any) =>
+          new Date(chat.createdAt).getTime() <
+          new Date(endingChat.createdAt).getTime()
       );
     }
-    
+
     console.log("Filtered chats:", filteredChats);
-    
+
     // Apply limit
     const hasMore = filteredChats.length > limit;
     const resultChats = hasMore ? filteredChats.slice(0, limit) : filteredChats;
-    
+
     console.log("Result chats:", resultChats, "hasMore:", hasMore);
-    
+
     return {
       chats: resultChats,
       hasMore,
@@ -199,10 +213,7 @@ export async function getLocalChatById({ id }: { id: string }) {
     return selectedChat;
   } catch (_error) {
     console.error("Error in getLocalChatById:", _error);
-    throw new ChatSDKError(
-      "bad_request:database",
-      "Failed to get chat by id"
-    );
+    throw new ChatSDKError("bad_request:database", "Failed to get chat by id");
   }
 }
 
@@ -222,21 +233,14 @@ export async function getLocalMessagesByChatId({ id }: { id: string }) {
   }
 }
 
-export async function saveLocalMessages({
-  messages,
-}: {
-  messages: any[];
-}) {
+export async function saveLocalMessages({ messages }: { messages: any[] }) {
   try {
     if (messages.length === 0) return true;
 
     const chatId = messages[0].chatId;
     return await saveMessagesToDb(chatId, messages);
   } catch (_error) {
-    throw new ChatSDKError(
-      "bad_request:database",
-      "Failed to save messages"
-    );
+    throw new ChatSDKError("bad_request:database", "Failed to save messages");
   }
 }
 
@@ -429,7 +433,10 @@ export async function getLocalSuggestionsByDocumentId({ id }: { id: string }) {
   try {
     return await getLocalSuggestions(id);
   } catch (_error) {
-    throw new ChatSDKError("bad_request:database", "Failed to get suggestions by document id");
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get suggestions by document id"
+    );
   }
 }
 
@@ -467,9 +474,11 @@ export async function deleteCustomProvider(providerId: string) {
 }
 
 // Re-export functions for compatibility with existing code
-export { saveLocalSuggestion as saveLocalSuggestions } from "@/lib/local-db";
-export { getLocalSuggestions } from "@/lib/local-db";
-export { saveLocalDocument as saveDocument } from "@/lib/local-db";
-export { getLocalDocument as getDocumentById } from "@/lib/local-db";
-export { getLocalSuggestions as getSuggestionsByDocumentId } from "@/lib/local-db";
-export { saveLocalVote as voteMessage } from "@/lib/local-db";
+export {
+  getLocalDocument as getDocumentById,
+  getLocalSuggestions,
+  getLocalSuggestions as getSuggestionsByDocumentId,
+  saveLocalDocument as saveDocument,
+  saveLocalSuggestion as saveLocalSuggestions,
+  saveLocalVote as voteMessage,
+} from "@/lib/local-db";

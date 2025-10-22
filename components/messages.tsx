@@ -1,9 +1,9 @@
-import type { UseChatHelpers } from "@/lib/custom-chat";
 import equal from "fast-deep-equal";
 import { AnimatePresence } from "framer-motion";
 import { ArrowDownIcon } from "lucide-react";
 import { memo, useEffect } from "react";
 import { useMessages } from "@/hooks/use-messages";
+import type { UseChatHelpers } from "@/lib/custom-chat";
 import type { Vote } from "@/lib/local-db";
 import type { ChatMessage } from "@/lib/types";
 import { useDataStream } from "./data-stream-provider";

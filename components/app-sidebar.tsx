@@ -17,7 +17,6 @@ import {
   SidebarMenu,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "./ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 // Define a local user type that matches our local authentication system
 type LocalUser = {
@@ -45,22 +45,24 @@ export function AppSidebar({ user }: { user: LocalUser | undefined }) {
 
   const handleDeleteAll = async () => {
     if (!user) return;
-    
+
     try {
       // Use client-side service instead of API call
-      const { clientHistoryService } = await import('@/lib/client-history-service');
+      const { clientHistoryService } = await import(
+        "@/lib/client-history-service"
+      );
       const result = await clientHistoryService.deleteAllChats(user);
       console.log("Delete all chats result:", result);
-      
+
       // Small delay to ensure IndexedDB operation is fully completed
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       // Dispatch a custom event to refresh the sidebar
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         console.log("Dispatching chatHistoryUpdated event");
-        window.dispatchEvent(new CustomEvent('chatHistoryUpdated'));
+        window.dispatchEvent(new CustomEvent("chatHistoryUpdated"));
       }
-      
+
       // Success handling - after event dispatch
       router.push("/");
       setShowDeleteAllDialog(false);
@@ -93,7 +95,7 @@ export function AppSidebar({ user }: { user: LocalUser | undefined }) {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
-                        className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500 h-8 p-1 md:h-fit md:p-2"
+                        className="h-8 cursor-pointer p-1 text-destructive focus:bg-destructive/15 focus:text-destructive md:h-fit md:p-2 dark:text-red-500"
                         onClick={() => setShowDeleteAllDialog(true)}
                         type="button"
                         variant="ghost"
@@ -109,7 +111,7 @@ export function AppSidebar({ user }: { user: LocalUser | undefined }) {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      className="cursor-pointer h-8 p-1 md:h-fit md:p-2"
+                      className="h-8 cursor-pointer p-1 md:h-fit md:p-2"
                       onClick={() => {
                         setOpenMobile(false);
                         router.push("/");
@@ -135,13 +137,16 @@ export function AppSidebar({ user }: { user: LocalUser | undefined }) {
         <SidebarFooter>{user && <SidebarUserNav user={user} />}</SidebarFooter>
       </Sidebar>
 
-      <AlertDialog onOpenChange={setShowDeleteAllDialog} open={showDeleteAllDialog}>
+      <AlertDialog
+        onOpenChange={setShowDeleteAllDialog}
+        open={showDeleteAllDialog}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete all chats?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete all your
-              chats and remove them from our servers.
+              This action cannot be undone. This will permanently delete all
+              your chats and remove them from our servers.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

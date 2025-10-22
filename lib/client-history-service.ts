@@ -1,15 +1,21 @@
 "use client";
 
-import { getChatsByUserId, deleteAllChatsByUserId } from "@/lib/local-db-queries";
 import { ChatSDKError } from "@/lib/errors";
+import {
+  deleteAllChatsByUserId,
+  getChatsByUserId,
+} from "@/lib/local-db-queries";
 
 // Client-side service to replace the local-history API route
 export class ClientHistoryService {
-  async getChats(requestParams: {
-    limit?: string;
-    starting_after?: string;
-    ending_before?: string;
-  }, localUser: any) {
+  async getChats(
+    requestParams: {
+      limit?: string;
+      starting_after?: string;
+      ending_before?: string;
+    },
+    localUser: any
+  ) {
     try {
       const limit = Number.parseInt(requestParams.limit || "10", 10);
       const startingAfter = requestParams.starting_after || null;
@@ -38,7 +44,10 @@ export class ClientHistoryService {
       if (error instanceof ChatSDKError) {
         throw error;
       }
-      throw new ChatSDKError("bad_request:database", `Failed to get chats: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new ChatSDKError(
+        "bad_request:database",
+        `Failed to get chats: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   }
 
@@ -55,7 +64,10 @@ export class ClientHistoryService {
       if (error instanceof ChatSDKError) {
         throw error;
       }
-      throw new ChatSDKError("bad_request:database", `Failed to delete all chats: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new ChatSDKError(
+        "bad_request:database",
+        `Failed to delete all chats: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   }
 }

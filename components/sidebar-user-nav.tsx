@@ -8,29 +8,29 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useLocalAuth } from "@/contexts/local-auth-context";
+import { useLock } from "@/contexts/lock-context";
 import { LoaderIcon } from "./icons";
 import { toast } from "./toast";
-import { useLock } from "@/contexts/lock-context";
-import { useLocalAuth } from "@/contexts/local-auth-context";
 
 export function SidebarUserNav({ user }: { user: any }) {
   const router = useRouter();
   const { user: localUser, logout } = useLocalAuth();
   const { setTheme, resolvedTheme } = useTheme();
-  
+
   // Get lock context
   const { lockTime, setLockTime, availableLockTimes, lock } = useLock();
 
@@ -85,44 +85,44 @@ export function SidebarUserNav({ user }: { user: any }) {
               {`Toggle ${resolvedTheme === "light" ? "dark" : "light"} mode`}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            
+
             {/* Auto-lock settings */}
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="cursor-pointer">
                 Auto-lock Settings
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
-                <DropdownMenuRadioGroup 
-                  value={lockTime?.toString() || "null"} 
+                <DropdownMenuRadioGroup
                   onValueChange={(value) => {
-                    const minutes = value === "null" ? null : parseInt(value, 10);
+                    const minutes =
+                      value === "null" ? null : Number.parseInt(value, 10);
                     setLockTime(minutes);
                   }}
+                  value={lockTime?.toString() || "null"}
                 >
-                  {availableLockTimes.map((option: { label: string; value: number | null }) => (
-                    <DropdownMenuRadioItem 
-                      key={option.value?.toString() || "null"} 
-                      value={option.value?.toString() || "null"}
-                    >
-                      {option.label}
-                    </DropdownMenuRadioItem>
-                  ))}
+                  {availableLockTimes.map(
+                    (option: { label: string; value: number | null }) => (
+                      <DropdownMenuRadioItem
+                        key={option.value?.toString() || "null"}
+                        value={option.value?.toString() || "null"}
+                      >
+                        {option.label}
+                      </DropdownMenuRadioItem>
+                    )
+                  )}
                 </DropdownMenuRadioGroup>
               </DropdownMenuSubContent>
             </DropdownMenuSub>
-            
+
             <DropdownMenuSeparator />
-            <DropdownMenuItem 
+            <DropdownMenuItem
               className="cursor-pointer"
               onClick={() => router.push("/settings")}
             >
               Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              className="cursor-pointer"
-              onClick={() => lock()}
-            >
+            <DropdownMenuItem className="cursor-pointer" onClick={() => lock()}>
               Lock Now
             </DropdownMenuItem>
             <DropdownMenuSeparator />

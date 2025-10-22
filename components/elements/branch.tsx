@@ -1,10 +1,10 @@
 "use client";
 
-import type { UIMessage } from "@/lib/custom-ai";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import type { UIMessage } from "@/lib/custom-ai";
 import { cn } from "@/lib/utils";
 
 type BranchContextType = {

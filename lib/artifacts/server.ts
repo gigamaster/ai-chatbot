@@ -1,13 +1,13 @@
-import type { UIMessageStreamWriter } from "@/lib/custom-ai";
 import { z } from "zod";
 import { codeDocumentHandler } from "@/artifacts/code/server";
-import { collabHandlers } from "@/artifacts/collab/server";
+// Removed collab import
 import { sheetDocumentHandler } from "@/artifacts/sheet/server";
 import { textDocumentHandler } from "@/artifacts/text/server";
 import type { ArtifactKind } from "@/components/artifact";
-import { saveLocalDocumentById } from "../local-db-queries";
-import type { Document } from "../local-db";
+import type { UIMessageStreamWriter } from "@/lib/custom-ai";
 import type { CustomUIDataTypes } from "@/lib/types";
+import type { Document } from "../local-db";
+import { saveLocalDocumentById } from "../local-db-queries";
 
 // Define the UserType type that was previously in the auth.ts file
 type UserType = "regular";
@@ -26,6 +26,25 @@ type LocalSession = {
   user: LocalUser;
   expires: string; // Required by the expected Session interface
 };
+
+// Export the artifact kinds array
+export const artifactKinds = ["text", "code", "sheet"] as const;
+
+// Add the missing createDocumentHandler function
+export function createDocumentHandler<T extends string>(config: {
+  kind: T;
+  onCreateDocument: (args: {
+    title: string;
+    dataStream: any;
+  }) => Promise<string>;
+  onUpdateDocument: (args: {
+    document: any;
+    description: string;
+    dataStream: any;
+  }) => Promise<string>;
+}) {
+  return config;
+}
 
 export type SaveDocumentProps = {
   id: string;
@@ -114,3 +133,10 @@ export async function updateDocumentCallback({
     data: updatedDocument.kind,
   });
 }
+
+// Add the missing documentHandlersByArtifactKind
+export const documentHandlersByArtifactKind = {
+  text: textDocumentHandler,
+  code: codeDocumentHandler,
+  sheet: sheetDocumentHandler,
+};

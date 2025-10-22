@@ -12,6 +12,7 @@ import {
 } from "react";
 import useSWR from "swr";
 import { useArtifact } from "@/hooks/use-artifact";
+import { clientDocumentService } from "@/lib/client-document-service";
 import type { Document } from "@/lib/local-db";
 import { cn, fetcher } from "@/lib/utils";
 import type { ArtifactKind, UIArtifact } from "./artifact";
@@ -22,12 +23,11 @@ import { FileIcon, FullscreenIcon, ImageIcon, LoaderIcon } from "./icons";
 import { ImageEditor } from "./image-editor";
 import { SpreadsheetEditor } from "./sheet-editor";
 import { Editor } from "./text-editor";
-import { clientDocumentService } from "@/lib/client-document-service";
 
 // Custom fetcher for client document service
 const documentFetcher = async (key: string) => {
   // Extract document ID from the key (format: client-document-{id})
-  const id = key.replace('client-document-', '');
+  const id = key.replace("client-document-", "");
   return await clientDocumentService.getDocument(id);
 };
 
@@ -43,11 +43,11 @@ export function DocumentPreview({
   args,
 }: DocumentPreviewProps) {
   const { artifact, setArtifact } = useArtifact();
-  
+
   // Replace SWR with direct client-side state management
   const [documents, setDocuments] = useState<Document[] | null>(null);
   const [isDocumentsFetching, setIsDocumentsFetching] = useState(false);
-  
+
   // Fetch document when result changes
   useEffect(() => {
     const fetchDocument = async () => {
@@ -55,7 +55,7 @@ export function DocumentPreview({
         setDocuments(null);
         return;
       }
-      
+
       setIsDocumentsFetching(true);
       try {
         const docs = await clientDocumentService.getDocument(result.id);
@@ -67,7 +67,7 @@ export function DocumentPreview({
         setIsDocumentsFetching(false);
       }
     };
-    
+
     fetchDocument();
   }, [result]);
 

@@ -1,5 +1,10 @@
-import { getAllCustomProviders, getCustomProvider, saveCustomProvider, deleteCustomProvider } from "@/lib/local-db-queries";
 import { testProviderConnection } from "@/lib/client-test-provider";
+import {
+  deleteCustomProvider,
+  getAllCustomProviders,
+  getCustomProvider,
+  saveCustomProvider,
+} from "@/lib/local-db-queries";
 
 // Define types - using 'enabled' for consistency with UI, but mapping to 'isEnabled' for database
 export interface ProviderModel {
@@ -28,7 +33,7 @@ export async function getAllProviders(): Promise<ProviderModel[]> {
     // Map database field 'isEnabled' to interface field 'enabled'
     const result = (providers || []).map((provider: DatabaseProvider) => ({
       ...provider,
-      enabled: provider.isEnabled
+      enabled: provider.isEnabled,
     }));
     return result;
   } catch (error) {
@@ -38,14 +43,16 @@ export async function getAllProviders(): Promise<ProviderModel[]> {
 }
 
 // Get a specific provider by ID
-export async function getProviderById(providerId: string): Promise<ProviderModel | null> {
+export async function getProviderById(
+  providerId: string
+): Promise<ProviderModel | null> {
   try {
     const provider = await getCustomProvider(providerId);
     if (!provider) return null;
     // Map database field 'isEnabled' to interface field 'enabled'
     return {
       ...provider,
-      enabled: (provider as DatabaseProvider).isEnabled
+      enabled: (provider as DatabaseProvider).isEnabled,
     };
   } catch (error) {
     console.error(`Failed to get provider ${providerId}:`, error);
@@ -59,7 +66,7 @@ export async function saveProvider(provider: ProviderModel): Promise<boolean> {
     // Map interface field 'enabled' to database field 'isEnabled'
     const providerToSave = {
       ...provider,
-      isEnabled: provider.enabled
+      isEnabled: provider.enabled,
     };
     await saveCustomProvider(providerToSave);
     return true;
@@ -81,7 +88,9 @@ export async function deleteProvider(providerId: string): Promise<boolean> {
 }
 
 // Test a provider connection
-export async function testProvider(provider: ProviderModel): Promise<{ success: boolean; message?: string; error?: string }> {
+export async function testProvider(
+  provider: ProviderModel
+): Promise<{ success: boolean; message?: string; error?: string }> {
   try {
     const result = await testProviderConnection(provider);
     return result;
@@ -89,13 +98,15 @@ export async function testProvider(provider: ProviderModel): Promise<{ success: 
     console.error("Failed to test provider:", error);
     return {
       success: false,
-      error: "An unexpected error occurred while testing the provider"
+      error: "An unexpected error occurred while testing the provider",
     };
   }
 }
 
 // Get models for a provider (for now, just return the single model)
-export async function getModelsForProvider(providerId: string): Promise<string[]> {
+export async function getModelsForProvider(
+  providerId: string
+): Promise<string[]> {
   const provider = await getProviderById(providerId);
   if (provider) {
     return [provider.model];
@@ -104,28 +115,32 @@ export async function getModelsForProvider(providerId: string): Promise<string[]
 }
 
 // Find provider by model name
-export async function findProviderByModel(modelName: string): Promise<ProviderModel | null> {
+export async function findProviderByModel(
+  modelName: string
+): Promise<ProviderModel | null> {
   const providers = await getAllProviders();
-  const provider = providers.find(p => p.model === modelName);
+  const provider = providers.find((p) => p.model === modelName);
   return provider || null;
 }
 
 // Get provider-model pairs for UI display
-export async function getProviderModelPairs(): Promise<Array<{ 
-  id: string; 
-  name: string; 
-  modelName: string; 
-  providerName: string;
-  providerId: string;
-}>> {
+export async function getProviderModelPairs(): Promise<
+  Array<{
+    id: string;
+    name: string;
+    modelName: string;
+    providerName: string;
+    providerId: string;
+  }>
+> {
   const providers = await getAllProviders();
-  const enabledProviders = providers.filter(provider => provider.enabled);
-  const result = enabledProviders.map(provider => ({
+  const enabledProviders = providers.filter((provider) => provider.enabled);
+  const result = enabledProviders.map((provider) => ({
     id: `provider-model-${provider.id}`,
     name: `${provider.name} - ${provider.model}`,
     modelName: provider.model,
     providerName: provider.name,
-    providerId: provider.id
+    providerId: provider.id,
   }));
   return result;
 }

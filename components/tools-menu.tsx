@@ -10,11 +10,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { CodeIcon, ChevronDownIcon } from "./icons";
+import { ChevronDownIcon, CodeIcon } from "./icons";
 
-export function ToolsMenu({
-  className,
-}: React.ComponentProps<typeof Button>) {
+export function ToolsMenu({ className }: React.ComponentProps<typeof Button>) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -39,10 +37,10 @@ export function ToolsMenu({
 
       <DropdownMenuContent align="start" className="min-w-[300px]">
         <DropdownMenuItem asChild>
-          <Link 
-            href="https://gigamaster.github.io/livecodes/" 
-            target="_blank"
+          <Link
             className="flex flex-col items-start gap-1"
+            href="https://gigamaster.github.io/livecodes/"
+            target="_blank"
           >
             <span>Live Code Editor</span>
             <div className="text-muted-foreground text-xs">
@@ -50,12 +48,12 @@ export function ToolsMenu({
             </div>
           </Link>
         </DropdownMenuItem>
-        
+
         <DropdownMenuItem asChild>
-          <Link 
-            href="https://gigamaster.github.io/codemo" 
-            target="_blank"
+          <Link
             className="flex flex-col items-start gap-1"
+            href="https://gigamaster.github.io/codemo"
+            target="_blank"
           >
             <span>Codemo Digital Nomad</span>
             <div className="text-muted-foreground text-xs">

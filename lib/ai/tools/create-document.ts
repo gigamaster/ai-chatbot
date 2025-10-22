@@ -1,8 +1,6 @@
-import { tool, type UIMessageStreamWriter } from "@/lib/custom-ai";
 import { z } from "zod";
-import {
-  artifactKinds,
-} from "@/lib/artifacts/server";
+import { artifactKinds } from "@/lib/artifacts/server";
+import { tool, type UIMessageStreamWriter } from "@/lib/custom-ai";
 import { generateUUID } from "@/lib/utils";
 
 export const createDocument = () =>

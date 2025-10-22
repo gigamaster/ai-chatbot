@@ -1,13 +1,9 @@
-import type { UseChatHelpers } from "@/lib/custom-chat";
 import { useEffect, useState } from "react";
+import type { UseChatHelpers } from "@/lib/custom-chat";
 import type { ChatMessage } from "@/lib/types";
 import { useScrollToBottom } from "./use-scroll-to-bottom";
 
-export function useMessages({
-  status,
-}: {
-  status: UseChatHelpers["status"];
-}) {
+export function useMessages({ status }: { status: UseChatHelpers["status"] }) {
   const {
     containerRef,
     endRef,

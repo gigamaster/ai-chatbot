@@ -1,10 +1,14 @@
 "use client";
 
+import { DotsHorizontalIcon, TrashIcon } from "@radix-ui/react-icons";
 import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import React, { useState, useEffect } from "react";
+import type React from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -13,12 +17,9 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 import type { Chat } from "@/lib/local-db";
 import { getAllLocalChats } from "@/lib/local-db";
 import { cn } from "@/lib/utils";
-import { DotsHorizontalIcon, TrashIcon } from "@radix-ui/react-icons";
-import Link from "next/link";
 import { ChatItem } from "./sidebar-history-item";
 
 type GroupedChats = {
@@ -79,10 +80,10 @@ export function SidebarHistory({ user }: { user: any | undefined }) {
   const { setOpenMobile } = useSidebar();
   const params = useParams();
   const router = useRouter();
-  
+
   // Unwrap the params to get the chat ID
   const [id, setId] = useState<string | null>(null);
-  
+
   useEffect(() => {
     // Handle both Promise and direct object cases
     if (params instanceof Promise) {
@@ -106,11 +107,11 @@ export function SidebarHistory({ user }: { user: any | undefined }) {
   // Fetch chats from IndexedDB
   const fetchChats = async () => {
     if (!user) return;
-    
+
     setIsValidating(true);
     try {
       // Small delay to ensure IndexedDB operation is fully completed
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
       const chats = await fetchChatsFromIndexedDB(user.id);
       console.log("Setting chat history:", chats);
       setChatHistory(chats);
@@ -125,48 +126,52 @@ export function SidebarHistory({ user }: { user: any | undefined }) {
   // Fetch chats when user changes or when component mounts
   useEffect(() => {
     fetchChats();
-    
+
     // Listen for chatSaved events to refresh the chat history
     const handleChatSaved = () => {
       console.log("Received chatSaved event");
       fetchChats();
     };
-    
+
     // Listen for chatHistoryUpdated events (e.g., after deleting all chats)
     const handleChatHistoryUpdated = () => {
       console.log("Received chatHistoryUpdated event");
       fetchChats();
     };
-    
-    if (typeof window !== 'undefined') {
-      window.addEventListener('chatSaved', handleChatSaved);
-      window.addEventListener('chatHistoryUpdated', handleChatHistoryUpdated);
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("chatSaved", handleChatSaved);
+      window.addEventListener("chatHistoryUpdated", handleChatHistoryUpdated);
     }
-    
+
     // Cleanup event listeners
     return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('chatSaved', handleChatSaved);
-        window.removeEventListener('chatHistoryUpdated', handleChatHistoryUpdated);
+      if (typeof window !== "undefined") {
+        window.removeEventListener("chatSaved", handleChatSaved);
+        window.removeEventListener(
+          "chatHistoryUpdated",
+          handleChatHistoryUpdated
+        );
       }
     };
   }, [user]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
-    
+
     try {
       // Delete chat using client-side service instead of API call
-      const { clientDbService } = await import('@/lib/client-db-service');
+      const { clientDbService } = await import("@/lib/client-db-service");
       const result = await clientDbService.deleteChat(deleteId);
-      
-      if (result.success) {
-        // Refresh chat history
-        await fetchChats();
-        toast.success("Chat deleted successfully");
-      } else {
-        toast.error("Failed to delete chat");
+
+      // Dispatch a custom event to refresh the sidebar (consistent with delete all chats)
+      if (typeof window !== "undefined") {
+        console.log("Dispatching chatHistoryUpdated event after single chat delete");
+        window.dispatchEvent(new CustomEvent("chatHistoryUpdated"));
       }
+      
+      // Show success message after sidebar refresh
+      toast.success("Chat deleted successfully");
     } catch (error) {
       console.error("Error deleting chat:", error);
       toast.error("Failed to delete chat");
@@ -347,8 +352,8 @@ export function SidebarHistory({ user }: { user: any | undefined }) {
       {/* Refresh button */}
       <div className="flex justify-center">
         <button
+          className="px-3 py-2 text-center"
           disabled={isValidating}
-          className="text-center px-3 py-2"
           onClick={fetchChats}
         >
           {isValidating ? "Refreshing..." : "Refresh"}
@@ -358,16 +363,22 @@ export function SidebarHistory({ user }: { user: any | undefined }) {
       {/* Delete dialog */}
       {showDeleteDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-background rounded-lg p-6 w-96">
-            <h3 className="text-lg font-semibold mb-2">Are you absolutely sure?</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              This action cannot be undone. This will permanently delete your chat.
+          <div className="w-96 rounded-lg bg-background p-6">
+            <h3 className="mb-2 font-semibold text-lg">
+              Are you absolutely sure?
+            </h3>
+            <p className="mb-4 text-muted-foreground text-sm">
+              This action cannot be undone. This will permanently delete your
+              chat.
             </p>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              <Button
+                onClick={() => setShowDeleteDialog(false)}
+                variant="outline"
+              >
                 Cancel
               </Button>
-              <Button variant="destructive" onClick={handleDelete}>
+              <Button onClick={handleDelete} variant="destructive">
                 Delete
               </Button>
             </div>

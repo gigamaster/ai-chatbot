@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { getAllAvailableProviders } from "@/lib/ai/providers";
 
 export function ModelSelector() {
@@ -23,7 +23,7 @@ export function ModelSelector() {
     try {
       setIsLoading(true);
       const providers = await getAllAvailableProviders();
-      
+
       // Use the first provider if available
       if (providers.length > 0) {
         const firstProvider = providers[0];
@@ -49,20 +49,18 @@ export function ModelSelector() {
     return (
       <div className="space-y-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium">Active AI Provider</label>
-          <div className="text-sm p-2 bg-muted rounded-md">
+          <label className="font-medium text-sm">Active AI Provider</label>
+          <div className="rounded-md bg-muted p-2 text-sm">
             Loading provider information...
           </div>
         </div>
-        
+
         <div className="space-y-2">
-          <label className="text-sm font-medium">Model</label>
-          <div className="text-sm p-2 bg-muted rounded-md">
-            Loading...
-          </div>
+          <label className="font-medium text-sm">Model</label>
+          <div className="rounded-md bg-muted p-2 text-sm">Loading...</div>
         </div>
-        
-        <div className="text-xs text-muted-foreground pt-2">
+
+        <div className="pt-2 text-muted-foreground text-xs">
           Note: Add your first AI provider in the AI Providers section below.
         </div>
       </div>
@@ -72,9 +70,11 @@ export function ModelSelector() {
   // If no providers are available
   if (!providerInfo) {
     return (
-      <div className="space-y-4 text-center py-8 text-muted-foreground">
+      <div className="space-y-4 py-8 text-center text-muted-foreground">
         <p>No AI providers configured yet.</p>
-        <p className="text-sm">Add your first provider in the AI Providers section below.</p>
+        <p className="text-sm">
+          Add your first provider in the AI Providers section below.
+        </p>
       </div>
     );
   }
@@ -82,20 +82,20 @@ export function ModelSelector() {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <label className="text-sm font-medium">Active AI Provider</label>
-        <div className="text-sm p-2 bg-muted rounded-md">
+        <label className="font-medium text-sm">Active AI Provider</label>
+        <div className="rounded-md bg-muted p-2 text-sm">
           {providerInfo.name} {providerInfo.type === "custom" ? "(Custom)" : ""}
         </div>
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Model</label>
-        <div className="text-sm p-2 bg-muted rounded-md">
+        <label className="font-medium text-sm">Model</label>
+        <div className="rounded-md bg-muted p-2 text-sm">
           {providerInfo.model}
         </div>
       </div>
 
-      <div className="text-xs text-muted-foreground pt-2">
+      <div className="pt-2 text-muted-foreground text-xs">
         Note: Manage your AI providers in the AI Providers section below.
       </div>
     </div>

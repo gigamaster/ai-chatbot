@@ -3,13 +3,13 @@
 import { isAfter } from "date-fns";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { useWindowSize } from "usehooks-ts";
 import { useArtifact } from "@/hooks/use-artifact";
+import { clientDocumentService } from "@/lib/client-document-service";
 import type { Document } from "@/lib/local-db";
 import { getDocumentTimestampByIndex } from "@/lib/utils";
-import { toast } from "sonner";
-import { clientDocumentService } from "@/lib/client-document-service";
 import { LoaderIcon } from "./icons";
 import { Button } from "./ui/button";
 
@@ -61,9 +61,12 @@ export const VersionFooter = ({
               // Use client-side service instead of API call
               await clientDocumentService.deleteDocument(
                 artifact.documentId,
-                getDocumentTimestampByIndex(documents, currentVersionIndex).toISOString()
+                getDocumentTimestampByIndex(
+                  documents,
+                  currentVersionIndex
+                ).toISOString()
               );
-              
+
               // Update the UI by filtering out the deleted document
               if (documents) {
                 const updatedDocuments = documents.filter((document) =>
@@ -77,13 +80,16 @@ export const VersionFooter = ({
                     )
                   )
                 );
-                
+
                 // We would need to update the parent component's state here
                 // This is a simplified approach - in a real implementation,
                 // you'd want to properly update the document state
-                console.log("Document restored, updated documents:", updatedDocuments);
+                console.log(
+                  "Document restored, updated documents:",
+                  updatedDocuments
+                );
               }
-              
+
               toast.success("Version restored successfully");
             } catch (error) {
               console.error("Failed to restore version:", error);

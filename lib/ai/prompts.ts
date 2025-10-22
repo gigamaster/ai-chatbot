@@ -1,4 +1,3 @@
-
 import type { ArtifactKind } from "@/components/artifact";
 
 export const artifactsPrompt = `

@@ -1,5 +1,5 @@
-import { genSaltSync, hashSync, compareSync } from "bcrypt-ts";
-import { openDB } from 'idb';
+import { compareSync, genSaltSync, hashSync } from "bcrypt-ts";
+import { openDB } from "idb";
 
 // Salt rounds for bcrypt hashing
 const SALT_ROUNDS = 10;
@@ -9,20 +9,22 @@ let lockDbPromise: ReturnType<typeof openDB> | null = null;
 
 // Initialize database only when needed and only in browser environment
 function getLockDb() {
-  if (typeof window === 'undefined') {
-    throw new Error('Database operations are not available in this environment');
+  if (typeof window === "undefined") {
+    throw new Error(
+      "Database operations are not available in this environment"
+    );
   }
-  
+
   if (!lockDbPromise) {
-    lockDbPromise = openDB('codemo-lock-db', 1, {
+    lockDbPromise = openDB("codemo-lock-db", 1, {
       upgrade(db) {
-        if (!db.objectStoreNames.contains('lock')) {
-          db.createObjectStore('lock');
+        if (!db.objectStoreNames.contains("lock")) {
+          db.createObjectStore("lock");
         }
       },
     });
   }
-  
+
   return lockDbPromise;
 }
 
@@ -42,23 +44,26 @@ export function hashPassword(password: string): string {
  * @param hashedPassword - The hashed password to compare against
  * @returns True if the passwords match, false otherwise
  */
-export function verifyPassword(password: string, hashedPassword: string): boolean {
+export function verifyPassword(
+  password: string,
+  hashedPassword: string
+): boolean {
   try {
     // Handle potential issues with hashed password format
-    if (!hashedPassword || typeof hashedPassword !== 'string') {
-      console.error('Invalid hashed password format');
+    if (!hashedPassword || typeof hashedPassword !== "string") {
+      console.error("Invalid hashed password format");
       return false;
     }
-    
+
     // Handle potential issues with plain text password
-    if (!password || typeof password !== 'string') {
-      console.error('Invalid plain text password');
+    if (!password || typeof password !== "string") {
+      console.error("Invalid plain text password");
       return false;
     }
-    
+
     return compareSync(password, hashedPassword);
   } catch (error) {
-    console.error('Error verifying password:', error);
+    console.error("Error verifying password:", error);
     return false;
   }
 }
@@ -68,9 +73,9 @@ export function verifyPassword(password: string, hashedPassword: string): boolea
  * @param hashedPassword - The hashed password to store
  */
 export async function storePassword(hashedPassword: string): Promise<void> {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     const db = await getLockDb();
-    await db.put('lock', hashedPassword, 'lock_password_hash');
+    await db.put("lock", hashedPassword, "lock_password_hash");
   }
 }
 
@@ -79,19 +84,19 @@ export async function storePassword(hashedPassword: string): Promise<void> {
  * @returns The hashed password or null if not found
  */
 export async function getStoredPassword(): Promise<string | null> {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     try {
       const db = await getLockDb();
-      const password = await db.get('lock', 'lock_password_hash');
-      
+      const password = await db.get("lock", "lock_password_hash");
+
       // Ensure we return a string or null
       if (password === undefined) {
         return null;
       }
-      
-      return typeof password === 'string' ? password : null;
+
+      return typeof password === "string" ? password : null;
     } catch (error) {
-      console.error('Error retrieving stored password:', error);
+      console.error("Error retrieving stored password:", error);
       return null;
     }
   }
@@ -102,9 +107,9 @@ export async function getStoredPassword(): Promise<string | null> {
  * Clears the stored password from IndexedDB
  */
 export async function clearStoredPassword(): Promise<void> {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     const db = await getLockDb();
-    await db.delete('lock', 'lock_password_hash');
+    await db.delete("lock", "lock_password_hash");
   }
 }
 
@@ -127,7 +132,7 @@ export function testBcrypt(): boolean {
     const hashed = hashPassword(testPassword);
     const isValid = verifyPassword(testPassword, hashed);
     const isInvalid = verifyPassword("wrongpassword", hashed);
-    
+
     return isValid && !isInvalid;
   } catch (error) {
     console.error("Bcrypt test failed:", error);

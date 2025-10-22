@@ -1,6 +1,6 @@
-import type { UIMessage } from "@/lib/custom-ai";
 import type { ComponentProps, HTMLAttributes } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type { UIMessage } from "@/lib/custom-ai";
 import { cn } from "@/lib/utils";
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {

@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
+import { LockScreen } from "@/components/lock-screen";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LocalAuthProvider } from "@/contexts/local-auth-context";
 import { LockProvider } from "@/contexts/lock-context";
-import { LockScreen } from "@/components/lock-screen";
 
 import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://github.com/gigamaster/ai-chatbot"),
-  title: "AI Chatbot - Code Collaboration Platform",
-  description: "An AI-Chatbot - Part of the Codemo suite of tools for Digital Nomads.",
+  title: "AI Chatbot - Codemo Digital Nomad",
+  description:
+    "An AI-Chatbot - Part of the Codemo suite of tools for Digital Nomads.",
 };
 
 export const viewport = {

@@ -1,30 +1,36 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
+import { nanoid } from "nanoid";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
-import { 
-  saveCustomProvider, 
-  getAllCustomProviders, 
-  deleteCustomProvider
+import { testProviderConnection } from "@/lib/client-test-provider";
+import {
+  deleteCustomProvider,
+  getAllCustomProviders,
+  saveCustomProvider,
 } from "@/lib/local-db";
 import { getCustomProvider } from "@/lib/local-db-queries";
-import { nanoid } from "nanoid";
-import { Loader2 } from "lucide-react";
-import { testProviderConnection } from "@/lib/client-test-provider";
 
 // Define the provider configuration type
 interface CustomProviderConfig {
@@ -41,10 +47,15 @@ interface CustomProviderConfig {
 export default function ProviderManagementPage() {
   const [providers, setProviders] = useState<CustomProviderConfig[]>([]);
   const [isAddingProvider, setIsAddingProvider] = useState(false);
-  const [editingProvider, setEditingProvider] = useState<CustomProviderConfig | null>(null);
-  const [testingProviderId, setTestingProviderId] = useState<string | null>(null);
-  const [testResults, setTestResults] = useState<Record<string, { success: boolean; message: string; error?: string }>>({});
-  
+  const [editingProvider, setEditingProvider] =
+    useState<CustomProviderConfig | null>(null);
+  const [testingProviderId, setTestingProviderId] = useState<string | null>(
+    null
+  );
+  const [testResults, setTestResults] = useState<
+    Record<string, { success: boolean; message: string; error?: string }>
+  >({});
+
   // Form state
   const [name, setName] = useState("");
   const [baseUrl, setBaseUrl] = useState("");
@@ -107,13 +118,13 @@ export default function ProviderManagementPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Basic validation
     if (!name || !baseUrl || !apiKey) {
       toast.error("Please fill in all required fields");
       return;
     }
-    
+
     try {
       const providerData: CustomProviderConfig = {
         id: editingProvider?.id || nanoid(),
@@ -125,9 +136,13 @@ export default function ProviderManagementPage() {
         updatedAt: new Date().toISOString(),
         isEnabled,
       };
-      
+
       await saveCustomProvider(providerData);
-      toast.success(editingProvider ? "Provider updated successfully" : "Provider added successfully");
+      toast.success(
+        editingProvider
+          ? "Provider updated successfully"
+          : "Provider added successfully"
+      );
       resetForm();
       loadProviders(); // Refresh the list
     } catch (error) {
@@ -138,20 +153,20 @@ export default function ProviderManagementPage() {
 
   const handleTestProvider = async (provider: CustomProviderConfig) => {
     setTestingProviderId(provider.id);
-    
+
     try {
       // Use client-side test function instead of API call
       const result = await testProviderConnection(provider);
-      
-      setTestResults(prev => ({
+
+      setTestResults((prev) => ({
         ...prev,
         [provider.id]: {
           success: result.success,
           message: result.message || "",
-          error: result.error
-        }
+          error: result.error,
+        },
       }));
-      
+
       if (result.success) {
         toast.success(`Connection successful for ${provider.name}`);
       } else {
@@ -160,9 +175,13 @@ export default function ProviderManagementPage() {
     } catch (error) {
       console.error("Failed to test provider:", error);
       toast.error(`Failed to test provider ${provider.name}`);
-      setTestResults(prev => ({
+      setTestResults((prev) => ({
         ...prev,
-        [provider.id]: { success: false, message: "Test failed", error: "Internal error" }
+        [provider.id]: {
+          success: false,
+          message: "Test failed",
+          error: "Internal error",
+        },
       }));
     } finally {
       setTestingProviderId(null);
@@ -172,7 +191,7 @@ export default function ProviderManagementPage() {
   const handleTestNewProvider = async () => {
     // Create a temporary provider object with current form values
     const tempProvider: CustomProviderConfig = {
-      id: editingProvider?.id || 'new',
+      id: editingProvider?.id || "new",
       name,
       baseUrl,
       apiKey,
@@ -181,22 +200,22 @@ export default function ProviderManagementPage() {
       updatedAt: new Date().toISOString(),
       isEnabled: true,
     };
-    
+
     setTestingProviderId(tempProvider.id);
-    
+
     try {
       // Use client-side test function instead of API call
       const result = await testProviderConnection(tempProvider);
-      
-      setTestResults(prev => ({
+
+      setTestResults((prev) => ({
         ...prev,
         [tempProvider.id]: {
           success: result.success,
           message: result.message || "",
-          error: result.error
-        }
+          error: result.error,
+        },
       }));
-      
+
       if (result.success) {
         toast.success(`Connection successful for ${name}`);
       } else {
@@ -214,7 +233,7 @@ export default function ProviderManagementPage() {
     <div className="container max-w-6xl py-8">
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">AI Provider Management</h1>
+          <h1 className="font-bold text-3xl">AI Provider Management</h1>
           <p className="text-muted-foreground">
             Configure and manage your AI providers
           </p>
@@ -228,9 +247,10 @@ export default function ProviderManagementPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex justify-between items-center mb-4">
-              <div className="text-sm text-muted-foreground">
-                {providers.length} provider{providers.length !== 1 ? 's' : ''} configured
+            <div className="mb-4 flex items-center justify-between">
+              <div className="text-muted-foreground text-sm">
+                {providers.length} provider{providers.length !== 1 ? "s" : ""}{" "}
+                configured
               </div>
               <Button onClick={handleAddProvider}>Add Provider</Button>
             </div>
@@ -238,76 +258,87 @@ export default function ProviderManagementPage() {
             {isAddingProvider ? (
               <Card className="mb-6">
                 <CardHeader>
-                  <CardTitle>{editingProvider ? "Edit Provider" : "Add New Provider"}</CardTitle>
+                  <CardTitle>
+                    {editingProvider ? "Edit Provider" : "Add New Provider"}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <form className="space-y-4" onSubmit={handleSubmit}>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="name">Provider Name *</Label>
                         <Input
                           id="name"
-                          value={name}
                           onChange={(e) => setName(e.target.value)}
                           placeholder="e.g., Groq, Hugging Face"
+                          value={name}
                         />
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="baseUrl">Base URL *</Label>
                         <Input
                           id="baseUrl"
-                          value={baseUrl}
                           onChange={(e) => setBaseUrl(e.target.value)}
                           placeholder="e.g., https://api.groq.com/openai/v1"
+                          value={baseUrl}
                         />
                       </div>
-                      
+
                       <div className="space-y-2 md:col-span-2">
                         <Label htmlFor="apiKey">API Key *</Label>
                         <Input
                           id="apiKey"
-                          type="password"
-                          value={apiKey}
                           onChange={(e) => setApiKey(e.target.value)}
                           placeholder="Enter your API key"
+                          type="password"
+                          value={apiKey}
                         />
                       </div>
-                      
+
                       <div className="space-y-2 md:col-span-2">
                         <Label htmlFor="model">Model (Optional)</Label>
                         <Input
                           id="model"
-                          value={model}
                           onChange={(e) => setModel(e.target.value)}
                           placeholder="e.g., llama3-8b-8192"
+                          value={model}
                         />
                       </div>
-                      
-                      <div className="space-y-2 md:col-span-2 flex items-center">
+
+                      <div className="flex items-center space-y-2 md:col-span-2">
                         <Switch
-                          id="isEnabled"
                           checked={isEnabled}
+                          id="isEnabled"
                           onCheckedChange={setIsEnabled}
                         />
-                        <Label htmlFor="isEnabled" className="ml-2">
+                        <Label className="ml-2" htmlFor="isEnabled">
                           Enabled
                         </Label>
                       </div>
                     </div>
-                    
+
                     <div className="flex justify-between pt-4">
-                      <Button type="button" variant="outline" onClick={resetForm}>
+                      <Button
+                        onClick={resetForm}
+                        type="button"
+                        variant="outline"
+                      >
                         Cancel
                       </Button>
                       <div className="flex gap-2">
-                        <Button 
-                          type="button" 
-                          variant="default"
+                        <Button
+                          disabled={
+                            !name ||
+                            !baseUrl ||
+                            !apiKey ||
+                            testingProviderId === "new"
+                          }
                           onClick={() => handleTestNewProvider()}
-                          disabled={!name || !baseUrl || !apiKey || testingProviderId === 'new'}
+                          type="button"
+                          variant="default"
                         >
-                          {testingProviderId === 'new' ? (
+                          {testingProviderId === "new" ? (
                             <>
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                               Testing...
@@ -340,9 +371,13 @@ export default function ProviderManagementPage() {
                 <TableBody>
                   {providers.map((provider) => (
                     <TableRow key={provider.id}>
-                      <TableCell className="font-medium">{provider.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {provider.name}
+                      </TableCell>
                       <TableCell>{provider.model || "-"}</TableCell>
-                      <TableCell className="max-w-xs truncate">{provider.baseUrl}</TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {provider.baseUrl}
+                      </TableCell>
                       <TableCell>
                         {provider.isEnabled ? (
                           <Badge variant="default">Enabled</Badge>
@@ -352,21 +387,27 @@ export default function ProviderManagementPage() {
                         {testResults[provider.id] && (
                           <div className="mt-1">
                             {testResults[provider.id].success ? (
-                              <Badge variant="default" className="text-xs">Connected</Badge>
+                              <Badge className="text-xs" variant="default">
+                                Connected
+                              </Badge>
                             ) : (
-                              <Badge variant="destructive" className="text-xs">Failed</Badge>
+                              <Badge className="text-xs" variant="destructive">
+                                Failed
+                              </Badge>
                             )}
                           </div>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button className="mr-2 h-4 w-4 animate-spin">MyButton</Button>
+                          <Button className="mr-2 h-4 w-4 animate-spin">
+                            MyButton
+                          </Button>
                           <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleTestProvider(provider)}
                             disabled={testingProviderId === provider.id}
+                            onClick={() => handleTestProvider(provider)}
+                            size="sm"
+                            variant="outline"
                           >
                             {testingProviderId === provider.id ? (
                               <>
@@ -378,16 +419,16 @@ export default function ProviderManagementPage() {
                             )}
                           </Button>
                           <Button
-                            variant="outline"
-                            size="sm"
                             onClick={() => handleEditProvider(provider)}
+                            size="sm"
+                            variant="outline"
                           >
                             Edit
                           </Button>
                           <Button
-                            variant="outline"
-                            size="sm"
                             onClick={() => handleDeleteProvider(provider.id)}
+                            size="sm"
+                            variant="outline"
                           >
                             Delete
                           </Button>
@@ -398,7 +439,7 @@ export default function ProviderManagementPage() {
                 </TableBody>
               </Table>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="py-8 text-center text-muted-foreground">
                 <p>No providers configured yet.</p>
                 <p className="mt-2">Add your first provider to get started.</p>
               </div>

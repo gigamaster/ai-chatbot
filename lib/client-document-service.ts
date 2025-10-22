@@ -1,16 +1,16 @@
 "use client";
 
-import { getDocumentById, saveDocument } from "@/lib/local-db-queries";
-import { ChatSDKError } from "@/lib/errors";
 import type { ArtifactKind } from "@/components/artifact";
+import { ChatSDKError } from "@/lib/errors";
 import type { Document } from "@/lib/local-db";
+import { getDocumentById, saveDocument } from "@/lib/local-db-queries";
 
 // Get user ID from local storage or cookie
 function getUserId(): string | null {
   try {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       // Try to get user from localStorage first
-      const storedUser = localStorage.getItem('local_user');
+      const storedUser = localStorage.getItem("local_user");
       if (storedUser) {
         try {
           const user = JSON.parse(storedUser);
@@ -21,22 +21,25 @@ function getUserId(): string | null {
           console.error("Error parsing user from localStorage:", parseError);
         }
       }
-      
+
       // If no user in localStorage, check for user cookie
       const cookieString = document.cookie;
-      const cookies = cookieString.split(';').reduce((acc, cookie) => {
-        const [name, value] = cookie.trim().split('=');
-        acc[name] = value;
-        return acc;
-      }, {} as Record<string, string>);
-      
-      const userCookie = cookies['local_user'];
+      const cookies = cookieString.split(";").reduce(
+        (acc, cookie) => {
+          const [name, value] = cookie.trim().split("=");
+          acc[name] = value;
+          return acc;
+        },
+        {} as Record<string, string>
+      );
+
+      const userCookie = cookies["local_user"];
       if (userCookie) {
         try {
           const user = JSON.parse(decodeURIComponent(userCookie));
           if (user && user.id) {
             // Save to localStorage for future visits
-            localStorage.setItem('local_user', JSON.stringify(user));
+            localStorage.setItem("local_user", JSON.stringify(user));
             return user.id;
           }
         } catch (parseError) {
@@ -74,7 +77,10 @@ export class ClientDocumentService {
       if (error instanceof ChatSDKError) {
         throw error;
       }
-      throw new ChatSDKError("bad_request:document", `Failed to get document: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new ChatSDKError(
+        "bad_request:document",
+        `Failed to get document: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   }
 
@@ -92,10 +98,8 @@ export class ClientDocumentService {
 
       const document = await getDocumentById(data.id);
 
-      if (document) {
-        if (document.userId !== userId) {
-          throw new ChatSDKError("forbidden:document");
-        }
+      if (document && document.userId !== userId) {
+        throw new ChatSDKError("forbidden:document");
       }
 
       const savedDocument = await saveDocument({
@@ -103,7 +107,7 @@ export class ClientDocumentService {
         content: data.content,
         title: data.title,
         kind: data.kind,
-        userId: userId,
+        userId,
       });
 
       return savedDocument;
@@ -111,11 +115,17 @@ export class ClientDocumentService {
       if (error instanceof ChatSDKError) {
         throw error;
       }
-      throw new ChatSDKError("bad_request:document", `Failed to save document: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new ChatSDKError(
+        "bad_request:document",
+        `Failed to save document: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   }
 
-  async deleteDocument(id: string, timestamp?: string): Promise<{ deletedCount: number }> {
+  async deleteDocument(
+    id: string,
+    timestamp?: string
+  ): Promise<{ deletedCount: number }> {
     // For local implementation, we'll just return a success response
     // since we don't have a delete function implemented yet
     return { deletedCount: 0 };

@@ -1,7 +1,6 @@
 "use client";
 
 import { Trigger } from "@radix-ui/react-select";
-import type { UIMessage } from "@/lib/custom-ai";
 import equal from "fast-deep-equal";
 import {
   type ChangeEvent,
@@ -17,9 +16,10 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
-import { saveChatModelAsCookie } from "@/app/(chat)/actions";
+import { saveChatModelAsCookie } from "@/lib/client-actions";
 import { SelectItem } from "@/components/ui/select";
 import { chatModels } from "@/lib/ai/models";
+import type { UIMessage } from "@/lib/custom-ai";
 import { getAllProviders } from "@/lib/provider-model-service";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import type { AppUsage } from "@/lib/usage";
@@ -42,9 +42,9 @@ import {
   StopIcon,
 } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
+import { ProviderModelSelector } from "./provider-model-selector";
 import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
-import { ProviderModelSelector } from "./provider-model-selector";
 
 function PureMultimodalInput({
   chatId,
@@ -133,8 +133,8 @@ function PureMultimodalInput({
       const input = event.target as HTMLInputElement;
       if (input.files && input.files.length > 0) {
         const files = Array.from(input.files);
-        setUploadQueue(files.map(file => file.name));
-        
+        setUploadQueue(files.map((file) => file.name));
+
         try {
           for (const file of files) {
             // Only process image files
@@ -145,14 +145,14 @@ function PureMultimodalInput({
                 reader.onerror = reject;
                 reader.readAsDataURL(file);
               });
-              
-              setAttachments(prev => [
+
+              setAttachments((prev) => [
                 ...prev,
                 {
                   url: fileData,
                   name: file.name,
                   contentType: file.type,
-                }
+                },
               ]);
             }
           }
@@ -179,85 +179,100 @@ function PureMultimodalInput({
 
   const submitForm = useCallback(async () => {
     console.log("=== submitForm called ===");
-    
+
     // Validate that we have a selected model
     if (!selectedModelId) {
       toast.error("Please select a model before sending a message");
       return;
     }
-    
+
     // Validate that we have input text
     if (!input.trim()) {
       toast.error("Please enter a message before sending");
       return;
     }
-    
+
     console.log("Selected model ID:", selectedModelId);
     console.log("Selected provider ID:", selectedProviderId);
-    
+
     // Get the provider for this model
     const providers = await getAllProviders();
     console.log("All providers:", providers.length);
-    
+
     let selectedProvider = null;
-    
+
     // If we have a selected provider ID, use that to find the exact provider
     if (selectedProviderId) {
-      selectedProvider = providers.find((p: any) => p.id === selectedProviderId);
+      selectedProvider = providers.find(
+        (p: any) => p.id === selectedProviderId
+      );
       console.log("Found provider by ID:", selectedProvider ? "Yes" : "No");
     }
-    
+
     // If we don't have a selected provider ID or didn't find the provider by ID,
     // fall back to finding by model name
     if (!selectedProvider) {
       // Find all providers with this model name
-      const matchingProviders = providers.filter((p: any) => p.model === selectedModelId);
+      const matchingProviders = providers.filter(
+        (p: any) => p.model === selectedModelId
+      );
       console.log("Matching providers by model:", matchingProviders.length);
-      
+
       if (matchingProviders.length === 0) {
-        toast.error("Selected model not found. Please check your provider configuration.");
+        toast.error(
+          "Selected model not found. Please check your provider configuration."
+        );
         return;
       }
-      
+
       // Use the first one
       selectedProvider = matchingProviders[0];
       console.log("Using first matching provider:", selectedProvider?.id);
     }
-    
+
     // Validate that we have a provider
     if (!selectedProvider) {
-      toast.error("No provider configured for the selected model. Please check your provider settings.");
+      toast.error(
+        "No provider configured for the selected model. Please check your provider settings."
+      );
       return;
     }
-    
+
     console.log("Selected provider:", {
       id: selectedProvider.id,
       name: selectedProvider.name,
       model: selectedProvider.model,
       hasApiKey: !!selectedProvider.apiKey,
-      hasBaseUrl: !!selectedProvider.baseUrl
+      hasBaseUrl: !!selectedProvider.baseUrl,
     });
-    
+
     // Validate that the provider has the required fields
     if (!selectedProvider.apiKey) {
-      toast.error("Provider API key is missing. Please check your provider configuration.");
+      toast.error(
+        "Provider API key is missing. Please check your provider configuration."
+      );
       return;
     }
-    
+
     if (!selectedProvider.baseUrl) {
-      toast.error("Provider base URL is missing. Please check your provider configuration.");
+      toast.error(
+        "Provider base URL is missing. Please check your provider configuration."
+      );
       return;
     }
-    
+
     window.history.replaceState({}, "", `/chat/${chatId}`);
 
     // Create parts that match the schema
     const parts = [];
-    
+
     // Add file attachments (if any)
     for (const attachment of attachments) {
       // Only add image attachments that match the schema requirements
-      if (attachment.contentType === "image/jpeg" || attachment.contentType === "image/png") {
+      if (
+        attachment.contentType === "image/jpeg" ||
+        attachment.contentType === "image/png"
+      ) {
         parts.push({
           type: "file" as const,
           mediaType: attachment.contentType,
@@ -266,25 +281,28 @@ function PureMultimodalInput({
         });
       }
     }
-    
+
     // Add the text part
     parts.push({
       type: "text" as const,
       text: input,
     });
-    
+
     console.log("Sending message with provider ID:", selectedProvider?.id);
     console.log("Sending message with model ID:", selectedModelId);
-    
+
     // Pass additional data through the sendMessage function
-    sendMessage({
-      role: "user",
-      parts: parts,
-      providerId: selectedProvider?.id,
-    }, {
-      selectedProviderId: selectedProvider?.id,
-      selectedModelId: selectedModelId
-    });
+    sendMessage(
+      {
+        role: "user",
+        parts,
+        providerId: selectedProvider?.id,
+      },
+      {
+        selectedProviderId: selectedProvider?.id,
+        selectedModelId,
+      }
+    );
 
     setAttachments([]);
     setLocalStorageInput("");
@@ -305,7 +323,7 @@ function PureMultimodalInput({
     chatId,
     resetHeight,
     selectedModelId,
-    selectedProviderId
+    selectedProviderId,
   ]);
 
   const _modelResolver = useMemo(() => {
@@ -313,7 +331,7 @@ function PureMultimodalInput({
     return {
       id: selectedModelId,
       // This is a placeholder - the actual model resolution happens in the API
-      languageModel: () => selectedModelId
+      languageModel: () => selectedModelId,
     };
   }, [selectedModelId]);
 
@@ -328,13 +346,13 @@ function PureMultimodalInput({
     <div className={cn("relative flex w-full flex-col gap-4", className)}>
       {/* Hidden file input element */}
       <input
-        ref={fileInputRef}
-        type="file"
         accept="image/jpeg,image/png"
         className="hidden"
         multiple
+        ref={fileInputRef}
+        type="file"
       />
-      
+
       {messages.length === 0 &&
         attachments.length === 0 &&
         uploadQueue.length === 0 && (
@@ -407,10 +425,10 @@ function PureMultimodalInput({
         </div>
         <PromptInputToolbar className="!border-top-0 border-t-0! p-0 shadow-none dark:border-0 dark:border-transparent!">
           <PromptInputTools className="gap-0 sm:gap-0.5">
-            <AttachmentsButton 
+            <AttachmentsButton
               fileInputRef={fileInputRef}
-              status={status}
               selectedModelId={selectedModelId}
+              status={status}
             />
             <ModelSelectorCompact
               onModelChange={(modelId, providerId) => {
@@ -479,7 +497,9 @@ function PureAttachmentsButton({
     <Button
       className="aspect-square h-8 rounded-lg p-1 transition-colors hover:bg-accent"
       data-testid="attachments-button"
-      disabled={(status !== "idle" && status !== "ready") || !attachmentsEnabled}
+      disabled={
+        (status !== "idle" && status !== "ready") || !attachmentsEnabled
+      }
       onClick={(event) => {
         event.preventDefault();
         fileInputRef.current?.click();
@@ -505,22 +525,25 @@ function PureModelSelectorCompact({
   return (
     <div className="w-full">
       <ProviderModelSelector
-        value={selectedProviderId}
         onValueChange={(providerId, modelName) => {
           onModelChange?.(modelName, providerId);
         }}
+        value={selectedProviderId}
       />
     </div>
   );
 }
 
-const ModelSelectorCompact = memo(PureModelSelectorCompact, (prevProps, nextProps) => {
-  return (
-    prevProps.selectedModelId === nextProps.selectedModelId &&
-    prevProps.selectedProviderId === nextProps.selectedProviderId &&
-    prevProps.onModelChange === nextProps.onModelChange
-  );
-});
+const ModelSelectorCompact = memo(
+  PureModelSelectorCompact,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.selectedModelId === nextProps.selectedModelId &&
+      prevProps.selectedProviderId === nextProps.selectedProviderId &&
+      prevProps.onModelChange === nextProps.onModelChange
+    );
+  }
+);
 
 function PureStopButton({
   stop,

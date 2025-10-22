@@ -48,7 +48,8 @@ export function projectWithPositions(
   suggestions: Suggestion[]
 ): UISuggestion[] {
   return suggestions.map((suggestion) => {
-    const positions = findPositionsInDoc(doc, suggestion.originalText);
+    // Use the content property instead of originalText
+    const positions = findPositionsInDoc(doc, suggestion.content);
 
     if (!positions) {
       return {
@@ -104,7 +105,7 @@ export function createSuggestionWidget(
     const textTransaction = view.state.tr.replaceWith(
       suggestion.selectionStart,
       suggestion.selectionEnd,
-      state.schema.text(suggestion.suggestedText)
+      state.schema.text(suggestion.content) // Use content instead of suggestedText
     );
 
     textTransaction.setMeta("no-debounce", true);

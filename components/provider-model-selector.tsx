@@ -1,6 +1,9 @@
 "use client";
 
+import { RefreshCwIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -8,10 +11,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getAllProviders, getProviderModelPairs } from "@/lib/provider-model-service";
-import { Button } from "@/components/ui/button";
-import { RefreshCwIcon } from "lucide-react";
-import { toast } from "sonner";
+import {
+  getAllProviders,
+  getProviderModelPairs,
+} from "@/lib/provider-model-service";
 
 interface ProviderModelOption {
   id: string;
@@ -32,7 +35,9 @@ export function ProviderModelSelector({
   placeholder?: string;
   disabled?: boolean;
 }) {
-  const [providerModels, setProviderModels] = useState<ProviderModelOption[]>([]);
+  const [providerModels, setProviderModels] = useState<ProviderModelOption[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -59,7 +64,9 @@ export function ProviderModelSelector({
     setRefreshing(false);
   };
 
-  const selectedOption = providerModels.find(option => option.providerId === value);
+  const selectedOption = providerModels.find(
+    (option) => option.providerId === value
+  );
 
   if (loading) {
     return (
@@ -72,14 +79,16 @@ export function ProviderModelSelector({
   return (
     <div className="flex gap-2">
       <Select
-        value={selectedOption?.providerId || ""}
+        disabled={disabled || providerModels.length === 0}
         onValueChange={(providerId) => {
-          const option = providerModels.find(opt => opt.providerId === providerId);
+          const option = providerModels.find(
+            (opt) => opt.providerId === providerId
+          );
           if (option) {
             onValueChange?.(option.providerId, option.modelName);
           }
         }}
-        disabled={disabled || providerModels.length === 0}
+        value={selectedOption?.providerId || ""}
       >
         <SelectTrigger className="w-full">
           <SelectValue placeholder={placeholder}>
@@ -88,7 +97,7 @@ export function ProviderModelSelector({
         </SelectTrigger>
         <SelectContent>
           {providerModels.length === 0 ? (
-            <SelectItem value="__empty__" disabled>
+            <SelectItem disabled value="__empty__">
               No providers configured
             </SelectItem>
           ) : (
@@ -96,7 +105,7 @@ export function ProviderModelSelector({
               <SelectItem key={option.id} value={option.providerId}>
                 <div className="flex flex-col">
                   <span>{option.name}</span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-muted-foreground text-xs">
                     {option.providerName}
                   </span>
                 </div>
@@ -106,13 +115,13 @@ export function ProviderModelSelector({
         </SelectContent>
       </Select>
       <Button
-        variant="outline"
-        size="icon"
-        onClick={handleRefresh}
         disabled={refreshing}
+        onClick={handleRefresh}
+        size="icon"
+        variant="outline"
       >
-        <RefreshCwIcon 
-          className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} 
+        <RefreshCwIcon
+          className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
         />
       </Button>
     </div>

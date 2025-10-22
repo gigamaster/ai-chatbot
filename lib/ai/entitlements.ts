@@ -1,5 +1,6 @@
 // Using local user types instead of external auth
 type UserType = "regular";
+
 import type { ChatModel } from "./models";
 
 type Entitlements = {

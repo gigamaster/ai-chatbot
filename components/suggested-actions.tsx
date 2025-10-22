@@ -1,8 +1,8 @@
 "use client";
 
-import type { UseChatHelpers } from "@/lib/custom-chat";
 import { motion } from "framer-motion";
 import { memo } from "react";
+import type { UseChatHelpers } from "@/lib/custom-chat";
 import type { ChatMessage } from "@/lib/types";
 import { Suggestion } from "./elements/suggestion";
 
@@ -12,7 +12,11 @@ type SuggestedActionsProps = {
   setInput?: (input: string) => void; // Add setInput prop
 };
 
-function PureSuggestedActions({ chatId, sendMessage, setInput }: SuggestedActionsProps) {
+function PureSuggestedActions({
+  chatId,
+  sendMessage,
+  setInput,
+}: SuggestedActionsProps) {
   const suggestedActions = [
     "Help me debug this JavaScript code",
     "Explain how React hooks work",
@@ -40,11 +44,11 @@ function PureSuggestedActions({ chatId, sendMessage, setInput }: SuggestedAction
               if (setInput) {
                 setInput(suggestion);
               }
-              
+
               // DO NOT automatically send the message
               // Let the user manually trigger the send action
               // This allows them to edit the message before sending
-              
+
               // Update the URL to reflect the chat ID
               window.history.replaceState({}, "", `/chat/${chatId}`);
             }}

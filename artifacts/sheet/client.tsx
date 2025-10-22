@@ -17,13 +17,20 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
   description: "Useful for working with spreadsheets",
   initialize: () => null,
   onStreamPart: ({ setArtifact, streamPart }) => {
-    if (streamPart.type === "data-sheetDelta") {
-      setArtifact((draftArtifact) => ({
-        ...draftArtifact,
-        content: streamPart.data,
-        isVisible: true,
-        status: "streaming",
-      }));
+    if (streamPart.type === "sheetDelta") {
+      setArtifact((draftArtifact) => {
+        // Type guard to ensure we're working with the correct type
+        if (typeof streamPart.data === 'string') {
+          return {
+            ...draftArtifact,
+            content: streamPart.data,
+            isVisible: true,
+            status: "streaming",
+          };
+        }
+        // Return the draft artifact unchanged if the data type doesn't match
+        return draftArtifact;
+      });
     }
   },
   content: ({ content, currentVersionIndex, onSaveContent, status }) => {

@@ -22,12 +22,15 @@ export function middleware(request: NextRequest) {
   // Check for local user in cookies
   const localUserCookie = request.cookies.get("local_user");
   console.log("Local user cookie:", localUserCookie);
-  
+
   // If no local user, redirect to login page
   if (!localUserCookie) {
     console.log("No user found, redirecting to login");
     // Only redirect if we're not already on an auth page
-    if (!pathname.startsWith("/local-login") && !pathname.startsWith("/local-register")) {
+    if (
+      !pathname.startsWith("/local-login") &&
+      !pathname.startsWith("/local-register")
+    ) {
       return NextResponse.redirect(new URL("/local-login", request.url));
     }
     // For auth pages, allow access
@@ -47,7 +50,10 @@ export function middleware(request: NextRequest) {
   }
 
   // Check if user is trying to access auth pages while already logged in
-  if (localUser && (pathname === "/local-login" || pathname === "/local-register")) {
+  if (
+    localUser &&
+    (pathname === "/local-login" || pathname === "/local-register")
+  ) {
     console.log("User already logged in, redirecting to home");
     return NextResponse.redirect(new URL("/", request.url));
   }

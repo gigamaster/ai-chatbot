@@ -16,7 +16,7 @@ export default async function Layout({
   // Use local authentication instead of NextAuth
   const [localUser, cookieStore] = await Promise.all([
     getLocalUserFromCookies(),
-    cookies()
+    cookies(),
   ]);
   const isCollapsed = cookieStore.get("sidebar_state")?.value !== "true";
 

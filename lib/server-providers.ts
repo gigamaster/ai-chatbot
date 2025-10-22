@@ -16,7 +16,10 @@ export function setServerProviders(providers: any[]) {
 // Function to get server-side providers
 export function getServerProviders() {
   console.log("=== getServerProviders called ===");
-  console.log("Getting server providers. Current count:", serverProviders.length);
+  console.log(
+    "Getting server providers. Current count:",
+    serverProviders.length
+  );
   console.log("Server providers:", JSON.stringify(serverProviders, null, 2));
   return serverProviders;
 }

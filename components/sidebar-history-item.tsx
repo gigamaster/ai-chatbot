@@ -1,13 +1,5 @@
 import Link from "next/link";
 import { memo } from "react";
-import type { Chat } from "@/lib/local-db";
-import { cn } from "@/lib/utils";
-import { formatISO } from "date-fns";
-import {
-  SidebarMenuAction,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,11 +11,13 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { 
-  MoreHorizontalIcon, 
-  TrashIcon, 
-  DownloadIcon
-} from "./icons";
+import {
+  SidebarMenuAction,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+import type { Chat } from "@/lib/local-db";
+import { DownloadIcon, MoreHorizontalIcon, TrashIcon } from "./icons";
 
 const PureChatItem = ({
   chat,
@@ -40,16 +34,18 @@ const PureChatItem = ({
   const handleExport = async (format: "json" | "markdown" | "text") => {
     try {
       // Import the export service dynamically
-      const { ChatExportService } = await import('@/lib/chat-export-service');
-      
+      const { ChatExportService } = await import("@/lib/chat-export-service");
+
       // Get messages for this chat
-      const { getLocalMessagesByChatId } = await import('@/lib/local-db-queries');
+      const { getLocalMessagesByChatId } = await import(
+        "@/lib/local-db-queries"
+      );
       const messages = await getLocalMessagesByChatId({ id: chat.id });
-      
+
       // Convert messages to UI format
-      const { convertToUIMessages } = await import('@/lib/utils');
+      const { convertToUIMessages } = await import("@/lib/utils");
       const uiMessages = convertToUIMessages(messages);
-      
+
       // Export the chat
       ChatExportService.exportChat(chat, uiMessages, format);
     } catch (error) {

@@ -1,6 +1,5 @@
 "use client";
 
-import type { ToolUIPart } from "@/lib/custom-ai";
 import {
   CheckCircleIcon,
   ChevronDownIcon,
@@ -16,6 +15,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import type { ToolUIPart } from "@/lib/custom-ai";
 import { cn } from "@/lib/utils";
 import { CodeBlock } from "./code-block";
 
@@ -35,19 +35,21 @@ export type ToolHeaderProps = {
   className?: string;
 };
 
-const getStatusBadge = (status: "pending" | "running" | "completed" | "error") => {
+const getStatusBadge = (
+  status: "pending" | "running" | "completed" | "error"
+) => {
   const labels = {
-    "pending": "Pending",
-    "running": "Running",
-    "completed": "Completed",
-    "error": "Error",
+    pending: "Pending",
+    running: "Running",
+    completed: "Completed",
+    error: "Error",
   } as const;
 
   const icons = {
-    "pending": <CircleIcon className="size-4" />,
-    "running": <ClockIcon className="size-4 animate-pulse" />,
-    "completed": <CheckCircleIcon className="size-4 text-green-600" />,
-    "error": <XCircleIcon className="size-4 text-red-600" />,
+    pending: <CircleIcon className="size-4" />,
+    running: <ClockIcon className="size-4 animate-pulse" />,
+    completed: <CheckCircleIcon className="size-4 text-green-600" />,
+    error: <XCircleIcon className="size-4 text-red-600" />,
   } as const;
 
   return (

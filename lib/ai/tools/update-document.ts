@@ -1,6 +1,6 @@
-import { tool } from "@/lib/custom-ai";
 import { z } from "zod";
 import { documentHandlersByArtifactKind } from "@/lib/artifacts/server";
+import { tool } from "@/lib/custom-ai";
 import { getDocumentById } from "@/lib/local-db-queries";
 
 export const updateDocument = () =>
@@ -15,7 +15,7 @@ export const updateDocument = () =>
     }),
     execute: async (args: { id: string; description: string }) => {
       const { id, description } = args;
-      const document = await getDocumentById({ id });
+      const document = await getDocumentById(id);
 
       if (!document) {
         return {

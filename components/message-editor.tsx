@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { deleteTrailingMessages } from "@/app/(chat)/actions";
+import { deleteTrailingMessages } from "@/lib/client-actions";
 import type { ChatMessage } from "@/lib/types";
 import { getTextFromMessage } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -84,7 +84,9 @@ export function MessageEditor({
             });
 
             setMessages((messages: ChatMessage[]) => {
-              const index = messages.findIndex((m: ChatMessage) => m.id === message.id);
+              const index = messages.findIndex(
+                (m: ChatMessage) => m.id === message.id
+              );
 
               if (index !== -1) {
                 const updatedMessage: ChatMessage = {

@@ -3,7 +3,8 @@
 import { useEffect, useRef } from "react";
 import { initialArtifactData, useArtifact } from "@/hooks/use-artifact";
 import { artifactDefinitions } from "./artifact";
-import { useDataStream } from "./data-stream-provider";
+// Use a relative import with the correct path
+import { useDataStream } from "@/components/data-stream-provider";
 
 export function DataStreamHandler() {
   const { dataStream } = useDataStream();
@@ -33,50 +34,54 @@ export function DataStreamHandler() {
         });
       }
 
-      setArtifact((draftArtifact) => {
-        if (!draftArtifact) {
-          return { ...initialArtifactData, status: "streaming" };
+      // Create a properly typed update function
+      const updateArtifact = (currentArtifact: any) => {
+        if (!currentArtifact) {
+          return { ...initialArtifactData, status: "streaming" as const };
         }
 
         switch (delta.type) {
           case "data-id":
             return {
-              ...draftArtifact,
+              ...currentArtifact,
               documentId: delta.data,
               status: "streaming",
             };
 
           case "data-title":
             return {
-              ...draftArtifact,
+              ...currentArtifact,
               title: delta.data,
               status: "streaming",
             };
 
           case "data-kind":
             return {
-              ...draftArtifact,
+              ...currentArtifact,
               kind: delta.data,
               status: "streaming",
             };
 
           case "data-clear":
             return {
-              ...draftArtifact,
+              ...currentArtifact,
               content: "",
               status: "streaming",
             };
 
           case "data-finish":
             return {
-              ...draftArtifact,
+              ...currentArtifact,
               status: "idle",
             };
 
           default:
-            return draftArtifact;
+            return currentArtifact;
         }
-      });
+      };
+
+      // Type assertion to match the expected signature
+      setArtifact(updateArtifact as any);
     }
   }, [dataStream, setArtifact, setMetadata, artifact]);
 

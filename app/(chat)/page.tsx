@@ -11,7 +11,7 @@ export default async function Page() {
   // Check for local user in cookies
   const cookieStore = await cookies();
   const localUserCookie = cookieStore.get("local_user");
-  
+
   let localUser;
   if (localUserCookie) {
     try {
@@ -41,8 +41,8 @@ export default async function Page() {
           autoResume={false}
           id={id}
           initialChatModel={DEFAULT_CHAT_MODEL}
-          initialProviderId={providerIdFromCookie?.value}
           initialMessages={[]}
+          initialProviderId={providerIdFromCookie?.value}
           isReadonly={false}
           key={id}
         />
@@ -57,8 +57,8 @@ export default async function Page() {
         autoResume={false}
         id={id}
         initialChatModel={modelIdFromCookie?.value || DEFAULT_CHAT_MODEL}
-        initialProviderId={providerIdFromCookie?.value}
         initialMessages={[]}
+        initialProviderId={providerIdFromCookie?.value}
         isReadonly={false}
         key={id}
       />

@@ -1,8 +1,8 @@
-import { streamObject, smoothStream } from "@/lib/custom-ai";
 import { z } from "zod";
 import { codePrompt, updateDocumentPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocumentHandler } from "@/lib/artifacts/server";
+import { smoothStream, streamObject } from "@/lib/custom-ai";
 
 export const codeDocumentHandler = createDocumentHandler<"code">({
   kind: "code",
@@ -11,11 +11,11 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
 
     // Get the language model dynamically
     const languageModel = await getLanguageModel();
-    
+
     // Since our custom streamObject is a mock, we'll return a mock response
     const mockDraft = {
       explanation: "This is a mock explanation for the code",
-      code: "console.log('Hello, World!');"
+      code: "console.log('Hello, World!');",
     };
 
     if (mockDraft.explanation) {
@@ -45,11 +45,11 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
 
     // Get the language model dynamically
     const languageModel = await getLanguageModel();
-    
+
     // Since our custom streamObject is a mock, we'll return a mock response
     const mockDraft = {
       explanation: "This is a mock explanation for the updated code",
-      code: "console.log('Updated Hello, World!');"
+      code: "console.log('Updated Hello, World!');",
     };
 
     if (mockDraft.explanation) {

@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, type KeyboardEvent, useEffect } from "react";
+import { type KeyboardEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { useLock } from "@/contexts/lock-context";
 import { LockIcon } from "./icons";
 
 export function LockScreen() {
-  const { isLocked, unlock, hasPassword, setPassword, resetPassword } = useLock();
+  const { isLocked, unlock, hasPassword, setPassword, resetPassword } =
+    useLock();
   const [password, setPasswordInput] = useState("");
   const [error, setError] = useState("");
   const [attemptCount, setAttemptCount] = useState(0);
@@ -40,22 +41,22 @@ export function LockScreen() {
 
     // Show loading state
     setError("");
-    
+
     const isUnlocked = await unlock(password);
-    
+
     if (isUnlocked) {
       setPasswordInput("");
       setAttemptCount(0);
     } else {
       const newAttemptCount = attemptCount + 1;
       setAttemptCount(newAttemptCount);
-      
+
       if (newAttemptCount >= 5) {
         setError("Too many failed attempts. Please reset your password.");
       } else {
         setError(`Incorrect password. Attempt ${newAttemptCount} of 5.`);
       }
-      
+
       // Clear the password input to let the user try again
       setPasswordInput("");
     }
@@ -68,7 +69,11 @@ export function LockScreen() {
   };
 
   const handleResetPassword = async () => {
-    if (confirm("Are you sure you want to reset your password? This will clear your current password and require you to set a new one.")) {
+    if (
+      confirm(
+        "Are you sure you want to reset your password? This will clear your current password and require you to set a new one."
+      )
+    ) {
       try {
         await resetPassword();
         setPasswordInput("");
@@ -83,8 +88,8 @@ export function LockScreen() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/20 backdrop-blur-md">
-      <div className="absolute inset-0 bg-black/10 backdrop-blur-sm"></div>
-      <Card className="relative z-10 w-full max-w-sm bg-background/90 backdrop-blur-sm border-border/50 shadow-2xl">
+      <div className="absolute inset-0 bg-black/10 backdrop-blur-sm" />
+      <Card className="relative z-10 w-full max-w-sm border-border/50 bg-background/90 shadow-2xl backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <LockIcon />
@@ -92,32 +97,32 @@ export function LockScreen() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {hasPassword
               ? "Enter your password to unlock the application"
               : "Set a password to protect your application"}
           </p>
           <div className="space-y-2">
             <Input
-              type="password"
-              placeholder="Password"
-              value={password}
+              autoFocus
+              className="bg-background/80 backdrop-blur-sm"
               onChange={(e) => setPasswordInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="bg-background/80 backdrop-blur-sm"
-              autoFocus
+              placeholder="Password"
+              type="password"
+              value={password}
             />
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            {error && <p className="text-red-500 text-sm">{error}</p>}
           </div>
           <div className="flex flex-col gap-2">
             <Button className="w-full" onClick={handleUnlock}>
               {hasPassword ? "Unlock" : "Set Password"}
             </Button>
             {attemptCount >= 3 && (
-              <Button 
-                variant="outline" 
+              <Button
                 className="w-full"
                 onClick={handleResetPassword}
+                variant="outline"
               >
                 Reset Password
               </Button>

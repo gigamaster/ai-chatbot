@@ -1,4 +1,3 @@
-import type { UseChatHelpers } from "@/lib/custom-chat";
 import { formatDistance } from "date-fns";
 import equal from "fast-deep-equal";
 import { AnimatePresence, motion } from "framer-motion";
@@ -10,19 +9,19 @@ import {
   useEffect,
   useState,
 } from "react";
+import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 import { useDebounceCallback, useWindowSize } from "usehooks-ts";
 import { codeArtifact } from "@/artifacts/code/client";
-import { collabArtifact } from "@/artifacts/collab/client";
 import { imageArtifact } from "@/artifacts/image/client";
 import { sheetArtifact } from "@/artifacts/sheet/client";
 import { textArtifact } from "@/artifacts/text/client";
 import { useArtifact } from "@/hooks/use-artifact";
+import { clientDocumentService } from "@/lib/client-document-service";
+import type { UseChatHelpers } from "@/lib/custom-chat";
 import type { Document, Vote } from "@/lib/local-db";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { fetcher } from "@/lib/utils";
-import { toast } from "sonner";
-import { clientDocumentService } from "@/lib/client-document-service";
 import { ArtifactActions } from "./artifact-actions";
 import { ArtifactCloseButton } from "./artifact-close-button";
 import { ArtifactMessages } from "./artifact-messages";
@@ -36,7 +35,6 @@ export const artifactDefinitions = [
   codeArtifact,
   imageArtifact,
   sheetArtifact,
-  collabArtifact,
 ];
 export type ArtifactKind = (typeof artifactDefinitions)[number]["kind"];
 
@@ -58,7 +56,7 @@ export type UIArtifact = {
 // Custom fetcher for client document service that matches SWR's expected signature
 const documentFetcher = async (url: string) => {
   // Extract document ID from the URL (format: client-document-{id})
-  const id = url.replace('client-document-', '');
+  const id = url.replace("client-document-", "");
   return await clientDocumentService.getDocument(id);
 };
 
@@ -94,11 +92,11 @@ export function PureArtifact({
   selectedModelId: string;
 }) {
   const { artifact, setArtifact, metadata, setMetadata } = useArtifact();
-  
+
   // Replace SWR with direct client-side state management
   const [documents, setDocuments] = useState<Document[] | undefined>(undefined);
   const [isDocumentsFetching, setIsDocumentsFetching] = useState(false);
-  
+
   // Fetch document when artifact.documentId changes
   useEffect(() => {
     const fetchDocument = async () => {
@@ -106,10 +104,12 @@ export function PureArtifact({
         setDocuments(undefined);
         return;
       }
-      
+
       setIsDocumentsFetching(true);
       try {
-        const docs = await clientDocumentService.getDocument(artifact.documentId);
+        const docs = await clientDocumentService.getDocument(
+          artifact.documentId
+        );
         setDocuments(docs || undefined);
       } catch (error) {
         console.error("Failed to fetch document:", error);
@@ -118,7 +118,7 @@ export function PureArtifact({
         setIsDocumentsFetching(false);
       }
     };
-    
+
     fetchDocument();
   }, [artifact.documentId, artifact.status]);
 
@@ -175,7 +175,9 @@ export function PureArtifact({
           if (currentDocument.content !== updatedContent) {
             try {
               // Use client-side service instead of API call
-              const { clientDbService } = await import('@/lib/client-db-service');
+              const { clientDbService } = await import(
+                "@/lib/client-db-service"
+              );
               await clientDbService.saveDocument({
                 id: artifact.documentId,
                 title: artifact.title,

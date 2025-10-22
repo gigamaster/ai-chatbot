@@ -1,5 +1,5 @@
-import type { DataUIPart } from "@/lib/custom-ai";
 import type { ComponentType, Dispatch, ReactNode, SetStateAction } from "react";
+import type { DataUIPart } from "@/lib/custom-ai";
 import type { Suggestion } from "@/lib/local-db";
 import type { ChatMessage, CustomUIDataTypes } from "@/lib/types";
 import type { UIArtifact } from "./artifact";

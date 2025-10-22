@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { startTransition, useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
+import { saveChatModelAsCookie } from "@/lib/client-actions";
 import { ChatHeader } from "@/components/chat-header";
 import {
   AlertDialog,
@@ -15,24 +16,23 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useArtifactSelector } from "@/hooks/use-artifact";
-import type { Vote } from "@/lib/local-db";
 import { ChatSDKError } from "@/lib/custom-ai";
+import type { Vote } from "@/lib/local-db";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import type { AppUsage } from "@/lib/usage";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
-import { saveChatModelAsCookie } from "@/app/(chat)/actions";
 import { Artifact } from "./artifact";
 
 // Remove unused imports
 // import { useAutoResume } from "@/hooks/use-auto-resume";
 // import { useDataStream } from "./data-stream-provider";
 
+import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
+import { CustomChatTransport, useCustomChat } from "@/lib/custom-chat";
+import { getAllProviders, getProviderById } from "@/lib/provider-model-service";
 import { Messages } from "./messages";
 import { MultimodalInput } from "./multimodal-input";
 import { toast } from "./toast";
-import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
-import { getAllProviders, getProviderById } from "@/lib/provider-model-service";
-import { useCustomChat, CustomChatTransport } from "@/lib/custom-chat";
 
 export function Chat({
   id,
@@ -69,7 +69,9 @@ export function Chat({
   const [usage, setUsage] = useState<AppUsage | undefined>(initialLastContext);
 
   const [currentModelId, setCurrentModelId] = useState(initialChatModel);
-  const [currentProviderId, setCurrentProviderId] = useState<string | null>(initialProviderId || null);
+  const [currentProviderId, setCurrentProviderId] = useState<string | null>(
+    initialProviderId || null
+  );
   const currentModelIdRef = useRef(currentModelId);
   const currentProviderIdRef = useRef(currentProviderId);
 
@@ -86,19 +88,23 @@ export function Chat({
     const initializeProviderId = async () => {
       try {
         const providers = await getAllProviders();
-        
+
         // If we have an initial provider ID from props, use that
         if (initialProviderId) {
-          const provider = providers.find((p: any) => p.id === initialProviderId);
+          const provider = providers.find(
+            (p: any) => p.id === initialProviderId
+          );
           if (provider) {
             setCurrentProviderId(initialProviderId);
             return;
           }
         }
-        
+
         // Otherwise, find all providers with the same model name
-        const matchingProviders = providers.filter((p: any) => p.model === initialChatModel);
-        
+        const matchingProviders = providers.filter(
+          (p: any) => p.model === initialChatModel
+        );
+
         if (matchingProviders.length > 0) {
           // Use the first one as default
           setCurrentProviderId(matchingProviders[0].id);
@@ -107,7 +113,7 @@ export function Chat({
         console.error("Error initializing provider ID:", error);
       }
     };
-    
+
     initializeProviderId();
   }, [initialChatModel, initialProviderId]);
 
@@ -133,15 +139,16 @@ export function Chat({
         const messageWithId = {
           id: lastMessage?.id || generateUUID(),
           role: lastMessage?.role || "user",
-          parts: lastMessage?.parts || []
+          parts: lastMessage?.parts || [],
         };
-        
+
         // Ensure we have the current provider ID
-        const providerIdToSend = currentProviderIdRef.current || currentProviderId;
-        
+        const providerIdToSend =
+          currentProviderIdRef.current || currentProviderId;
+
         // Use the chat ID from the hook options, not from the request
         const chatId = id;
-        
+
         // Create the request body
         const requestBody = {
           id: chatId, // Use the proper chat ID
@@ -150,7 +157,7 @@ export function Chat({
           selectedProviderId: providerIdToSend,
           ...request.body,
         };
-        
+
         return requestBody;
       },
     }),
@@ -214,10 +221,7 @@ export function Chat({
   return (
     <>
       <div className="overscroll-behavior-contain flex h-dvh min-w-0 touch-pan-y flex-col bg-background">
-        <ChatHeader
-          chatId={id}
-          isReadonly={isReadonly}
-        />
+        <ChatHeader chatId={id} isReadonly={isReadonly} />
 
         <Messages
           chatId={id}

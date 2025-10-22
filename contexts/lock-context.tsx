@@ -1,9 +1,16 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
-import { storePassword, getStoredPassword, hasStoredPassword, hashPassword, verifyPassword, clearStoredPassword } from '@/lib/lock-utils';
+import { createContext, useContext, useEffect, useState } from "react";
 import { useLocalAuth } from "@/contexts/local-auth-context";
+import {
+  clearStoredPassword,
+  getStoredPassword,
+  hashPassword,
+  hasStoredPassword,
+  storePassword,
+  verifyPassword,
+} from "@/lib/lock-utils";
 
 type LockContextType = {
   isLocked: boolean;
@@ -22,18 +29,18 @@ const LockContext = createContext<LockContextType | undefined>(undefined);
 export function LockProvider({ children }: { children: ReactNode }) {
   // Initialize isLocked state with saved value if it exists
   const getInitialLockState = () => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const savedLockState = localStorage.getItem("codemo_is_locked");
       return savedLockState === "true";
     }
     return false;
   };
-  
+
   const [isLocked, setIsLocked] = useState(getInitialLockState());
   const [hasPassword, setHasPassword] = useState(false);
   const [lockTime, setLockTime] = useState<number | null>(null);
   const [lastActivity, setLastActivity] = useState(Date.now());
-  
+
   const { user: localUser } = useLocalAuth();
 
   // Load async lock state values from storage on mount
@@ -41,17 +48,17 @@ export function LockProvider({ children }: { children: ReactNode }) {
     const loadLockState = async () => {
       try {
         console.log("Loading async lock state values...");
-        
+
         // Check if password exists
         const hasPwd = await hasStoredPassword();
         console.log("Has stored password:", hasPwd);
         setHasPassword(hasPwd);
-        
+
         // Load auto-lock time setting
         const savedLockTime = localStorage.getItem("codemo_lock_time");
         console.log("Saved lock time from localStorage:", savedLockTime);
         if (savedLockTime) {
-          const parsedTime = parseInt(savedLockTime, 10);
+          const parsedTime = Number.parseInt(savedLockTime, 10);
           if (!isNaN(parsedTime)) {
             console.log("Setting lock time to:", parsedTime);
             setLockTime(parsedTime);
@@ -61,7 +68,7 @@ export function LockProvider({ children }: { children: ReactNode }) {
         console.error("Error loading lock state:", error);
       }
     };
-    
+
     loadLockState();
   }, []);
 
@@ -91,7 +98,7 @@ export function LockProvider({ children }: { children: ReactNode }) {
           setIsLocked(true);
         }
       }
-    }, 60000); // Check every minute
+    }, 60_000); // Check every minute
 
     return () => {
       window.removeEventListener("mousedown", handleActivity);
@@ -112,28 +119,27 @@ export function LockProvider({ children }: { children: ReactNode }) {
       console.log("Attempting to unlock with password:", password);
       const storedPassword = await getStoredPassword();
       console.log("Stored password:", storedPassword);
-      
+
       // Check if we have a stored password
       if (!storedPassword) {
-        console.warn('No stored password found');
+        console.warn("No stored password found");
         return false;
       }
-      
+
       // Verify the password
       const isValid = verifyPassword(password, storedPassword);
       console.log("Password is valid:", isValid);
-      
+
       if (isValid) {
         console.log("Unlock successful, setting isLocked to false");
         setIsLocked(false);
         return true;
-      } else {
-        console.log("Unlock failed: incorrect password");
       }
+      console.log("Unlock failed: incorrect password");
     } catch (error) {
       console.error("Error during unlock:", error);
     }
-    
+
     return false;
   };
 
@@ -142,7 +148,7 @@ export function LockProvider({ children }: { children: ReactNode }) {
     const hashedPassword = hashPassword(newPassword);
     console.log("Hashed password:", hashedPassword);
     setHasPassword(true);
-    
+
     try {
       await storePassword(hashedPassword);
       console.log("Password stored successfully");
