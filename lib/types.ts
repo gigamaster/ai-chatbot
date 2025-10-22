@@ -49,6 +49,7 @@ export type CustomUIDataTypes = {
   "data-kind": ArtifactKind;
   "data-clear": null;
   "data-finish": null;
+  "data-appendMessage": string; // Add this line
   // Debug tool data types
   "debug-start": { language: string; code: string; error?: string };
   "debug-result": { 

@@ -5,6 +5,9 @@ import type React from "react";
 import { createContext, useContext, useMemo, useState } from "react";
 import type { CustomUIDataTypes } from "@/lib/types";
 
+// Simple replacement for the data stream provider that returns empty data
+// This avoids breaking components that were calling useDataStream() but not using it
+
 type DataStreamContextValue = {
   dataStream: DataUIPart<CustomUIDataTypes>[];
   setDataStream: React.Dispatch<
@@ -32,10 +35,12 @@ export function DataStreamProvider({
   );
 }
 
+// Simple hook that returns empty data to avoid breaking existing components
 export function useDataStream() {
-  const context = useContext(DataStreamContext);
-  if (!context) {
-    throw new Error("useDataStream must be used within a DataStreamProvider");
-  }
-  return context;
+  return {
+    dataStream: [] as DataUIPart<CustomUIDataTypes>[],
+    setDataStream: (() => {}) as React.Dispatch<
+      React.SetStateAction<DataUIPart<CustomUIDataTypes>[]>
+    >,
+  };
 }

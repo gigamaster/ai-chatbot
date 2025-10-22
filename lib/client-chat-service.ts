@@ -1,6 +1,5 @@
 import { getProviderById } from "@/lib/provider-model-service";
 import { ChatSDKError } from "@/lib/errors";
-import { generateTitleFromUserMessage } from "@/app/(chat)/actions";
 import { saveLocalChat } from "@/lib/local-db-queries";
 
 /**
@@ -43,10 +42,14 @@ async function createSSEStream(response: Response) {
         }
 
         buffer += decoder.decode(value, { stream: true });
+        console.log("=== RAW STREAMING DATA ===");
+        console.log("Raw buffer:", JSON.stringify(buffer));
         
         // Process complete lines
         const lines = buffer.split('\n');
+        console.log("Lines to process:", lines);
         buffer = lines.pop() || ''; // Keep incomplete line in buffer
+        console.log("Remaining buffer:", JSON.stringify(buffer));
         
         for (const line of lines) {
           if (line.startsWith('data: ')) {
@@ -64,9 +67,13 @@ async function createSSEStream(response: Response) {
               const parsed = JSON.parse(data);
               if (parsed.choices && parsed.choices[0] && parsed.choices[0].delta) {
                 const content = parsed.choices[0].delta.content;
+                console.log("=== SSE PARSING DEBUG ===");
+                console.log("Raw SSE data:", data);
+                console.log("Parsed content:", JSON.stringify(content));
                 if (content) {
                   // Format as text-delta for frontend
                   const deltaData = `data: ${JSON.stringify({ type: "text-delta", textDelta: content, transient: false })}\n\n`;
+                  console.log("Sending delta data:", deltaData);
                   controller.enqueue(new TextEncoder().encode(deltaData));
                 }
               }
@@ -135,6 +142,34 @@ function getUserId(): string | null {
   return null;
 }
 
+// Simple client-side title generation function
+async function generateTitleFromUserMessage(userMessage: any): Promise<string> {
+  try {
+    // Extract text content from the user message
+    const textContent = userMessage.parts
+      .filter((part: any) => part.type === "text")
+      .map((part: any) => part.text)
+      .join(" ")
+      .trim();
+
+    // If we have text content, create a simple title from it
+    if (textContent) {
+      // Take first 50 characters and add ellipsis if needed
+      let title = textContent.substring(0, 50);
+      if (textContent.length > 50) {
+        title += "...";
+      }
+      return title || "New Chat";
+    }
+    
+    // Fallback if no text content
+    return "New Chat";
+  } catch (error) {
+    console.error("Error generating title:", error);
+    return "New Chat";
+  }
+}
+
 // Client-side chat service
 export class ClientChatService {
   async sendMessages(request: any) {
@@ -186,10 +221,7 @@ export class ClientChatService {
       // Generate chat title from the first message if this is a new chat
       let title = "";
       try {
-        title = await generateTitleFromUserMessage({
-          message: userMessage,
-          selectedChatModel: selectedModelId,
-        });
+        title = await generateTitleFromUserMessage(userMessage);
         console.log("Generated title:", title);
       } catch (titleError) {
         console.error("Error generating title:", titleError);
@@ -202,37 +234,6 @@ export class ClientChatService {
       }
       
       console.log("Final title to use:", title);
-      
-      // Save the chat to the database
-      try {
-        console.log("Attempting to save chat with data:", {
-          id: chatId,
-          userId: userId,
-          title: title,
-        });
-        
-        const savedChat = await saveLocalChat({
-          id: chatId,
-          userId: userId,
-          title: title,
-        });
-        
-        console.log("Chat saved result:", savedChat);
-        
-        // Dispatch a custom event to notify that a chat has been saved
-        // This will allow the sidebar to refresh its chat history
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('chatSaved', { detail: { chatId, userId } }));
-        }
-        
-        // Also dispatch a general chatSaved event for components that listen to it without details
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('chatSaved'));
-        }
-      } catch (saveError) {
-        console.error("Error saving chat:", saveError);
-        // Don't throw an error here as the chat functionality should still work
-      }
       
       // Prepare messages in OpenAI format
       const messages = convertMessagesToOpenAIFormat([userMessage]);
@@ -285,6 +286,7 @@ export class ClientChatService {
       const stream = await createSSEStream(response);
       
       // Return a Response object that mimics the server API response
+      // DO NOT SAVE THE CHAT HERE - let the custom chat hook handle it after first response
       return new Response(stream, {
         status: 200,
         headers: {

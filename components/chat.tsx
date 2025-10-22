@@ -15,7 +15,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useArtifactSelector } from "@/hooks/use-artifact";
-import { useAutoResume } from "@/hooks/use-auto-resume";
 import type { Vote } from "@/lib/local-db";
 import { ChatSDKError } from "@/lib/custom-ai";
 import type { Attachment, ChatMessage } from "@/lib/types";
@@ -23,7 +22,11 @@ import type { AppUsage } from "@/lib/usage";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { saveChatModelAsCookie } from "@/app/(chat)/actions";
 import { Artifact } from "./artifact";
-import { useDataStream } from "./data-stream-provider";
+
+// Remove unused imports
+// import { useAutoResume } from "@/hooks/use-auto-resume";
+// import { useDataStream } from "./data-stream-provider";
+
 import { Messages } from "./messages";
 import { MultimodalInput } from "./multimodal-input";
 import { toast } from "./toast";
@@ -59,7 +62,8 @@ export function Chat({
   });
 
   const { mutate } = useSWRConfig();
-  const { setDataStream } = useDataStream();
+  // Remove data stream provider usage
+  // const { setDataStream } = useDataStream();
 
   const [input, setInput] = useState<string>("");
   const [usage, setUsage] = useState<AppUsage | undefined>(initialLastContext);
@@ -150,17 +154,17 @@ export function Chat({
         return requestBody;
       },
     }),
+    // Simplify onData callback - remove data stream provider usage
     onData: (dataPart) => {
-      setDataStream((ds) => (ds ? [...ds, dataPart] : []));
+      // Remove setDataStream call that was causing complexity
       if (dataPart.type === "data-usage") {
         setUsage(dataPart.data);
       }
     },
     onFinish: () => {
-      // Instead, we'll dispatch a custom event to notify the sidebar to refresh
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('chatSaved'));
-      }
+      // Chat saving is now handled in the custom chat hook after first response
+      // No need to dispatch chatSaved event here
+      console.log("Stream finished, chat saving handled elsewhere");
     },
 
     onError: (error) => {
@@ -196,12 +200,16 @@ export function Chat({
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
 
-  useAutoResume({
-    autoResume,
-    initialMessages,
-    resumeStream,
-    setMessages,
-  });
+  // Remove auto-resume hook usage - it was causing duplication
+  // useAutoResume({
+  //   autoResume: shouldUseAutoResume,
+  //   initialMessages,
+  //   resumeStream,
+  //   setMessages,
+  //   currentMessages: messages,
+  //   status,
+  //   setDataStream,
+  // });
 
   return (
     <>

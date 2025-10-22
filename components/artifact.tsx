@@ -157,8 +157,9 @@ export function PureArtifact({
         return;
       }
 
-      mutate<Document[]>(
-        `/api/local-document?id=${artifact.documentId}`,
+      // Use a simple key instead of URL since server-side routes are removed
+      mutate(
+        ["document", artifact.documentId],
         async (currentDocuments) => {
           if (!currentDocuments) {
             return [];
