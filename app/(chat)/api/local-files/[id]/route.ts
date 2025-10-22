@@ -22,8 +22,9 @@ function getLocalUserFromCookies(cookieHeader: string | null) {
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<Response> {
+  const resolvedParams = await params;
   const localUser = getLocalUserFromCookies(request.headers.get("cookie"));
 
   if (!localUser) {
@@ -31,7 +32,7 @@ export async function GET(
   }
 
   try {
-    const file = await getLocalFile(params.id);
+    const file = await getLocalFile(resolvedParams.id);
     
     if (!file) {
       return new Response("File not found", { status: 404 });

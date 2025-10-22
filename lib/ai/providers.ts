@@ -1,116 +1,119 @@
-// Provider configuration types
-type ProviderConfig = {
-  // Use a single model for all purposes to support generic OpenAI endpoints
-  model: string;
-};
+import { getModelById, DEFAULT_CHAT_MODEL } from './models';
 
-// Get provider from environment or return empty config
-const getProviderConfig = (): ProviderConfig => {
-  // Return empty config instead of defaulting to XAI
-  return {
-    model: "",
-  };
-};
-
-// Create a mock language model that throws an error when used
-const createErrorLanguageModel = (errorMessage: string) => {
-  // Return an object that matches the LanguageModelV2 interface but throws errors when used
-  return {
-    specificationVersion: 'v2' as const,
-    provider: 'error-provider',
-    modelId: 'error-model',
-    defaultObjectGenerationMode: 'json' as const,
-    supportsImageUrls: false,
-    supportedUrls: {},
-    generate: async () => {
-      throw new Error(errorMessage);
-    },
-    doGenerate: async () => {
-      throw new Error(errorMessage);
-    },
-    doStream: async () => {
-      throw new Error(errorMessage);
-    }
-  };
-};
-
-// Create provider based on environment and configuration
-const createProvider = () => {
-  // For the main provider, we'll create a dynamic provider that resolves models at runtime
-  return {
-    languageModel: () => createErrorLanguageModel("Provider not initialized. Model will be resolved at runtime."),
-  };
-};
-
-// myProvider is no longer used - models are resolved dynamically
-
-// Helper function to get model information for UI display
-export const getModelInfo = () => {
-  // Return empty/default values instead of defaulting to XAI
-  return {
-    provider: "",
-    model: "",
-  };
-};
-
-// Wrapper function to track model usage
-export const trackModelUsage = (
-  modelId: string,
-  inputTokens: number,
-  outputTokens: number,
-  totalTokens: number
-) => {
-  // For now, just log the usage
-  console.log(`Model ${modelId} usage: ${inputTokens} input tokens, ${outputTokens} output tokens, ${totalTokens} total tokens`);
-};
-
-// Function to get all available providers (including custom ones)
+// Function to get all available providers (only saved providers)
+// This completely removes built-in providers and simplifies validation
 export const getAllAvailableProviders = async () => {
   try {
-    console.log("getAllAvailableProviders called");
-    // First try to get providers from the database
-    const customProviders: any[] = []; // This would come from database in a real implementation
-    console.log("Custom providers from database:", customProviders);
-    const enabledProviders = customProviders.filter((p: any) => p.isEnabled);
-    console.log("Enabled providers from database:", enabledProviders);
+    console.log("=== DEBUG: getAllAvailableProviders called ===");
+    // Get providers from the LLMService (only saved providers)
+    const { getProviders } = await import('../llm-service');
+    console.log("Imported getProviders function");
     
-    // Return empty array if there's an error
-    return [];
-  } catch (error) {
-    console.error("Failed to load providers:", error);
+    const savedProviders = await getProviders();
+    console.log("DEBUG: Raw saved providers from database:", JSON.stringify(savedProviders, null, 2));
+    
+    // Return all saved providers - no validation filtering
+    // If they're saved, they should be available
+    const result = savedProviders || [];
+    console.log("DEBUG: Returning providers:", JSON.stringify(result, null, 2));
+    return result;
+  } catch (error: any) {
+    console.error("=== DEBUG: FAILED to load saved providers ===");
+    console.error("Error:", error);
+    console.error("Error stack:", error.stack);
     // Return empty array if there's an error
     return [];
   }
 };
 
-// Function to create a language model based on provider type
-// ALL providers use the generic OpenAI-compatible approach
-export const createLanguageModel = async (modelName: string) => {
+// Function to create a language model based on provider type using LLM.js
+// Accepts either (providerId, modelId) or just (modelId) and infers provider.
+export const createLanguageModel = async (
+  providerOrModelId: string,
+  maybeModelId?: string
+) => {
   try {
     console.log("=== createLanguageModel called ===");
-    console.log("Model name:", modelName);
-    console.log("typeof window:", typeof window);
+    let providerId: string;
+    let modelId: string;
+
+    if (maybeModelId) {
+      providerId = providerOrModelId;
+      modelId = maybeModelId;
+    } else {
+      modelId = providerOrModelId;
+      // Instead of looking up provider by model ID, we need to find the provider that has this model
+      const { getProviders } = await import('../llm-service');
+      const allProviders = await getProviders();
+      const provider = allProviders.find((p: any) => p.model === modelId);
+      
+      if (provider) {
+        providerId = provider.id;
+      } else {
+        // Fallback to default provider lookup
+        const modelInfo = getModelById(modelId);
+        providerId = modelInfo?.provider || 'google'; // Default to google if not found
+      }
+    }
+    console.log("Provider:", providerId);
+    console.log("Model:", modelId);
     
-    // Always return an error language model since we've removed Vercel AI SDK
-    return createErrorLanguageModel("Vercel AI SDK has been removed. Please configure a custom provider.");
+    // Get provider configuration from LLMService (only saved providers)
+    const { getProviderConfig } = await import('../llm-service');
+    const providerConfig = await getProviderConfig(providerId);
+    
+    // Create LLM.js instance with provider configuration
+    // All providers use the generic OpenAI interface with base URL and API key
+    const options: any = {
+      service: 'openai', // Use generic OpenAI service for all providers
+      model: modelId,
+      stream: true,
+    };
+    
+    // Add provider configuration if available
+    if (providerConfig) {
+      // Add API key if available
+      if (providerConfig.apiKey) {
+        options.apiKey = providerConfig.apiKey;
+      }
+      
+      // Add base URL if available
+      if (providerConfig.baseUrl) {
+        options.baseUrl = providerConfig.baseUrl;
+      }
+    }
+    
+    console.log("Creating LLM with generic OpenAI options:", JSON.stringify(options, null, 2));
+    // Dynamically import LLM to avoid immediate instantiation
+    const LLMModule = await import('@themaximalist/llm.js');
+    const LLM = LLMModule.default;
+    const llm = new LLM(options);
+    return llm;
   } catch (error: any) {
     console.error("=== FAILED to create language model ===");
     console.error("Error:", error);
     console.error("Error stack:", error.stack);
-    throw new Error("Failed to create language model. Please check your provider configuration.");
+    throw new Error(`Failed to create language model: ${error.message}`);
   }
 };
 
 // Function to get a language model for immediate use
-// ALL providers use the generic OpenAI-compatible approach
 export const getLanguageModel = async (modelType: string = "default") => {
   try {
     console.log("=== getLanguageModel called ===");
     console.log("Model type:", modelType);
     console.log("typeof window:", typeof window);
-    
-    // Always return an error language model since we've removed Vercel AI SDK
-    return createErrorLanguageModel("Vercel AI SDK has been removed. Please configure a custom provider.");
+
+    // TODO: get modelId from modelType, and fallback to DEFAULT_CHAT_MODEL
+    let modelId: string = modelType;
+    if (modelType === "default") {
+      modelId = DEFAULT_CHAT_MODEL;
+    }
+
+    // Create the language model using the determined modelId
+    const languageModel = await createLanguageModel(modelId);
+    return languageModel;
+
   } catch (error: any) {
     console.error("=== FAILED to get language model ===");
     console.error("Error:", error);

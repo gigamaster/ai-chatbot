@@ -9,7 +9,6 @@ interface CodemoDB extends DBSchema {
       createdAt: Date;
       title: string;
       userId: string;
-      visibility: 'private' | 'public';
       lastContext?: any;
     };
   };
@@ -117,19 +116,12 @@ const isBrowser = typeof window !== 'undefined';
 
 // Initialize database only when needed and only in browser environment
 async function getDb() {
-  console.log("getDb called");
-  console.log("typeof window:", typeof window);
-  console.log("isBrowser:", isBrowser);
-  
   // Always use IndexedDB when in browser environment
   if (typeof window !== 'undefined') {
     if (!dbInstance) {
       // Updated database version to 2 to create the providers object store
-      console.log("Initializing database instance");
       dbInstance = await openDB<CodemoDB>('codemo-db', 2, {
         upgrade(db, oldVersion, newVersion, transaction) {
-          console.log(`Upgrading database from version ${oldVersion} to ${newVersion}`);
-          
           // Create stores for different data types
           if (!db.objectStoreNames.contains('chats')) {
             db.createObjectStore('chats', { keyPath: 'id' });
@@ -168,10 +160,15 @@ async function getDb() {
             db.createObjectStore('providers', { keyPath: 'id' });
           }
         },
+        blocked() {
+        },
+        blocking() {
+        },
+        terminated() {
+        }
       });
     }
     
-    console.log("Returning dbInstance");
     return dbInstance;
   }
   
@@ -243,24 +240,30 @@ function isIndexedDB(db: any): db is ReturnType<typeof openDB<CodemoDB>> {
 // Chat operations
 export async function saveLocalChat(chatData: any) {
   try {
+    console.log("saveLocalChat called with data:", chatData);
     const db = await getDb();
+    console.log("Database instance:", db);
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
+      console.log("Using in-memory storage (server environment)");
       const result = await db.put('chats', {
         ...chatData,
         createdAt: chatData.createdAt || new Date(),
         lastModified: new Date().toISOString()
       });
+      console.log("In-memory save result:", result);
       return result;
     }
     
     // For browser environments, use IndexedDB
+    console.log("Using IndexedDB (browser environment)");
     const result = await db.put('chats', {
       ...chatData,
       createdAt: chatData.createdAt || new Date(),
       lastModified: new Date().toISOString()
     });
+    console.log("IndexedDB save result:", result);
     return result;
   } catch (error) {
     console.error('Failed to save chat locally:', error);
@@ -268,34 +271,43 @@ export async function saveLocalChat(chatData: any) {
   }
 }
 
+// Add function to retrieve a single chat by ID
 export async function getLocalChat(chatId: string) {
   try {
     const db = await getDb();
+    console.log("getLocalChat called with chatId:", chatId);
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      return await db.get('chats', chatId);
+      const result = await db.get('chats', chatId);
+      console.log("getLocalChat (server) returned:", result);
+      return result;
     }
     
     // For browser environments, use IndexedDB
-    return await db.get('chats', chatId);
+    const result = await db.get('chats', chatId);
+    console.log("getLocalChat (browser) returned:", result);
+    return result;
   } catch (error) {
     console.error('Failed to retrieve chat:', error);
     return null;
   }
 }
 
+// Add function to delete a chat by ID
 export async function deleteLocalChat(chatId: string) {
   try {
     const db = await getDb();
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      return await db.delete('chats', chatId);
+      const result = await db.delete('chats', chatId);
+      return result;
     }
     
     // For browser environments, use IndexedDB
-    return await db.delete('chats', chatId);
+    const result = await db.delete('chats', chatId);
+    return result;
   } catch (error) {
     console.error('Failed to delete chat:', error);
     return false;
@@ -304,17 +316,31 @@ export async function deleteLocalChat(chatId: string) {
 
 export async function getAllLocalChats(userId: string) {
   try {
+    console.log("getAllLocalChats called with userId:", userId);
     const db = await getDb();
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
+      console.log("Using in-memory storage (server environment)");
       const allChats = await db.getAll('chats');
-      return allChats.filter((chat: any) => chat.userId === userId);
+      console.log("All chats from in-memory:", allChats);
+      const filteredChats = allChats.filter((chat: any) => chat.userId === userId);
+      console.log("Filtered chats for userId:", userId, filteredChats);
+      return filteredChats;
     }
     
     // For browser environments, use IndexedDB
+    console.log("Using IndexedDB (browser environment)");
     const allChats = await db.getAll('chats');
-    return allChats.filter((chat: any) => chat.userId === userId);
+    console.log("All chats from IndexedDB:", allChats);
+    const filteredChats = allChats.filter((chat: any) => {
+      console.log(`Comparing chat userId: "${chat.userId}" with requested userId: "${userId}"`);
+      const match = chat.userId === userId;
+      console.log(`Match result: ${match}`);
+      return match;
+    });
+    console.log("Filtered chats for userId:", userId, filteredChats);
+    return filteredChats;
   } catch (error) {
     console.error('Failed to retrieve chats:', error);
     return [];
@@ -325,6 +351,7 @@ export async function getAllLocalChats(userId: string) {
 export async function saveLocalMessages(chatId: string, messages: any[]) {
   try {
     const db = await getDb();
+    console.log("saveLocalMessages called with chatId:", chatId, "messages:", messages);
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
@@ -349,16 +376,19 @@ export async function saveLocalMessages(chatId: string, messages: any[]) {
       
       // Clear existing messages for this chat
       const chatMessages = await store.index('by-chat').getAll(chatId);
+      console.log("Existing messages for chat:", chatMessages);
       for (const message of chatMessages) {
         await store.delete(message.id);
       }
       
       // Add new messages
+      console.log("Saving new messages:", messages);
       for (const message of messages) {
         await store.add(message);
       }
       
       await transaction.done;
+      console.log("Messages saved successfully");
       return true;
     }
     
@@ -372,14 +402,21 @@ export async function saveLocalMessages(chatId: string, messages: any[]) {
 export async function getLocalMessages(chatId: string) {
   try {
     const db = await getDb();
+    console.log("getLocalMessages called with chatId:", chatId);
     
     // For server environments, use in-memory storage
     if (!isBrowser) {
-      return await db.getAllFromIndex('messages', 'by-chat', chatId);
+      const result = await db.getAllFromIndex('messages', 'by-chat', chatId);
+      console.log("getLocalMessages (server) returned:", result);
+      console.log("Number of messages (server):", result.length);
+      return result;
     }
     
     // For browser environments, use IndexedDB
-    return await db.getAllFromIndex('messages', 'by-chat', chatId);
+    const result = await db.getAllFromIndex('messages', 'by-chat', chatId);
+    console.log("getLocalMessages (browser) returned:", result);
+    console.log("Number of messages (browser):", result.length);
+    return result;
   } catch (error) {
     console.error('Failed to retrieve messages:', error);
     return [];
@@ -521,6 +558,22 @@ export async function getLocalSuggestions(documentId: string) {
   }
 }
 
+// Save multiple suggestions
+export async function saveLocalSuggestions(suggestions: any[]) {
+  try {
+    // Save each suggestion individually
+    const results = [];
+    for (const suggestion of suggestions) {
+      const result = await saveLocalSuggestion(suggestion);
+      results.push(result);
+    }
+    return results;
+  } catch (error) {
+    console.error('Failed to save suggestions:', error);
+    return [];
+  }
+}
+
 // Vote operations
 export async function saveLocalVote(voteData: any) {
   try {
@@ -607,13 +660,28 @@ export async function getLocalUser(userId: string) {
   }
 }
 
+// Get user by email
+export async function getLocalUserByEmail(email: string) {
+  try {
+    const db = await getDb();
+
+    // Retrieve all users then find by email
+    const users = await db.getAll('users');
+    const user = (users || []).find((u: any) => u?.email === email);
+    return user || null;
+  } catch (error) {
+    console.error('Failed to retrieve user by email:', error);
+    return null;
+  }
+}
+
 // Provider operations
 export async function saveLocalProvider(providerData: any) {
   try {
     const db = await getDb();
     
     // For server environments, use in-memory storage
-    if (!isBrowser) {
+    if (typeof window === 'undefined') {
       const result = await db.put('providers', {
         ...providerData,
         createdAt: providerData.createdAt || new Date().toISOString(),
@@ -657,7 +725,7 @@ export async function getAllLocalProviders() {
     const db = await getDb();
     
     // For server environments, use in-memory storage
-    if (!isBrowser) {
+    if (typeof window === 'undefined') {
       return await db.getAll('providers');
     }
     
@@ -685,3 +753,9 @@ export async function deleteLocalProvider(providerId: string) {
     return false;
   }
 }
+
+// Export functions with different names for compatibility
+export { saveLocalProvider as saveCustomProvider };
+export { getLocalProvider as getCustomProvider };
+export { getAllLocalProviders as getAllCustomProviders };
+export { deleteLocalProvider as deleteCustomProvider };

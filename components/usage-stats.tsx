@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { telemetry } from "@/lib/ai/telemetry";
+import { telemetry } from "../lib/ai/telemetry";
 
 export function UsageStats() {
   const [usageStats, setUsageStats] = useState({
@@ -52,6 +52,7 @@ export function UsageStats() {
       <Card>
         <CardHeader>
           <CardTitle>Model Usage</CardTitle>
+          <p className="text-sm text-muted-foreground">All usage data is stored locally on your device and never sent to any server.</p>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">

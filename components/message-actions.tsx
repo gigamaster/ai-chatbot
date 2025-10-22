@@ -76,45 +76,47 @@ export function PureMessageActions({
         data-testid="message-upvote"
         disabled={vote?.isUpvoted}
         onClick={() => {
-          const upvote = fetch("/api/local-vote", {
-            method: "PATCH",
-            body: JSON.stringify({
-              chatId,
-              messageId: message.id,
-              type: "up",
-            }),
-          });
-
-          toast.promise(upvote, {
-            loading: "Upvoting Response...",
-            success: () => {
-              mutate<Vote[]>(
-                `/api/local-vote?chatId=${chatId}`,
-                (currentVotes) => {
-                  if (!currentVotes) {
-                    return [];
-                  }
-
-                  const votesWithoutCurrent = currentVotes.filter(
-                    (currentVote) => currentVote.messageId !== message.id
-                  );
-
-                  return [
-                    ...votesWithoutCurrent,
-                    {
-                      chatId,
-                      messageId: message.id,
-                      isUpvoted: true,
-                    },
-                  ];
-                },
-                { revalidate: false }
-              );
-
-              return "Upvoted Response!";
-            },
-            error: "Failed to upvote response.",
-          });
+          // Disabled vote functionality for GitHub Pages deployment
+          console.log("Vote functionality disabled");
+          // const upvote = fetch("/api/local-vote", {
+          //   method: "PATCH",
+          //   body: JSON.stringify({
+          //     chatId,
+          //     messageId: message.id,
+          //     type: "up",
+          //   }),
+          // });
+          //
+          // toast.promise(upvote, {
+          //   loading: "Upvoting Response...",
+          //   success: () => {
+          //     mutate<Vote[]>(
+          //       `/api/local-vote?chatId=${chatId}`,
+          //       (currentVotes) => {
+          //         if (!currentVotes) {
+          //           return [];
+          //         }
+          //
+          //         const votesWithoutCurrent = currentVotes.filter(
+          //           (currentVote) => currentVote.messageId !== message.id
+          //         );
+          //
+          //         return [
+          //           ...votesWithoutCurrent,
+          //           {
+          //             chatId,
+          //             messageId: message.id,
+          //             isUpvoted: true,
+          //           },
+          //         ];
+          //       },
+          //       { revalidate: false }
+          //     );
+          //
+          //     return "Upvoted Response!";
+          //   },
+          //   error: "Failed to upvote response.",
+          // });
         }}
         tooltip="Upvote Response"
       >
@@ -125,45 +127,47 @@ export function PureMessageActions({
         data-testid="message-downvote"
         disabled={vote && !vote.isUpvoted}
         onClick={() => {
-          const downvote = fetch("/api/local-vote", {
-            method: "PATCH",
-            body: JSON.stringify({
-              chatId,
-              messageId: message.id,
-              type: "down",
-            }),
-          });
-
-          toast.promise(downvote, {
-            loading: "Downvoting Response...",
-            success: () => {
-              mutate<Vote[]>(
-                `/api/local-vote?chatId=${chatId}`,
-                (currentVotes) => {
-                  if (!currentVotes) {
-                    return [];
-                  }
-
-                  const votesWithoutCurrent = currentVotes.filter(
-                    (currentVote) => currentVote.messageId !== message.id
-                  );
-
-                  return [
-                    ...votesWithoutCurrent,
-                    {
-                      chatId,
-                      messageId: message.id,
-                      isUpvoted: false,
-                    },
-                  ];
-                },
-                { revalidate: false }
-              );
-
-              return "Downvoted Response!";
-            },
-            error: "Failed to downvote response.",
-          });
+          // Disabled vote functionality for GitHub Pages deployment
+          console.log("Vote functionality disabled");
+          // const downvote = fetch("/api/local-vote", {
+          //   method: "PATCH",
+          //   body: JSON.stringify({
+          //     chatId,
+          //     messageId: message.id,
+          //     type: "down",
+          //   }),
+          // });
+          //
+          // toast.promise(downvote, {
+          //   loading: "Downvoting Response...",
+          //   success: () => {
+          //     mutate<Vote[]>(
+          //       `/api/local-vote?chatId=${chatId}`,
+          //       (currentVotes) => {
+          //         if (!currentVotes) {
+          //           return [];
+          //         }
+          //
+          //         const votesWithoutCurrent = currentVotes.filter(
+          //           (currentVote) => currentVote.messageId !== message.id
+          //         );
+          //
+          //         return [
+          //           ...votesWithoutCurrent,
+          //           {
+          //             chatId,
+          //             messageId: message.id,
+          //             isUpvoted: false,
+          //           },
+          //         ];
+          //       },
+          //       { revalidate: false }
+          //     );
+          //
+          //     return "Downvoted Response!";
+          //   },
+          //   error: "Failed to downvote response.",
+          // });
         }}
         tooltip="Downvote Response"
       >
@@ -176,9 +180,10 @@ export function PureMessageActions({
 export const MessageActions = memo(
   PureMessageActions,
   (prevProps, nextProps) => {
-    if (!equal(prevProps.vote, nextProps.vote)) {
-      return false;
-    }
+    // Disable vote comparison for GitHub Pages deployment
+    // if (!equal(prevProps.vote, nextProps.vote)) {
+    //   return false;
+    // }
     if (prevProps.isLoading !== nextProps.isLoading) {
       return false;
     }

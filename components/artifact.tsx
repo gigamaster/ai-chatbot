@@ -21,6 +21,8 @@ import { useArtifact } from "@/hooks/use-artifact";
 import type { Document, Vote } from "@/lib/local-db";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { fetcher } from "@/lib/utils";
+import { toast } from "sonner";
+import { clientDocumentService } from "@/lib/client-document-service";
 import { ArtifactActions } from "./artifact-actions";
 import { ArtifactCloseButton } from "./artifact-close-button";
 import { ArtifactMessages } from "./artifact-messages";
@@ -28,7 +30,6 @@ import { MultimodalInput } from "./multimodal-input";
 import { Toolbar } from "./toolbar";
 import { useSidebar } from "./ui/sidebar";
 import { VersionFooter } from "./version-footer";
-import type { VisibilityType } from "./visibility-selector";
 
 export const artifactDefinitions = [
   textArtifact,
@@ -54,7 +55,14 @@ export type UIArtifact = {
   };
 };
 
-function PureArtifact({
+// Custom fetcher for client document service that matches SWR's expected signature
+const documentFetcher = async (url: string) => {
+  // Extract document ID from the URL (format: client-document-{id})
+  const id = url.replace('client-document-', '');
+  return await clientDocumentService.getDocument(id);
+};
+
+export function PureArtifact({
   chatId,
   input,
   setInput,
@@ -68,7 +76,6 @@ function PureArtifact({
   regenerate,
   votes,
   isReadonly,
-  selectedVisibilityType,
   selectedModelId,
 }: {
   chatId: string;
@@ -84,21 +91,36 @@ function PureArtifact({
   sendMessage: any;
   regenerate: any;
   isReadonly: boolean;
-  selectedVisibilityType: VisibilityType;
   selectedModelId: string;
 }) {
   const { artifact, setArtifact, metadata, setMetadata } = useArtifact();
-
-  const {
-    data: documents,
-    isLoading: isDocumentsFetching,
-    mutate: mutateDocuments,
-  } = useSWR<Document[]>(
-    artifact.documentId !== "init" && artifact.status !== "streaming"
-      ? `/api/local-document?id=${artifact.documentId}`
-      : null,
-    fetcher
-  );
+  
+  // Replace SWR with direct client-side state management
+  const [documents, setDocuments] = useState<Document[] | undefined>(undefined);
+  const [isDocumentsFetching, setIsDocumentsFetching] = useState(false);
+  
+  // Fetch document when artifact.documentId changes
+  useEffect(() => {
+    const fetchDocument = async () => {
+      if (artifact.documentId === "init" || artifact.status === "streaming") {
+        setDocuments(undefined);
+        return;
+      }
+      
+      setIsDocumentsFetching(true);
+      try {
+        const docs = await clientDocumentService.getDocument(artifact.documentId);
+        setDocuments(docs || undefined);
+      } catch (error) {
+        console.error("Failed to fetch document:", error);
+        setDocuments(undefined);
+      } finally {
+        setIsDocumentsFetching(false);
+      }
+    };
+    
+    fetchDocument();
+  }, [artifact.documentId, artifact.status]);
 
   const [mode, setMode] = useState<"edit" | "diff">("edit");
   const [document, setDocument] = useState<Document | null>(null);
@@ -121,9 +143,10 @@ function PureArtifact({
     }
   }, [documents, setArtifact]);
 
-  useEffect(() => {
-    mutateDocuments();
-  }, [mutateDocuments]);
+  // Remove the mutateDocuments useEffect since we're using direct state management
+  // useEffect(() => {
+  //   mutateDocuments();
+  // }, [mutateDocuments]);
 
   const { mutate } = useSWRConfig();
   const [isContentDirty, setIsContentDirty] = useState(false);
@@ -149,24 +172,31 @@ function PureArtifact({
           }
 
           if (currentDocument.content !== updatedContent) {
-            await fetch(`/api/local-document?id=${artifact.documentId}`, {
-              method: "POST",
-              body: JSON.stringify({
+            try {
+              // Use client-side service instead of API call
+              const { clientDbService } = await import('@/lib/client-db-service');
+              await clientDbService.saveDocument({
+                id: artifact.documentId,
                 title: artifact.title,
                 content: updatedContent,
                 kind: artifact.kind,
-              }),
-            });
+                userId: "", // This would need to be passed in or retrieved from context
+              });
 
-            setIsContentDirty(false);
+              setIsContentDirty(false);
 
-            const newDocument = {
-              ...currentDocument,
-              content: updatedContent,
-              createdAt: new Date(),
-            };
+              const newDocument = {
+                ...currentDocument,
+                content: updatedContent,
+                createdAt: new Date(),
+              };
 
-            return [...currentDocuments, newDocument];
+              return [...currentDocuments, newDocument];
+            } catch (error) {
+              console.error("Failed to save document:", error);
+              toast.error("Failed to save document");
+              return currentDocuments;
+            }
           }
           return currentDocuments;
         },
@@ -340,7 +370,6 @@ function PureArtifact({
                     input={input}
                     messages={messages}
                     selectedModelId={selectedModelId}
-                    selectedVisibilityType={selectedVisibilityType}
                     sendMessage={sendMessage}
                     setAttachments={setAttachments}
                     setInput={setInput}
@@ -521,9 +550,6 @@ export const Artifact = memo(PureArtifact, (prevProps, nextProps) => {
     return false;
   }
   if (!equal(prevProps.messages, nextProps.messages.length)) {
-    return false;
-  }
-  if (prevProps.selectedVisibilityType !== nextProps.selectedVisibilityType) {
     return false;
   }
 

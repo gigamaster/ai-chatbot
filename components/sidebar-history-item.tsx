@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { memo } from "react";
-import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Chat } from "@/lib/local-db";
 import { cn } from "@/lib/utils";
 import { formatISO } from "date-fns";
@@ -23,10 +22,7 @@ import {
 import { 
   MoreHorizontalIcon, 
   TrashIcon, 
-  ShareIcon, 
-  LockIcon, 
-  GlobeIcon, 
-  CheckCircleFillIcon 
+  DownloadIcon
 } from "./icons";
 
 const PureChatItem = ({
@@ -40,10 +36,27 @@ const PureChatItem = ({
   onDelete: (chatId: string) => void;
   setOpenMobile: (open: boolean) => void;
 }) => {
-  const { visibilityType, setVisibilityType } = useChatVisibility({
-    chatId: chat.id,
-    initialVisibilityType: chat.visibility,
-  });
+  // Handle chat export
+  const handleExport = async (format: "json" | "markdown" | "text") => {
+    try {
+      // Import the export service dynamically
+      const { ChatExportService } = await import('@/lib/chat-export-service');
+      
+      // Get messages for this chat
+      const { getLocalMessagesByChatId } = await import('@/lib/local-db-queries');
+      const messages = await getLocalMessagesByChatId({ id: chat.id });
+      
+      // Convert messages to UI format
+      const { convertToUIMessages } = await import('@/lib/utils');
+      const uiMessages = convertToUIMessages(messages);
+      
+      // Export the chat
+      ChatExportService.exportChat(chat, uiMessages, format);
+    } catch (error) {
+      console.error("Error exporting chat:", error);
+      // TODO: Show error to user
+    }
+  };
 
   return (
     <SidebarMenuItem>
@@ -67,36 +80,34 @@ const PureChatItem = ({
         <DropdownMenuContent align="end" side="bottom">
           <DropdownMenuSub>
             <DropdownMenuSubTrigger className="cursor-pointer">
-              <ShareIcon />
-              <span>Share</span>
+              <DownloadIcon />
+              <span>Download</span>
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
                 <DropdownMenuItem
                   className="cursor-pointer flex-row justify-between"
-                  onClick={() => {
-                    setVisibilityType("private");
-                  }}
+                  onClick={() => handleExport("json")}
                 >
                   <div className="flex flex-row items-center gap-2">
-                    <LockIcon size={12} />
-                    <span>Private</span>
+                    <span>JSON</span>
                   </div>
-                  {visibilityType === "private" ? (
-                    <CheckCircleFillIcon />
-                  ) : null}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="cursor-pointer flex-row justify-between"
-                  onClick={() => {
-                    setVisibilityType("public");
-                  }}
+                  onClick={() => handleExport("markdown")}
                 >
                   <div className="flex flex-row items-center gap-2">
-                    <GlobeIcon />
-                    <span>Public</span>
+                    <span>Markdown</span>
                   </div>
-                  {visibilityType === "public" ? <CheckCircleFillIcon /> : null}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer flex-row justify-between"
+                  onClick={() => handleExport("text")}
+                >
+                  <div className="flex flex-row items-center gap-2">
+                    <span>Plain Text</span>
+                  </div>
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuPortal>

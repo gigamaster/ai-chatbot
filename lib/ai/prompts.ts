@@ -1,4 +1,4 @@
-// Removed Geo import from @vercel/functions for privacy compliance
+
 import type { ArtifactKind } from "@/components/artifact";
 
 export const artifactsPrompt = `
@@ -35,7 +35,7 @@ Do not update document right after creating it. Wait for user feedback or reques
 export const regularPrompt =
   "You are a friendly assistant! Keep your responses concise and helpful.";
 
-// Replaced Vercel Geo types with privacy-compliant alternatives
+// TODO: Replaced Geo types with privacy-compliant alternatives
 export type RequestHints = {
   latitude: number | undefined;
   longitude: number | undefined;

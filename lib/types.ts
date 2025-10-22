@@ -43,6 +43,12 @@ export type CustomUIDataTypes = {
   clear: null;
   finish: null;
   usage: AppUsage;
+  // Data stream types with data- prefix
+  "data-id": string;
+  "data-title": string;
+  "data-kind": ArtifactKind;
+  "data-clear": null;
+  "data-finish": null;
   // Debug tool data types
   "debug-start": { language: string; code: string; error?: string };
   "debug-result": { 

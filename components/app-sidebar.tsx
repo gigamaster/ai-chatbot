@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
-import { unstable_serialize } from "swr/infinite";
 import { PlusIcon, TrashIcon } from "@/components/icons";
-import { SidebarHistory, getChatHistoryPaginationKey } from "@/components/sidebar-history";
+import { SidebarHistory } from "@/components/sidebar-history";
 import { SidebarUserNav } from "@/components/sidebar-user-nav";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,21 +43,32 @@ export function AppSidebar({ user }: { user: LocalUser | undefined }) {
   const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
 
-  const handleDeleteAll = () => {
-    const deletePromise = fetch("/api/local-history", {
-      method: "DELETE",
-    });
-
-    toast.promise(deletePromise, {
-      loading: "Deleting all chats...",
-      success: () => {
-        mutate(unstable_serialize(getChatHistoryPaginationKey));
-        router.push("/");
-        setShowDeleteAllDialog(false);
-        return "All chats deleted successfully";
-      },
-      error: "Failed to delete all chats",
-    });
+  const handleDeleteAll = async () => {
+    if (!user) return;
+    
+    try {
+      // Use client-side service instead of API call
+      const { clientHistoryService } = await import('@/lib/client-history-service');
+      const result = await clientHistoryService.deleteAllChats(user);
+      console.log("Delete all chats result:", result);
+      
+      // Small delay to ensure IndexedDB operation is fully completed
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Dispatch a custom event to refresh the sidebar
+      if (typeof window !== 'undefined') {
+        console.log("Dispatching chatHistoryUpdated event");
+        window.dispatchEvent(new CustomEvent('chatHistoryUpdated'));
+      }
+      
+      // Success handling - after event dispatch
+      router.push("/");
+      setShowDeleteAllDialog(false);
+      toast.success("All chats deleted successfully");
+    } catch (error) {
+      console.error("Failed to delete all chats:", error);
+      toast.error("Failed to delete all chats");
+    }
   };
 
   return (
@@ -75,7 +85,7 @@ export function AppSidebar({ user }: { user: LocalUser | undefined }) {
                 }}
               >
                 <span className="cursor-pointer rounded-md px-2 font-semibold text-lg hover:bg-muted">
-                  Chatbot
+                  AI Chatbot
                 </span>
               </Link>
               <div className="flex flex-row gap-1">
@@ -83,7 +93,7 @@ export function AppSidebar({ user }: { user: LocalUser | undefined }) {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
-                        className="h-8 p-1 md:h-fit md:p-2"
+                        className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500 h-8 p-1 md:h-fit md:p-2"
                         onClick={() => setShowDeleteAllDialog(true)}
                         type="button"
                         variant="ghost"
@@ -99,7 +109,7 @@ export function AppSidebar({ user }: { user: LocalUser | undefined }) {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      className="h-8 p-1 md:h-fit md:p-2"
+                      className="cursor-pointer h-8 p-1 md:h-fit md:p-2"
                       onClick={() => {
                         setOpenMobile(false);
                         router.push("/");

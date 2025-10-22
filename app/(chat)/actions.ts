@@ -2,17 +2,18 @@
 
 import { generateText, type UIMessage } from "@/lib/custom-ai";
 import { cookies } from "next/headers";
-import type { VisibilityType } from "@/components/visibility-selector";
 import { getLanguageModel, createLanguageModel } from "@/lib/ai/providers";
 import {
   deleteChatById,
   getLocalMessagesByChatId,
-  updateChatVisiblityById,
 } from "@/lib/local-db-queries";
 
-export async function saveChatModelAsCookie(model: string) {
+export async function saveChatModelAsCookie(model: string, providerId?: string) {
   const cookieStore = await cookies();
   cookieStore.set("chat-model", model);
+  if (providerId) {
+    cookieStore.set("chat-provider", providerId);
+  }
 }
 
 export async function generateTitleFromUserMessage({
@@ -57,14 +58,4 @@ export async function deleteTrailingMessages({ id }: { id: string }) {
   // Note: This functionality needs to be implemented in the local database
   // For now, we'll just log that it's not implemented
   console.log("deleteTrailingMessages not implemented for local database");
-}
-
-export async function updateChatVisibility({
-  chatId,
-  visibility,
-}: {
-  chatId: string;
-  visibility: VisibilityType;
-}) {
-  await updateChatVisiblityById({ chatId, visibility });
 }

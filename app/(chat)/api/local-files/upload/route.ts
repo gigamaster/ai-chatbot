@@ -69,7 +69,7 @@ export async function POST(request: Request) {
     const fileBuffer = await file.arrayBuffer();
 
     try {
-      // Store file in IndexedDB instead of Vercel Blob
+      // Store file in IndexedDB
       const fileId = await saveLocalFile({
         id: crypto.randomUUID(),
         name: filename,
