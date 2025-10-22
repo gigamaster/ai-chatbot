@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ProviderCRUDTable } from "@/components/provider-crud-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DatabaseStats } from "@/components/settings-backup";
 import { UsageStats } from "@/components/usage-stats";
 import { getAllProviders } from "@/lib/provider-model-service";
 
@@ -23,9 +24,8 @@ export default function SettingsPage() {
       // Get all providers from local database
       const providers = await getAllProviders();
 
-      // Store providers in server-side memory for current session when running with server
       // For GitHub Pages deployment, this runs entirely client-side using IndexedDB
-      // Providers are stored exclusively in per-user IndexedDB for browser-only deployments
+      // Providers are stored exclusively in per-user IndexedDB
 
       toast.success(
         "Settings saved successfully! Providers are stored locally in your browser."
@@ -67,6 +67,15 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <ProviderCRUDTable />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Database Backup</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DatabaseStats />
           </CardContent>
         </Card>
 

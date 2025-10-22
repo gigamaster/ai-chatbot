@@ -1,3 +1,8 @@
+import { z } from "zod";
+import { updateDocumentPrompt } from "@/lib/ai/prompts";
+import { getLanguageModel } from "@/lib/ai/providers";
+import { createDocumentHandler } from "@/lib/artifacts/document-handler";
+import { smoothStream, streamText } from "@/lib/custom-ai";
 import { formatISO } from "date-fns";
 import { toast } from "sonner";
 import { Artifact } from "@/components/create-artifact";
@@ -15,10 +20,54 @@ import { Editor } from "@/components/text-editor";
 import type { Suggestion } from "@/lib/local-db";
 import { getSuggestions } from "@/lib/client-actions";
 
+// Server-side logic (runs client-side in browser)
+export const textDocumentHandler = createDocumentHandler<"text">({
+  kind: "text",
+  onCreateDocument: async ({ title, dataStream }) => {
+    let draftContent = "";
+
+    // Get the language model dynamically
+    const languageModel = await getLanguageModel();
+
+    // Since our custom streamText is a mock, we'll return a mock response
+    const mockText = `# ${title}\n\nThis is a mock response for the text artifact.`;
+
+    draftContent = mockText;
+
+    dataStream.write({
+      type: "data-textDelta",
+      data: mockText,
+      transient: true,
+    });
+
+    return draftContent;
+  },
+  onUpdateDocument: async ({ document, description, dataStream }) => {
+    let draftContent = "";
+
+    // Get the language model dynamically
+    const languageModel = await getLanguageModel();
+
+    // Since our custom streamText is a mock, we'll return a mock response
+    const mockText = `${document.content}\n\nThis is an updated mock response for the text artifact.`;
+
+    draftContent = mockText;
+
+    dataStream.write({
+      type: "data-textDelta",
+      data: mockText,
+      transient: true,
+    });
+
+    return draftContent;
+  },
+});
+
 type TextArtifactMetadata = {
   suggestions: Suggestion[];
 };
 
+// Client-side UI component
 export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
   kind: "text",
   description: "Useful for text content, like drafting essays and emails.",

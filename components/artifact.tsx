@@ -12,10 +12,10 @@ import {
 import { toast } from "sonner";
 import useSWR, { useSWRConfig } from "swr";
 import { useDebounceCallback, useWindowSize } from "usehooks-ts";
-import { codeArtifact } from "@/artifacts/code/client";
-import { imageArtifact } from "@/artifacts/image/client";
-import { sheetArtifact } from "@/artifacts/sheet/client";
-import { textArtifact } from "@/artifacts/text/client";
+import { codeArtifact } from "@/artifacts/code/artifact";
+import { imageArtifact } from "@/artifacts/image/artifact";
+import { sheetArtifact } from "@/artifacts/sheet/artifact";
+import { textArtifact } from "@/artifacts/text/artifact";
 import { useArtifact } from "@/hooks/use-artifact";
 import { clientDocumentService } from "@/lib/client-document-service";
 import type { UseChatHelpers } from "@/lib/custom-chat";

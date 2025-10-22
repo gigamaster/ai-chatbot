@@ -18,7 +18,6 @@
 Codemo provides a suite of open-source tools designed for digital nomads on GitHub, featuring an AI-powered chatbot that operates on free tiers, stores data locally, and adheres to European data privacy standards.
 
 <p align="center">
-  <a href="https://chat-sdk.dev"><strong>Read Docs</strong></a> ·
   <a href="#features"><strong>Features</strong></a> ·
   <a href="#model-providers"><strong>Model Providers</strong></a> ·
   <a href="#deploy-your-own"><strong>Deploy Your Own</strong></a> ·
@@ -30,8 +29,8 @@ Codemo provides a suite of open-source tools designed for digital nomads on GitH
 
 - [Next.js](https://nextjs.org) App Router
   - Advanced routing for seamless navigation and performance
-  - React Server Components (RSCs) and Server Actions for server-side rendering and increased performance
-- [AI SDK](https://ai-sdk.dev/docs/introduction)
+  - React Components (RSCs) and Actions for client-side
+- AI Generic
   - Unified API for generating code, debugging, and technical explanations
   - Hooks for building dynamic code collaboration interfaces
   - Supports multiple AI models optimized for code understanding
@@ -50,36 +49,35 @@ Codemo provides a suite of open-source tools designed for digital nomads on GitH
 
 ## Model Providers
 
-Codemo uses an AI Gateway to access multiple AI models optimized for code understanding through a unified interface. The default configuration includes models that excel at programming tasks.
+Codemo AI-chatbot uses an AI Gateway to access multiple AI models optimized for code understanding through a unified interface. The default configuration includes models with free tiers.
 
 ### AI Gateway Authentication
 
-You need to provide an AI Gateway API key by setting the provider `API_KEY` and endpoint URL.
+You need to provide an AI Gateway API key by setting the provider `API_KEY` and endpoint URL `baseUrl`.  This ensures that the AI Gateway can authenticate and connect to the appropriate services.
 
 **Optional**  
 
-With the [AI SDK](https://ai-sdk.dev/docs/introduction), you can also switch to direct LLM providers like [OpenAI Codex](https://openai.com/blog/openai-codex), [Anthropic Claude Code](https://anthropic.com), and [other code-optimized models](https://ai-sdk.dev/providers/ai-sdk-providers) with just a few lines of code.
+You can also switch to direct LLM providers like [OpenAI Codex](https://openai.com/blog/openai-codex), [Anthropic Claude Code](https://anthropic.com), and [other code-optimized models](https://ai-sdk.dev/providers/ai-sdk-providers) with just a few lines of code.
 
 ## Running locally
 
 You will need to use pnpm:
 
 1. Install the required dependencies: `pnpm install`
-2. Set up your environment variables as defined in `.env.example`
-3. Run the development server: `pnpm dev`
+2. Run the development server: `pnpm dev`
 
 ```
 pnpm install
 pnpm dev
 ```
 
-Codemo should now be running on [localhost:3000](http://localhost:3000).
+AI-chatbot should now be running on [localhost:3000](http://localhost:3000).
 
 ## How to Use
 
 ### Locking the Application
 
-Codemo includes a security feature that allows you to lock the application to protect your data on shared computers:
+Codemo AI-chatbot includes a security feature that allows you to lock the application to protect your data on shared computers:
 
 1. **Set up a password**:
    - Open the user menu by clicking on your user avatar in the sidebar
@@ -98,7 +96,7 @@ Codemo includes a security feature that allows you to lock the application to pr
 
 ### Using Developer Tools
 
-Codemo provides access to additional developer tools through the tools menu:
+Codemo AI-chatbot provides access to additional developer tools through the tools menu:
 
 1. Click the code icon in the header
 2. Choose from the available tools:

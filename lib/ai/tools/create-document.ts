@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { artifactKinds } from "@/lib/artifacts/server";
+import { artifactKinds } from "@/lib/artifacts/document-handlers";
 import { tool, type UIMessageStreamWriter } from "@/lib/custom-ai";
 import { generateUUID } from "@/lib/utils";
 

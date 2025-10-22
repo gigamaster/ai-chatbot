@@ -3,7 +3,6 @@ import Script from "next/script";
 import { AppSidebar } from "@/components/app-sidebar";
 // import { DataStreamProvider } from "@/components/data-stream-provider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-// Import local auth server utility instead of NextAuth
 import { getLocalUserFromCookies } from "@/lib/local-auth-server";
 
 export const experimental_ppr = true;

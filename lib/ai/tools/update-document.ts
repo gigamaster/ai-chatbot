@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { documentHandlersByArtifactKind } from "@/lib/artifacts/server";
+import { documentHandlersByArtifactKind } from "@/lib/artifacts/document-handlers";
 import { tool } from "@/lib/custom-ai";
 import { getDocumentById } from "@/lib/local-db-queries";
 

@@ -62,16 +62,6 @@ export function ProviderTestButton({
         )}
         {testing ? "Testing..." : "Test Connection"}
       </Button>
-
-      {result?.success === true && (
-        <span className="text-green-600 text-sm">Connected successfully</span>
-      )}
-
-      {result?.success === false && (
-        <span className="text-red-600 text-sm">
-          {result.error || "Connection failed"}
-        </span>
-      )}
     </div>
   );
 }

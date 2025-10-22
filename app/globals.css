@@ -53,39 +53,39 @@
 
 /* define design tokens (dark mode) */
 .dark {
-  --background: hsl(240 10% 3.9%);
+  --background: hsl(240 10% 4%);
   --foreground: hsl(0 0% 98%);
-  --card: hsl(240 10% 3.9%);
+  --card: hsl(240 10% 4%);
   --card-foreground: hsl(0 0% 98%);
-  --popover: hsl(240 10% 3.9%);
+  --popover: hsl(240 10% 4%);
   --popover-foreground: hsl(0 0% 98%);
   --primary: hsl(0 0% 98%);
-  --primary-foreground: hsl(240 5.9% 10%);
-  --secondary: hsl(240 3.7% 15.9%);
+  --primary-foreground: hsl(240 6% 10%);
+  --secondary: hsl(240 5% 15%);
   --secondary-foreground: hsl(0 0% 98%);
-  --muted: hsl(240 3.7% 15.9%);
-  --muted-foreground: hsl(240 5% 64.9%);
-  --accent: hsl(240 3.7% 15.9%);
+  --muted: hsl(240 5% 15%);
+  --muted-foreground: hsl(240 5% 65%);
+  --accent: hsl(240 5% 15%);
   --accent-foreground: hsl(0 0% 98%);
-  --destructive: hsl(0 62.8% 30.6%);
+  --destructive: hsl(0 62% 30%);
   --destructive-foreground: hsl(0 0% 98%);
-  --border: hsl(240 3.7% 15.9%);
-  --input: hsl(240 3.7% 15.9%);
-  --ring: hsl(240 4.9% 83.9%);
+  --border: hsl(240, 5%, 25%);
+  --input: hsl(240 5% 15%);
+  --ring: hsl(240 5% 50%);
   --chart-1: hsl(220 70% 50%);
   --chart-2: hsl(160 60% 45%);
   --chart-3: hsl(30 80% 55%);
   --chart-4: hsl(280 65% 60%);
   --chart-5: hsl(340 75% 55%);
-  --sidebar-background: hsl(240 5.9% 10%);
-  --sidebar-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-background: hsl(240 5% 10%);
+  --sidebar-foreground: hsl(240 5% 95%);
   --sidebar-primary: hsl(224.3 76.3% 48%);
   --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(240 3.7% 15.9%);
-  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-border: hsl(240 3.7% 15.9%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
-  --sidebar: hsl(240 5.9% 10%);
+  --sidebar-accent: hsl(240 5% 15.9%);
+  --sidebar-accent-foreground: hsl(240 5% 95%);
+  --sidebar-border: hsl(240 5% 16%);
+  --sidebar-ring: hsl(217 9% 60%);
+  --sidebar: hsl(240 5% 10%);
 }
 
 /* define theme */
@@ -157,7 +157,7 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+    border-color: var(--color-border);
   }
 }
 

@@ -1,8 +1,6 @@
 import { z } from "zod";
-import { codeDocumentHandler } from "@/artifacts/code/server";
-// Removed collab import
-import { sheetDocumentHandler } from "@/artifacts/sheet/server";
-import { textDocumentHandler } from "@/artifacts/text/server";
+import { artifactKinds, documentHandlersByArtifactKind } from "@/lib/artifacts/document-handlers";
+import { createDocumentHandler } from "@/lib/artifacts/document-handler";
 import type { ArtifactKind } from "@/components/artifact";
 import type { UIMessageStreamWriter } from "@/lib/custom-ai";
 import type { CustomUIDataTypes } from "@/lib/types";
@@ -27,24 +25,9 @@ type LocalSession = {
   expires: string; // Required by the expected Session interface
 };
 
-// Export the artifact kinds array
-export const artifactKinds = ["text", "code", "sheet"] as const;
+// artifactKinds is now imported from document-handlers.ts
 
-// Add the missing createDocumentHandler function
-export function createDocumentHandler<T extends string>(config: {
-  kind: T;
-  onCreateDocument: (args: {
-    title: string;
-    dataStream: any;
-  }) => Promise<string>;
-  onUpdateDocument: (args: {
-    document: any;
-    description: string;
-    dataStream: any;
-  }) => Promise<string>;
-}) {
-  return config;
-}
+// createDocumentHandler is now imported from document-handler.ts
 
 export type SaveDocumentProps = {
   id: string;
@@ -134,9 +117,4 @@ export async function updateDocumentCallback({
   });
 }
 
-// Add the missing documentHandlersByArtifactKind
-export const documentHandlersByArtifactKind = {
-  text: textDocumentHandler,
-  code: codeDocumentHandler,
-  sheet: sheetDocumentHandler,
-};
+// documentHandlersByArtifactKind is now imported from document-handlers.ts

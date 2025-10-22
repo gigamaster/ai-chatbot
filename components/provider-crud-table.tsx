@@ -200,7 +200,9 @@ export function ProviderCRUDTable() {
               <TableRow key={provider.id}>
                 <TableCell className="font-medium">{provider.name}</TableCell>
                 <TableCell>{provider.model}</TableCell>
-                <TableCell>{provider.baseUrl}</TableCell>
+                <TableCell className="max-w-[160px] truncate">
+                  {provider.baseUrl}
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2">
                     <Switch
@@ -266,7 +268,7 @@ export function ProviderCRUDTable() {
 
       {isDialogOpen && (
         <AlertDialog onOpenChange={setIsDialogOpen} open={isDialogOpen}>
-          <AlertDialogContent className="sm:max-w-[425px]">
+          <AlertDialogContent className="rounded-lg border sm:max-w-[425px]">
             <AlertDialogHeader>
               <AlertDialogTitle>
                 {editingProvider ? "Edit Provider" : "Add Provider"}
@@ -289,6 +291,7 @@ export function ProviderCRUDTable() {
                 <Label htmlFor="model">Model Name</Label>
                 <Input
                   id="model"
+                  className="rounded-sm border"
                   onChange={(e) =>
                     setFormData({ ...formData, model: e.target.value })
                   }
@@ -301,6 +304,7 @@ export function ProviderCRUDTable() {
                 <Label htmlFor="baseUrl">Base URL</Label>
                 <Input
                   id="baseUrl"
+                  className="rounded-sm"
                   onChange={(e) =>
                     setFormData({ ...formData, baseUrl: e.target.value })
                   }
