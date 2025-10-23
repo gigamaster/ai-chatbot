@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronUp } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
@@ -25,6 +24,23 @@ import { useLocalAuth } from "@/contexts/local-auth-context";
 import { useLock } from "@/contexts/lock-context";
 import { LoaderIcon } from "./icons";
 import { toast } from "./toast";
+
+// Helper function to get the first letter of the user's email
+function getUserInitial(email: string | undefined): string {
+  if (!email) return "U"; // Default to "U" if no email
+  return email.charAt(0).toUpperCase();
+}
+
+// First letter avatar component
+function UserAvatar({ email }: { email: string | undefined }) {
+  const initial = getUserInitial(email);
+  
+  return (
+    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600">
+      <span className="text-white text-xs font-medium">{initial}</span>
+    </div>
+  );
+}
 
 export function SidebarUserNav({ user }: { user: any }) {
   const router = useRouter();
@@ -56,13 +72,7 @@ export function SidebarUserNav({ user }: { user: any }) {
                 className="h-10 bg-background data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 data-testid="user-nav-button"
               >
-                <Image
-                  alt={localUser?.email ?? "User Avatar"}
-                  className="rounded-full"
-                  height={24}
-                  src={`https://www.gravatar.com/avatar/${localUser?.email}?d=mp`}
-                  width={24}
-                />
+                <UserAvatar email={localUser?.email} />
                 <span className="truncate" data-testid="user-email">
                   {localUser?.email}
                 </span>

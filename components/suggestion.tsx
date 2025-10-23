@@ -27,7 +27,7 @@ export const Suggestion = ({
       {isExpanded ? (
         <motion.div
           animate={{ opacity: 1, y: -20 }}
-          className="-right-12 md:-right-16 absolute z-50 flex w-56 flex-col gap-3 rounded-2xl border bg-background p-3 font-sans text-sm shadow-xl"
+          className="-right-12 md:-right-16 absolute z-50 flex w-56 flex-col gap-3 rounded-lg border bg-background p-3 font-sans text-sm shadow-xl"
           exit={{ opacity: 0, y: -10 }}
           initial={{ opacity: 0, y: -10 }}
           key={suggestion.id}
@@ -36,7 +36,7 @@ export const Suggestion = ({
         >
           <div className="flex flex-row items-center justify-between">
             <div className="flex flex-row items-center gap-2">
-              <div className="size-4 rounded-full bg-muted-foreground/25" />
+              <div className="size-4 rounded-lg bg-muted-foreground/25" />
               <div className="font-medium">Assistant</div>
             </div>
             <button
@@ -51,7 +51,7 @@ export const Suggestion = ({
           </div>
           <div>{suggestion.content}</div>
           <Button
-            className="w-fit rounded-full px-3 py-1.5"
+            className="w-fit rounded-lg px-3 py-1.5"
             onClick={onApply}
             variant="outline"
           >

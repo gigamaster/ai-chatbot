@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { getAllCustomProviders } from "@/lib/local-db-queries";
 import { getAllLocalChats, getLocalMessages } from "@/lib/local-db";
 import { useLocalAuth } from "@/contexts/local-auth-context";
@@ -152,7 +153,7 @@ export function DatabaseStats() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Database Usage</CardTitle>
+          <CardTitle>Database Backup</CardTitle>
           <p className="text-muted-foreground text-sm">
             All usage data is stored locally on your device and never sent to
             any server.
@@ -163,18 +164,22 @@ export function DatabaseStats() {
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="font-medium">{localUser?.email || databaseStats.userId}</div>
               <div className="flex gap-4">
-                <button 
+                <Button 
                   onClick={exportDatabaseAsJson}
-                  className="text-sm text-blue-600 hover:underline"
+                  className="text-sm"
+                  size="sm"
+                  variant="secondary"
                 >
                   Export Json
-                </button>
-                <button 
+                </Button>
+                <Button 
                   onClick={exportDatabaseAsZip}
-                  className="text-sm text-blue-600 hover:underline"
+                  className="text-sm"
+                  size="sm"
+                  variant="secondary"
                 >
                   Export Zip
-                </button>
+                </Button>
               </div>
             </div>
           </div>

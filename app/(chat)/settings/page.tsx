@@ -72,7 +72,7 @@ export default function SettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Database Backup</CardTitle>
+            <CardTitle>Database Usage</CardTitle>
           </CardHeader>
           <CardContent>
             <DatabaseStats />

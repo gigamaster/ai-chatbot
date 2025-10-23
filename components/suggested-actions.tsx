@@ -18,10 +18,10 @@ function PureSuggestedActions({
   setInput,
 }: SuggestedActionsProps) {
   const suggestedActions = [
-    "Help me debug this JavaScript code",
-    "Explain how React hooks work",
-    "Write a Python function to sort a list",
-    "How do I optimize this SQL query?",
+    "Write a polite email to my manager about a deadline extension",
+    "Summarize the key differences between Node.js and Python",
+    "Help me brainstorm ideas for a blog post about productivity",
+    "Explain the concept of 'Cloud Computing' in simple terms",
   ];
 
   return (
