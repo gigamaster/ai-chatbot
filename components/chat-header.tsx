@@ -133,7 +133,7 @@ function PureChatHeader({ isReadonly }: ChatHeaderProps) {
                 </div>
                 
                 <div className="text-xs text-muted-foreground">
-                  AI-chatbot Codemo © 2025. Version 1.0.0  by Nuno Luciano
+                  AI-chatbot Codemo © 2025. Version 1.0.0  by Nuno Luciano.
                 </div>
               </div>
             </AlertDialogDescription>

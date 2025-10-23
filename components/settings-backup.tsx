@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { getAllCustomProviders } from "@/lib/local-db-queries";
 import { getAllLocalChats, getLocalMessages } from "@/lib/local-db";
 import { useLocalAuth } from "@/contexts/local-auth-context";
+import { downloadZip } from "client-zip";
 
 export function DatabaseStats() {
   const { user: localUser } = useLocalAuth();
@@ -92,9 +93,64 @@ export function DatabaseStats() {
     }
   };
 
-  const exportDatabaseAsZip = () => {
-    // Mockup for ZIP export - to be implemented later
-    alert("ZIP export functionality will be implemented in a future update.");
+  const exportDatabaseAsZip = async () => {
+    if (!localUser?.id) return;
+    
+    try {
+      // Collect all data
+      const providers = await getAllCustomProviders();
+      const chats = await getAllLocalChats(localUser.id);
+      
+      // Prepare files for ZIP
+      const files = [];
+      
+      // Add providers file
+      files.push({
+        name: "providers.json",
+        lastModified: new Date(),
+        input: JSON.stringify(providers, null, 2)
+      });
+      
+      // Add chats file
+      files.push({
+        name: "chats.json",
+        lastModified: new Date(),
+        input: JSON.stringify(chats, null, 2)
+      });
+      
+      // Add messages files (one per chat)
+      for (const chat of chats) {
+        const messages = await getLocalMessages(chat.id);
+        files.push({
+          name: `messages-${chat.id}.json`,
+          lastModified: new Date(),
+          input: JSON.stringify(messages, null, 2)
+        });
+      }
+      
+      // Add metadata file
+      const metadata = {
+        userId: localUser.id,
+        exportedAt: new Date().toISOString(),
+        stats: databaseStats
+      };
+      files.push({
+        name: "metadata.json",
+        lastModified: new Date(),
+        input: JSON.stringify(metadata, null, 2)
+      });
+      
+      // Create and download ZIP
+      const blob = await downloadZip(files).blob();
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `ai-chatbot-backup-${new Date().toISOString().slice(0, 10)}.zip`;
+      link.click();
+      
+    } catch (error) {
+      console.error("Failed to export database as ZIP:", error);
+      alert("Failed to export database as ZIP. Check console for details.");
+    }
   };
 
   if (loading) {

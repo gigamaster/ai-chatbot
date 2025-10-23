@@ -27,19 +27,12 @@ type LockContextType = {
 const LockContext = createContext<LockContextType | undefined>(undefined);
 
 export function LockProvider({ children }: { children: ReactNode }) {
-  // Initialize isLocked state with saved value if it exists
-  const getInitialLockState = () => {
-    if (typeof window !== "undefined") {
-      const savedLockState = localStorage.getItem("codemo_is_locked");
-      return savedLockState === "true";
-    }
-    return false;
-  };
-
-  const [isLocked, setIsLocked] = useState(getInitialLockState());
+  // Initialize isLocked state - start with false for consistent server/client initial state
+  const [isLocked, setIsLocked] = useState(false);
   const [hasPassword, setHasPassword] = useState(false);
   const [lockTime, setLockTime] = useState<number | null>(null);
   const [lastActivity, setLastActivity] = useState(Date.now());
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const { user: localUser } = useLocalAuth();
 
@@ -47,25 +40,28 @@ export function LockProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadLockState = async () => {
       try {
-        console.log("Loading async lock state values...");
-
         // Check if password exists
         const hasPwd = await hasStoredPassword();
-        console.log("Has stored password:", hasPwd);
         setHasPassword(hasPwd);
 
         // Load auto-lock time setting
         const savedLockTime = localStorage.getItem("codemo_lock_time");
-        console.log("Saved lock time from localStorage:", savedLockTime);
         if (savedLockTime) {
           const parsedTime = Number.parseInt(savedLockTime, 10);
           if (!isNaN(parsedTime)) {
-            console.log("Setting lock time to:", parsedTime);
             setLockTime(parsedTime);
           }
         }
+
+        // IMPORTANT: Only update lock state after hydration
+        // This ensures server and client have the same initial state
+        const savedLockState = localStorage.getItem("codemo_is_locked");
+        const initialLockState = savedLockState === "true";
+        setIsLocked(initialLockState);
       } catch (error) {
         console.error("Error loading lock state:", error);
+      } finally {
+        setIsInitialized(true);
       }
     };
 
@@ -74,12 +70,14 @@ export function LockProvider({ children }: { children: ReactNode }) {
 
   // Save lock state to localStorage when it changes
   useEffect(() => {
-    console.log("Saving lock state to localStorage:", isLocked);
+    if (!isInitialized) return; // Don't save until initialized
     localStorage.setItem("codemo_is_locked", isLocked.toString());
-  }, [isLocked]);
+  }, [isLocked, isInitialized]);
 
   // Activity tracking for auto-lock
   useEffect(() => {
+    if (!isInitialized) return; // Don't track until initialized
+    
     const handleActivity = () => {
       setLastActivity(Date.now());
     };
@@ -107,13 +105,15 @@ export function LockProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("touchstart", handleActivity);
       clearInterval(interval);
     };
-  }, [hasPassword, lockTime, isLocked, lastActivity]);
+  }, [hasPassword, lockTime, isLocked, lastActivity, isInitialized]);
 
   const lock = () => {
     setIsLocked(true);
   };
 
   const unlock = async (password: string) => {
+    if (!isInitialized) return false; // Don't unlock until initialized
+    
     try {
       const storedPassword = await getStoredPassword();
 
