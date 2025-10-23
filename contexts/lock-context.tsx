@@ -110,8 +110,12 @@ export function LockProvider({ children }: { children: ReactNode }) {
   }, [hasPassword, lockTime, isLocked, lastActivity]);
 
   const lock = () => {
-    console.log("Locking application");
+    console.log("Lock function called");
+    console.log("Current isLocked state:", isLocked);
+    console.log("Has password:", hasPassword);
+    console.log("Lock time setting:", lockTime);
     setIsLocked(true);
+    console.log("isLocked state set to true");
   };
 
   const unlock = async (password: string) => {

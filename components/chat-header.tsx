@@ -25,9 +25,19 @@ interface ChatHeaderProps {
 function PureChatHeader({ isReadonly }: ChatHeaderProps) {
   const router = useRouter();
   const { open } = useSidebar();
-  const { lock, hasPassword, isLocked } = useLock();
+  const { lock, hasPassword } = useLock();
   const { user: localUser } = useLocalAuth();
   const isMobile = useIsMobile();
+
+  const handleLock = () => {
+    console.log("Lock button clicked");
+    console.log("Has password:", hasPassword);
+    
+    // Always attempt to lock, regardless of password status
+    // The lock function should handle the case where no password is set
+    console.log("Calling lock function");
+    lock();
+  };
 
   return (
     <header className="sticky top-0 flex items-center gap-2 bg-background px-2 py-1.5 md:px-2">
@@ -53,17 +63,12 @@ function PureChatHeader({ isReadonly }: ChatHeaderProps) {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              className="order-3 hidden h-8 px-2 md:order-2 md:ml-auto md:flex md:h-fit"
-              disabled={!hasPassword}
-              onClick={() => {
-                // Lock the application immediately
-                lock();
-              }}
-              // Only enable if they have a password set
+              className="order-3 h-8 px-2 md:order-2 md:ml-auto md:h-fit"
+              onClick={handleLock}
               variant="outline"
             >
               <LockIcon size={16} />
-              <span className="md:sr-only">Lock</span>
+              <span className="sr-only md:not-sr-only md:ml-2">Lock Session</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent>
