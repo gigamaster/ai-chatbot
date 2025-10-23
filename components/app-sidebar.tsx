@@ -28,6 +28,7 @@ import {
   AlertDialogTitle,
 } from "./ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { useLocalAuth } from "@/contexts/local-auth-context";
 
 // Define a local user type that matches our local authentication system
 type LocalUser = {
@@ -37,11 +38,15 @@ type LocalUser = {
   image?: string;
 };
 
-export function AppSidebar({ user }: { user: LocalUser | undefined }) {
+export function AppSidebar({ user: propUser }: { user?: LocalUser | undefined }) {
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
   const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
+  
+  // Get user from context if not provided via props
+  const { user: contextUser } = useLocalAuth();
+  const user = propUser !== undefined ? propUser : contextUser;
 
   const handleDeleteAll = async () => {
     if (!user) return;
@@ -52,14 +57,12 @@ export function AppSidebar({ user }: { user: LocalUser | undefined }) {
         "@/lib/client-history-service"
       );
       const result = await clientHistoryService.deleteAllChats(user);
-      console.log("Delete all chats result:", result);
 
       // Small delay to ensure IndexedDB operation is fully completed
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Dispatch a custom event to refresh the sidebar
       if (typeof window !== "undefined") {
-        console.log("Dispatching chatHistoryUpdated event");
         window.dispatchEvent(new CustomEvent("chatHistoryUpdated"));
       }
 
@@ -68,7 +71,6 @@ export function AppSidebar({ user }: { user: LocalUser | undefined }) {
       setShowDeleteAllDialog(false);
       toast.success("All chats deleted successfully");
     } catch (error) {
-      console.error("Failed to delete all chats:", error);
       toast.error("Failed to delete all chats");
     }
   };

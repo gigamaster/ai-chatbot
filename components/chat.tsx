@@ -28,7 +28,7 @@ import { Artifact } from "./artifact";
 // import { useDataStream } from "./data-stream-provider";
 
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
-import { CustomChatTransport, useCustomChat } from "@/lib/custom-chat";
+import { useCustomChat } from "@/lib/custom-chat";
 import { getAllProviders, getProviderById } from "@/lib/provider-model-service";
 import { Messages } from "./messages";
 import { MultimodalInput } from "./multimodal-input";
@@ -51,18 +51,9 @@ export function Chat({
   initialLastContext?: AppUsage;
   initialProviderId?: string;
 }) {
-  console.log("Chat component rendered with props:", {
-    id,
-    initialMessages,
-    initialChatModel,
-    isReadonly,
-    autoResume,
-    initialLastContext,
-    initialProviderId,
-  });
 
   const { mutate } = useSWRConfig();
-  // Remove data stream provider usage
+  // TODO: data stream provider usage
   // const { setDataStream } = useDataStream();
 
   const [input, setInput] = useState<string>("");
@@ -130,37 +121,7 @@ export function Chat({
     messages: initialMessages,
     experimental_throttle: 100,
     generateId: generateUUID,
-    transport: new CustomChatTransport({
-      api: "/api/local-chat",
-      fetch: fetchWithErrorHandlers,
-      prepareSendMessagesRequest(request) {
-        // Get the last message and ensure it has an ID
-        const lastMessage = request.message;
-        const messageWithId = {
-          id: lastMessage?.id || generateUUID(),
-          role: lastMessage?.role || "user",
-          parts: lastMessage?.parts || [],
-        };
-
-        // Ensure we have the current provider ID
-        const providerIdToSend =
-          currentProviderIdRef.current || currentProviderId;
-
-        // Use the chat ID from the hook options, not from the request
-        const chatId = id;
-
-        // Create the request body
-        const requestBody = {
-          id: chatId, // Use the proper chat ID
-          message: messageWithId,
-          selectedChatModel: currentModelIdRef.current || currentModelId,
-          selectedProviderId: providerIdToSend,
-          ...request.body,
-        };
-
-        return requestBody;
-      },
-    }),
+    // Remove transport parameter - it's no longer needed
     // Simplify onData callback - remove data stream provider usage
     onData: (dataPart) => {
       // Remove setDataStream call that was causing complexity

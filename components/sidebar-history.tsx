@@ -33,9 +33,7 @@ type GroupedChats = {
 // Add a function to fetch chats directly from IndexedDB
 async function fetchChatsFromIndexedDB(userId: string) {
   try {
-    console.log("Fetching chats from IndexedDB for userId:", userId);
     const chats = await getAllLocalChats(userId);
-    console.log("Fetched chats:", chats);
     return chats;
   } catch (error) {
     console.error("Error fetching chats from IndexedDB:", error);

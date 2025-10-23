@@ -1,6 +1,8 @@
 import { ChatSDKError } from "@/lib/errors";
 import { saveLocalChat } from "@/lib/local-db-queries";
 import { getProviderById } from "@/lib/provider-model-service";
+import { getUserId } from "@/lib/auth-utils";
+import { generateTitleFromUserMessage } from "@/lib/chat-storage-service";
 
 /**
  * Client-side chat service for GitHub Pages deployment
@@ -35,7 +37,6 @@ async function createSSEStream(response: Response) {
       try {
         const { done, value } = await reader.read();
         if (done) {
-          console.log("Stream done, sending finish signal");
           // Send finish signal when stream is done
           const finishData = `data: ${JSON.stringify({ type: "data-finish", data: null, transient: true })}\n\n`;
           controller.enqueue(new TextEncoder().encode(finishData));
@@ -44,20 +45,15 @@ async function createSSEStream(response: Response) {
         }
 
         buffer += decoder.decode(value, { stream: true });
-        console.log("=== RAW STREAMING DATA ===");
-        console.log("Raw buffer:", JSON.stringify(buffer));
 
         // Process complete lines
         const lines = buffer.split("\n");
-        console.log("Lines to process:", lines);
         buffer = lines.pop() || ""; // Keep incomplete line in buffer
-        console.log("Remaining buffer:", JSON.stringify(buffer));
 
         for (const line of lines) {
           if (line.startsWith("data: ")) {
             const data = line.slice(6);
             if (data === "[DONE]") {
-              console.log("Received [DONE], sending finish signal");
               // Send finish signal when we get [DONE]
               const finishData = `data: ${JSON.stringify({ type: "data-finish", data: null, transient: true })}\n\n`;
               controller.enqueue(new TextEncoder().encode(finishData));
@@ -73,13 +69,10 @@ async function createSSEStream(response: Response) {
                 parsed.choices[0].delta
               ) {
                 const content = parsed.choices[0].delta.content;
-                console.log("=== SSE PARSING DEBUG ===");
-                console.log("Raw SSE data:", data);
-                console.log("Parsed content:", JSON.stringify(content));
+
                 if (content) {
                   // Format as text-delta for frontend
                   const deltaData = `data: ${JSON.stringify({ type: "text-delta", textDelta: content, transient: false })}\n\n`;
-                  console.log("Sending delta data:", deltaData);
                   controller.enqueue(new TextEncoder().encode(deltaData));
                 }
               }
@@ -104,82 +97,6 @@ async function createSSEStream(response: Response) {
   });
 }
 
-// Get user ID from local storage or cookie
-function getUserId(): string | null {
-  try {
-    if (typeof window !== "undefined") {
-      // Try to get user from localStorage first
-      const storedUser = localStorage.getItem("local_user");
-      if (storedUser) {
-        try {
-          const user = JSON.parse(storedUser);
-          if (user && user.id) {
-            return user.id;
-          }
-        } catch (parseError) {
-          console.error("Error parsing user from localStorage:", parseError);
-        }
-      }
-
-      // If no user in localStorage, check for user cookie
-      const cookieString = document.cookie;
-      const cookies = cookieString.split(";").reduce(
-        (acc, cookie) => {
-          const [name, value] = cookie.trim().split("=");
-          acc[name] = value;
-          return acc;
-        },
-        {} as Record<string, string>
-      );
-
-      const userCookie = cookies["local_user"];
-      if (userCookie) {
-        try {
-          const user = JSON.parse(decodeURIComponent(userCookie));
-          if (user && user.id) {
-            // Save to localStorage for future visits
-            localStorage.setItem("local_user", JSON.stringify(user));
-            return user.id;
-          }
-        } catch (parseError) {
-          console.error("Error parsing user from cookie:", parseError);
-        }
-      }
-    }
-  } catch (error) {
-    console.error("Error getting user ID:", error);
-  }
-  return null;
-}
-
-// Simple client-side title generation function
-async function generateTitleFromUserMessage(userMessage: any): Promise<string> {
-  try {
-    // Extract text content from the user message
-    const textContent = userMessage.parts
-      .filter((part: any) => part.type === "text")
-      .map((part: any) => part.text)
-      .join(" ")
-      .trim();
-
-    // If we have text content, create a simple title from it
-    if (textContent) {
-      // Take first 50 characters and add ellipsis if needed
-      let title = textContent.substring(0, 50);
-      if (textContent.length > 50) {
-        title += "...";
-      }
-      return title || "New Chat";
-    }
-
-    // Fallback if no text content
-    return "New Chat";
-  } catch (error) {
-    console.error("Error generating title:", error);
-    return "New Chat";
-  }
-}
-
 // Client-side chat service
 export class ClientChatService {
   async sendMessages(request: any) {
@@ -192,12 +109,6 @@ export class ClientChatService {
         request.selectedModelId || request.body?.selectedModelId;
       const chatId = request.id || request.body?.id;
       const userMessage = request.message;
-
-      console.log("=== ClientChatService.sendMessages debug info ===");
-      console.log("Chat ID:", chatId);
-      console.log("Selected Provider ID:", selectedProviderId);
-      console.log("Selected Model ID:", selectedModelId);
-      console.log("User Message:", userMessage);
 
       if (!selectedProviderId) {
         throw new ChatSDKError("bad_request:chat", "No provider selected");
@@ -230,7 +141,6 @@ export class ClientChatService {
 
       // Get user ID
       const userId = getUserId();
-      console.log("Retrieved User ID:", userId);
 
       if (!userId) {
         throw new ChatSDKError("bad_request:chat", "User not authenticated");
@@ -240,7 +150,6 @@ export class ClientChatService {
       let title = "";
       try {
         title = await generateTitleFromUserMessage(userMessage);
-        console.log("Generated title:", title);
       } catch (titleError) {
         console.error("Error generating title:", titleError);
         title = "New Chat";
@@ -250,8 +159,6 @@ export class ClientChatService {
       if (!title || title.trim() === "") {
         title = "New Chat";
       }
-
-      console.log("Final title to use:", title);
 
       // Prepare messages in OpenAI format
       const messages = convertMessagesToOpenAIFormat([userMessage]);

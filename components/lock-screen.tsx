@@ -14,21 +14,15 @@ export function LockScreen() {
   const [error, setError] = useState("");
   const [attemptCount, setAttemptCount] = useState(0);
 
-  console.log("LockScreen rendered with isLocked:", isLocked);
-
   // Reset attempt count when the component mounts or when isLocked changes
   useEffect(() => {
-    console.log("LockScreen useEffect triggered, isLocked:", isLocked);
     setAttemptCount(0);
   }, [isLocked]);
 
   // Only render the lock screen when the app is locked
   if (!isLocked) {
-    console.log("Not rendering lock screen because isLocked is false");
     return null;
   }
-
-  console.log("Rendering lock screen because isLocked is true");
 
   const handleUnlock = async () => {
     if (!hasPassword) {

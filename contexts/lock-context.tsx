@@ -110,36 +110,25 @@ export function LockProvider({ children }: { children: ReactNode }) {
   }, [hasPassword, lockTime, isLocked, lastActivity]);
 
   const lock = () => {
-    console.log("Lock function called");
-    console.log("Current isLocked state:", isLocked);
-    console.log("Has password:", hasPassword);
-    console.log("Lock time setting:", lockTime);
     setIsLocked(true);
-    console.log("isLocked state set to true");
   };
 
   const unlock = async (password: string) => {
     try {
-      console.log("Attempting to unlock with password:", password);
       const storedPassword = await getStoredPassword();
-      console.log("Stored password:", storedPassword);
 
       // Check if we have a stored password
       if (!storedPassword) {
-        console.warn("No stored password found");
         return false;
       }
 
       // Verify the password
       const isValid = verifyPassword(password, storedPassword);
-      console.log("Password is valid:", isValid);
 
       if (isValid) {
-        console.log("Unlock successful, setting isLocked to false");
         setIsLocked(false);
         return true;
       }
-      console.log("Unlock failed: incorrect password");
     } catch (error) {
       console.error("Error during unlock:", error);
     }
@@ -148,14 +137,12 @@ export function LockProvider({ children }: { children: ReactNode }) {
   };
 
   const setPassword = async (newPassword: string) => {
-    console.log("Setting new password");
     const hashedPassword = hashPassword(newPassword);
-    console.log("Hashed password:", hashedPassword);
+
     setHasPassword(true);
 
     try {
       await storePassword(hashedPassword);
-      console.log("Password stored successfully");
     } catch (error) {
       console.error("Error storing password:", error);
     }
@@ -189,7 +176,6 @@ export function LockProvider({ children }: { children: ReactNode }) {
     { label: "15 minutes", value: 15 },
     { label: "30 minutes", value: 30 },
     { label: "1 hour", value: 60 },
-    { label: "2 hours", value: 120 },
   ];
 
   return (

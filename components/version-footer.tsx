@@ -82,12 +82,6 @@ export const VersionFooter = ({
                 );
 
                 // We would need to update the parent component's state here
-                // This is a simplified approach - in a real implementation,
-                // you'd want to properly update the document state
-                console.log(
-                  "Document restored, updated documents:",
-                  updatedDocuments
-                );
               }
 
               toast.success("Version restored successfully");

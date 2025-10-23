@@ -178,7 +178,6 @@ function PureMultimodalInput({
   }, [setAttachments]);
 
   const submitForm = useCallback(async () => {
-    console.log("=== submitForm called ===");
 
     // Validate that we have a selected model
     if (!selectedModelId) {
@@ -192,12 +191,8 @@ function PureMultimodalInput({
       return;
     }
 
-    console.log("Selected model ID:", selectedModelId);
-    console.log("Selected provider ID:", selectedProviderId);
-
     // Get the provider for this model
     const providers = await getAllProviders();
-    console.log("All providers:", providers.length);
 
     let selectedProvider = null;
 
@@ -206,17 +201,14 @@ function PureMultimodalInput({
       selectedProvider = providers.find(
         (p: any) => p.id === selectedProviderId
       );
-      console.log("Found provider by ID:", selectedProvider ? "Yes" : "No");
     }
 
-    // If we don't have a selected provider ID or didn't find the provider by ID,
-    // fall back to finding by model name
+    // If we don't have a provider ID fall back to finding by model name
     if (!selectedProvider) {
       // Find all providers with this model name
       const matchingProviders = providers.filter(
         (p: any) => p.model === selectedModelId
       );
-      console.log("Matching providers by model:", matchingProviders.length);
 
       if (matchingProviders.length === 0) {
         toast.error(
@@ -227,7 +219,6 @@ function PureMultimodalInput({
 
       // Use the first one
       selectedProvider = matchingProviders[0];
-      console.log("Using first matching provider:", selectedProvider?.id);
     }
 
     // Validate that we have a provider
@@ -237,14 +228,6 @@ function PureMultimodalInput({
       );
       return;
     }
-
-    console.log("Selected provider:", {
-      id: selectedProvider.id,
-      name: selectedProvider.name,
-      model: selectedProvider.model,
-      hasApiKey: !!selectedProvider.apiKey,
-      hasBaseUrl: !!selectedProvider.baseUrl,
-    });
 
     // Validate that the provider has the required fields
     if (!selectedProvider.apiKey) {
@@ -288,9 +271,6 @@ function PureMultimodalInput({
       text: input,
     });
 
-    console.log("Sending message with provider ID:", selectedProvider?.id);
-    console.log("Sending message with model ID:", selectedModelId);
-
     // Pass additional data through the sendMessage function
     sendMessage(
       {
@@ -327,10 +307,10 @@ function PureMultimodalInput({
   ]);
 
   const _modelResolver = useMemo(() => {
-    // Use the actual model name directly instead of the provider
+    // Use model name
     return {
       id: selectedModelId,
-      // This is a placeholder - the actual model resolution happens in the API
+      // placeholder - the model resolution happens in the API
       languageModel: () => selectedModelId,
     };
   }, [selectedModelId]);

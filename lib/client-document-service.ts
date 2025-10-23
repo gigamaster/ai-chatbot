@@ -4,54 +4,7 @@ import type { ArtifactKind } from "@/components/artifact";
 import { ChatSDKError } from "@/lib/errors";
 import type { Document } from "@/lib/local-db";
 import { getDocumentById, saveDocument } from "@/lib/local-db-queries";
-
-// Get user ID from local storage or cookie
-function getUserId(): string | null {
-  try {
-    if (typeof window !== "undefined") {
-      // Try to get user from localStorage first
-      const storedUser = localStorage.getItem("local_user");
-      if (storedUser) {
-        try {
-          const user = JSON.parse(storedUser);
-          if (user && user.id) {
-            return user.id;
-          }
-        } catch (parseError) {
-          console.error("Error parsing user from localStorage:", parseError);
-        }
-      }
-
-      // If no user in localStorage, check for user cookie
-      const cookieString = document.cookie;
-      const cookies = cookieString.split(";").reduce(
-        (acc, cookie) => {
-          const [name, value] = cookie.trim().split("=");
-          acc[name] = value;
-          return acc;
-        },
-        {} as Record<string, string>
-      );
-
-      const userCookie = cookies["local_user"];
-      if (userCookie) {
-        try {
-          const user = JSON.parse(decodeURIComponent(userCookie));
-          if (user && user.id) {
-            // Save to localStorage for future visits
-            localStorage.setItem("local_user", JSON.stringify(user));
-            return user.id;
-          }
-        } catch (parseError) {
-          console.error("Error parsing user from cookie:", parseError);
-        }
-      }
-    }
-  } catch (error) {
-    console.error("Error getting user ID:", error);
-  }
-  return null;
-}
+import { getUserId } from "@/lib/auth-utils";
 
 // Client-side document service for GitHub Pages deployment
 export class ClientDocumentService {
