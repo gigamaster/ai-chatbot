@@ -26,6 +26,7 @@ import {
 import { hashPassword } from "@/lib/lock-utils";
 import type { AppUsage } from "@/lib/usage";
 import { generateUUID } from "@/lib/utils";
+import { getUserId } from "@/lib/auth-utils";
 
 // User operations
 export async function getUser(email: string) {
@@ -449,9 +450,16 @@ export async function saveCustomProvider(providerData: any) {
   }
 }
 
+// Get all providers for the current user
 export async function getAllCustomProviders() {
   try {
-    return await getAllLocalProviders();
+    // Get current user ID
+    const userId = getUserId();
+    if (!userId) {
+      return [];
+    }
+    
+    return await getAllLocalProviders(userId);
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to get providers");
   }

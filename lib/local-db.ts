@@ -86,6 +86,7 @@ interface CodemoDB extends DBSchema {
       createdAt: string; // ISO date string
       updatedAt: string; // ISO date string
       isEnabled: boolean;
+      userId: string; // Add userId for user isolation
     };
   };
 }
@@ -107,8 +108,8 @@ async function getDb() {
   }
 
   if (!dbInstance) {
-    // Updated database version to 2 to create the providers object store
-    dbInstance = await openDB<CodemoDB>("codemo-db", 2, {
+    // Updated database version to 3 to add userId to providers object store
+    dbInstance = await openDB<CodemoDB>("codemo-db", 3, {
       upgrade(db, oldVersion, newVersion, transaction) {
         // Create stores for different data types
         if (!db.objectStoreNames.contains("chats")) {
@@ -152,6 +153,15 @@ async function getDb() {
         // Create providers object store (new in version 2)
         if (!db.objectStoreNames.contains("providers")) {
           db.createObjectStore("providers", { keyPath: "id" });
+        }
+
+        // Handle upgrade from version 2 to 3 - add userId to providers
+        if (oldVersion < 3) {
+          if (db.objectStoreNames.contains("providers")) {
+            // Note: In a production environment, you would want to migrate existing data
+            // For now, we'll just note that existing providers will need to be re-added
+            console.warn("Providers schema updated - existing providers may need to be re-added");
+          }
         }
       },
       blocked() {},
@@ -476,6 +486,28 @@ export async function getLocalUser(userId: string) {
   }
 }
 
+/**
+ * Check if any users exist in the database
+ * @returns Promise<boolean> - True if users exist, false otherwise
+ */
+export async function hasUsersInDatabase(): Promise<boolean> {
+  try {
+    // Only check in browser environment
+    if (typeof window === "undefined") {
+      return false;
+    }
+    
+    const db = await getDb();
+    const tx = db.transaction("users", "readonly");
+    const store = tx.objectStore("users");
+    const count = await store.count();
+    return count > 0;
+  } catch (error) {
+    console.error("Error checking for users in database:", error);
+    return false;
+  }
+}
+
 // Get user by email
 export async function getLocalUserByEmail(email: string) {
   try {
@@ -519,13 +551,27 @@ export async function getLocalProvider(providerId: string) {
   }
 }
 
-export async function getAllLocalProviders() {
+// Get all providers for a specific user
+export async function getAllLocalProviders(userId: string) {
   try {
     const db = await getDb();
 
-    return await db.getAll("providers");
+    const allProviders = await db.getAll("providers");
+    // Filter providers by userId for user isolation
+    return allProviders.filter((provider: any) => provider.userId === userId);
   } catch (error) {
     console.error("Failed to retrieve providers:", error);
+    return [];
+  }
+}
+
+// Get all providers (for backward compatibility, but should be avoided)
+export async function getAllProvidersGlobal() {
+  try {
+    const db = await getDb();
+    return await db.getAll("providers");
+  } catch (error) {
+    console.error("Failed to retrieve all providers:", error);
     return [];
   }
 }

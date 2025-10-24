@@ -145,11 +145,6 @@ export function Chat({
     },
   });
 
-  // Log when the custom chat hook messages change
-  useEffect(() => {
-    console.log("Custom chat hook messages updated:", messages);
-  }, [messages]);
-
   const searchParams = useSearchParams();
   const query = searchParams.get("query");
 
@@ -167,17 +162,6 @@ export function Chat({
 
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
-
-  // Remove auto-resume hook usage - it was causing duplication
-  // useAutoResume({
-  //   autoResume: shouldUseAutoResume,
-  //   initialMessages,
-  //   resumeStream,
-  //   setMessages,
-  //   currentMessages: messages,
-  //   status,
-  //   setDataStream,
-  // });
 
   return (
     <>

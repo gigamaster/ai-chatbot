@@ -5,6 +5,7 @@ import {
   getCustomProvider,
   saveCustomProvider,
 } from "@/lib/local-db-queries";
+import { getUserId } from "@/lib/auth-utils";
 
 // Define types - using 'enabled' for consistency with UI, but mapping to 'isEnabled' for database
 export interface ProviderModel {
@@ -24,9 +25,10 @@ interface DatabaseProvider {
   baseUrl?: string;
   model: string;
   isEnabled: boolean; // Database uses 'isEnabled'
+  userId: string; // Add userId for user isolation
 }
 
-// Get all available providers
+// Get all available providers for the current user
 export async function getAllProviders(): Promise<ProviderModel[]> {
   try {
     const providers = await getAllCustomProviders();
@@ -42,7 +44,7 @@ export async function getAllProviders(): Promise<ProviderModel[]> {
   }
 }
 
-// Get a specific provider by ID
+// Get a specific provider by ID (user-specific)
 export async function getProviderById(
   providerId: string
 ): Promise<ProviderModel | null> {
@@ -60,13 +62,21 @@ export async function getProviderById(
   }
 }
 
-// Save a provider
+// Save a provider with user ID association
 export async function saveProvider(provider: ProviderModel): Promise<boolean> {
   try {
-    // Map interface field 'enabled' to database field 'isEnabled'
+    // Get current user ID
+    const userId = getUserId();
+    if (!userId) {
+      console.error("No user ID found, cannot save provider");
+      return false;
+    }
+    
+    // Map interface field 'enabled' to database field 'isEnabled' and add userId
     const providerToSave = {
       ...provider,
       isEnabled: provider.enabled,
+      userId, // Associate with current user
     };
     await saveCustomProvider(providerToSave);
     return true;
@@ -87,22 +97,6 @@ export async function deleteProvider(providerId: string): Promise<boolean> {
   }
 }
 
-// Test a provider connection
-export async function testProvider(
-  provider: ProviderModel
-): Promise<{ success: boolean; message?: string; error?: string }> {
-  try {
-    const result = await testProviderConnection(provider);
-    return result;
-  } catch (error) {
-    console.error("Failed to test provider:", error);
-    return {
-      success: false,
-      error: "An unexpected error occurred while testing the provider",
-    };
-  }
-}
-
 // Get models for a provider (for now, just return the single model)
 export async function getModelsForProvider(
   providerId: string
@@ -114,7 +108,7 @@ export async function getModelsForProvider(
   return [];
 }
 
-// Find provider by model name
+// Find provider by model name (user-specific)
 export async function findProviderByModel(
   modelName: string
 ): Promise<ProviderModel | null> {
@@ -123,7 +117,7 @@ export async function findProviderByModel(
   return provider || null;
 }
 
-// Get provider-model pairs for UI display
+// Get provider-model pairs for UI display (user-specific)
 export async function getProviderModelPairs(): Promise<
   Array<{
     id: string;

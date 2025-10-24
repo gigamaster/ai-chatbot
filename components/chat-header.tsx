@@ -115,6 +115,12 @@ function PureChatHeader({ isReadonly }: ChatHeaderProps) {
                 
                 <div>
                   <h4 className="font-medium">How to Use:</h4>
+                  <ul className="ml-4 list-disc space-y-1">  
+                    <li>Add an AI provider and model</li>
+                    <li>For example, visit <a href="https://aistudio.google.com/api-keys" target="_blank">Google AI Studio</a> to generate an API Key</li>
+                    <li>You also need the Gemini API endpoint baseURL <a href="https://ai.google.dev/gemini-api/docs/openai" target="_blank">OpenAI compatibility</a></li>
+                    <li>Default url: https://generativelanguage.googleapis.com/v1beta/openai/</li>
+                  </ul>
                   <ul className="ml-4 list-disc space-y-1">
                     <li>Type your message in the input box at the bottom</li>
                     <li>Select an AI provider and model from the settings</li>

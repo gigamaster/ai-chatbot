@@ -4,7 +4,7 @@ import { CheckIcon, PlayIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { testProvider } from "@/lib/provider-model-service";
+import { testProviderConnection } from "@/lib/client-test-provider";
 
 export function ProviderTestButton({
   provider,
@@ -27,7 +27,7 @@ export function ProviderTestButton({
     setResult(null);
 
     try {
-      const testResult = await testProvider(provider);
+      const testResult = await testProviderConnection(provider);
       setResult(testResult);
 
       if (testResult.success) {

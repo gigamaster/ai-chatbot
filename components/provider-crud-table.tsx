@@ -30,7 +30,6 @@ import {
   deleteProvider,
   getAllProviders,
   saveProvider,
-  testProvider,
 } from "@/lib/provider-model-service";
 import { generateUUID } from "@/lib/utils";
 import { ProviderTestButton } from "./provider-test-button";

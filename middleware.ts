@@ -23,19 +23,20 @@ export function middleware(request: NextRequest) {
   const localUserCookie = request.cookies.get("local_user");
   console.log("Local user cookie:", localUserCookie);
 
-  // If no local user, redirect to login page
+  // If no local user, allow access to root page which will handle client-side auth
   if (!localUserCookie) {
-    console.log("No user found, redirecting to login");
-    // Only redirect if we're not already on an auth page
+    console.log("No user found, allowing access to root page for client-side auth");
+    // Allow access to root page and auth pages
     if (
-      !pathname.startsWith("/local-login") &&
-      !pathname.startsWith("/local-register")
+      pathname === "/" ||
+      pathname.startsWith("/local-login") ||
+      pathname.startsWith("/local-register")
     ) {
-      return NextResponse.redirect(new URL("/local-login", request.url));
+      return NextResponse.next();
     }
-    // For auth pages, allow access
-    console.log("On auth page, allowing access");
-    return NextResponse.next();
+    
+    // Redirect other pages to root for client-side auth handling
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   // Parse the local user
@@ -44,9 +45,12 @@ export function middleware(request: NextRequest) {
     localUser = JSON.parse(localUserCookie.value);
     console.log("Parsed user:", localUser);
   } catch (e) {
-    console.log("Failed to parse user cookie, redirecting to login");
-    // If parsing fails, redirect to local login
-    return NextResponse.redirect(new URL("/local-login", request.url));
+    console.log("Failed to parse user cookie, allowing access to root page");
+    // If parsing fails, allow access to root page for client-side handling
+    if (pathname === "/") {
+      return NextResponse.next();
+    }
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   // Check if user is trying to access auth pages while already logged in
@@ -54,11 +58,8 @@ export function middleware(request: NextRequest) {
     localUser &&
     (pathname === "/local-login" || pathname === "/local-register")
   ) {
-    console.log("User already logged in, redirecting to home");
     return NextResponse.redirect(new URL("/", request.url));
   }
-
-  console.log("Allowing access to protected route");
   return NextResponse.next();
 }
 
@@ -69,7 +70,6 @@ export const config = {
     "/api/:path*",
     "/local-login",
     "/local-register",
-
     /*
      * Match all request paths except for the ones starting with:
      * - _next/static (static files)
