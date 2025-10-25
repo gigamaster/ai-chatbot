@@ -182,6 +182,27 @@ const Sidebar = React.forwardRef<
   ) => {
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
+    // Use React.useEffect to manage focus when sidebar state changes
+    React.useEffect(() => {
+      if (!ref || !('current' in ref) || !ref.current) return;
+      
+      const sidebarElement = ref.current as HTMLDivElement;
+      
+      // When sidebar is collapsed, make it inert to prevent focus
+      if (state === "collapsed") {
+        sidebarElement.inert = true;
+      } else {
+        sidebarElement.inert = false;
+      }
+      
+      // Cleanup function to remove inert when component unmounts
+      return () => {
+        if (sidebarElement) {
+          sidebarElement.inert = false;
+        }
+      };
+    }, [state, ref]);
+
     if (collapsible === "none") {
       return (
         <div

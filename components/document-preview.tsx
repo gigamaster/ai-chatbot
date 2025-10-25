@@ -213,10 +213,11 @@ const PureHitboxLayer = ({
 
   return (
     <div
-      aria-hidden="true"
+      // Use inert instead of aria-hidden to properly handle focus
+      ref={hitboxRef}
+      inert={true}
       className="absolute top-0 left-0 z-10 size-full rounded-xl"
       onClick={handleClick}
-      ref={hitboxRef}
       role="presentation"
     >
       <div className="flex w-full items-center justify-end p-4">
