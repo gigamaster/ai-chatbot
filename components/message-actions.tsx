@@ -1,12 +1,13 @@
-import equal from "fast-deep-equal";
 import { memo } from "react";
+//import equal from "fast-deep-equal";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
 import type { Vote } from "@/lib/local-db";
 import type { ChatMessage } from "@/lib/types";
 import { Action, Actions } from "./elements/actions";
-import { CopyIcon, PencilEditIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
+import { CopyIcon, DownloadIcon, FileIcon, PencilEditIcon } from "./icons";
+import { downloadZip } from "client-zip";
 
 export function PureMessageActions({
   chatId,
@@ -44,6 +45,73 @@ export function PureMessageActions({
     toast.success("Copied to clipboard!");
   };
 
+  // Download message as JSON
+  const handleDownloadJson = async () => {
+    try {
+      const messageData = {
+        id: message.id,
+        chatId,
+        role: message.role,
+        parts: message.parts,
+        metadata: message.metadata,
+        exportedAt: new Date().toISOString()
+      };
+      
+      const dataStr = JSON.stringify(messageData, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+      const exportFileDefaultName = `message-${message.id}.json`;
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+      
+      toast.success("Message downloaded as JSON!");
+    } catch (error) {
+      console.error("Failed to download message as JSON:", error);
+      toast.error("Failed to download message as JSON");
+    }
+  };
+
+  // Download message as ZIP
+  const handleDownloadZip = async () => {
+    try {
+      const messageData = {
+        id: message.id,
+        chatId,
+        role: message.role,
+        parts: message.parts,
+        metadata: message.metadata,
+        exportedAt: new Date().toISOString()
+      };
+      
+      // Prepare files for ZIP
+      const files = [
+        {
+          name: `message-${message.id}.json`,
+          lastModified: new Date(),
+          input: JSON.stringify(messageData, null, 2)
+        },
+        {
+          name: `message-${message.id}.md`,
+          lastModified: new Date(),
+          input: textFromParts || ""
+        }
+      ];
+      
+      // Create and download ZIP
+      const blob = await downloadZip(files).blob();
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `message-${message.id}.zip`;
+      link.click();
+      
+      toast.success("Message downloaded as ZIP!");
+    } catch (error) {
+      console.error("Failed to download message as ZIP:", error);
+      toast.error("Failed to download message as ZIP");
+    }
+  };
+
   // User messages get edit (on hover) and copy actions
   if (message.role === "user") {
     return (
@@ -73,105 +141,17 @@ export function PureMessageActions({
       </Action>
 
       <Action
-        data-testid="message-upvote"
-        disabled={vote?.isUpvoted}
-        onClick={() => {
-          // Disabled vote functionality for GitHub Pages deployment
-          console.log("Vote functionality disabled");
-          // const upvote = fetch("/api/local-vote", {
-          //   method: "PATCH",
-          //   body: JSON.stringify({
-          //     chatId,
-          //     messageId: message.id,
-          //     type: "up",
-          //   }),
-          // });
-          //
-          // toast.promise(upvote, {
-          //   loading: "Upvoting Response...",
-          //   success: () => {
-          //     mutate<Vote[]>(
-          //       `/api/local-vote?chatId=${chatId}`,
-          //       (currentVotes) => {
-          //         if (!currentVotes) {
-          //           return [];
-          //         }
-          //
-          //         const votesWithoutCurrent = currentVotes.filter(
-          //           (currentVote) => currentVote.messageId !== message.id
-          //         );
-          //
-          //         return [
-          //           ...votesWithoutCurrent,
-          //           {
-          //             chatId,
-          //             messageId: message.id,
-          //             isUpvoted: true,
-          //           },
-          //         ];
-          //       },
-          //       { revalidate: false }
-          //     );
-          //
-          //     return "Upvoted Response!";
-          //   },
-          //   error: "Failed to upvote response.",
-          // });
-        }}
-        tooltip="Upvote Response"
+        onClick={handleDownloadJson}
+        tooltip="Download as JSON"
       >
-        <ThumbUpIcon />
+        <FileIcon />
       </Action>
 
       <Action
-        data-testid="message-downvote"
-        disabled={vote && !vote.isUpvoted}
-        onClick={() => {
-          // Disabled vote functionality for GitHub Pages deployment
-          console.log("Vote functionality disabled");
-          // const downvote = fetch("/api/local-vote", {
-          //   method: "PATCH",
-          //   body: JSON.stringify({
-          //     chatId,
-          //     messageId: message.id,
-          //     type: "down",
-          //   }),
-          // });
-          //
-          // toast.promise(downvote, {
-          //   loading: "Downvoting Response...",
-          //   success: () => {
-          //     mutate<Vote[]>(
-          //       `/api/local-vote?chatId=${chatId}`,
-          //       (currentVotes) => {
-          //         if (!currentVotes) {
-          //           return [];
-          //         }
-          //
-          //         const votesWithoutCurrent = currentVotes.filter(
-          //           (currentVote) => currentVote.messageId !== message.id
-          //         );
-          //
-          //         return [
-          //           ...votesWithoutCurrent,
-          //           {
-          //             chatId,
-          //             messageId: message.id,
-          //             isUpvoted: false,
-          //           },
-          //         ];
-          //       },
-          //       { revalidate: false }
-          //     );
-          //
-          //     return "Downvoted Response!";
-          //   },
-          //   error: "Failed to downvote response.",
-          // });
-        }}
-        tooltip="Downvote Response"
+        onClick={handleDownloadZip}
+        tooltip="Download JSON and Markdown as ZIP"
       >
-        <ThumbDownIcon />
+        <DownloadIcon />
       </Action>
     </Actions>
   );
