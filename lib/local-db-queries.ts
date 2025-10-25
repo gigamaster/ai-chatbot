@@ -1,4 +1,5 @@
 import type { ArtifactKind } from "@/components/artifact";
+import { getUserId } from "@/lib/auth-utils";
 import { ChatSDKError } from "@/lib/errors";
 import {
   deleteLocalChat,
@@ -26,7 +27,6 @@ import {
 import { hashPassword } from "@/lib/lock-utils";
 import type { AppUsage } from "@/lib/usage";
 import { generateUUID } from "@/lib/utils";
-import { getUserId } from "@/lib/auth-utils";
 
 // User operations
 export async function getUser(email: string) {
@@ -62,13 +62,11 @@ export async function saveLocalChat({
   title: string;
 }) {
   try {
-    console.log("saveLocalChat called with:", { id, userId, title });
     const result = await saveChatToDb({
       id,
       userId,
       title,
     });
-    console.log("saveChatToDb returned:", result);
     return result;
   } catch (_error) {
     console.error("Error in saveLocalChat:", _error);
@@ -124,21 +122,13 @@ export async function getChatsByUserId({
   endingBefore: string | null;
 }) {
   try {
-    console.log("getChatsByUserId called with:", {
-      id,
-      limit,
-      startingAfter,
-      endingBefore,
-    });
     const allChats = await getAllLocalChats(id);
-    console.log("getAllLocalChats returned:", allChats);
 
     // Sort chats by createdAt in descending order (newest first)
     const sortedChats = allChats.sort(
       (a: any, b: any) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
-    console.log("Sorted chats:", sortedChats);
 
     // Apply pagination
     let filteredChats = sortedChats;
@@ -179,20 +169,15 @@ export async function getChatsByUserId({
       );
     }
 
-    console.log("Filtered chats:", filteredChats);
-
     // Apply limit
     const hasMore = filteredChats.length > limit;
     const resultChats = hasMore ? filteredChats.slice(0, limit) : filteredChats;
-
-    console.log("Result chats:", resultChats, "hasMore:", hasMore);
 
     return {
       chats: resultChats,
       hasMore,
     };
   } catch (_error) {
-    console.error("Error in getChatsByUserId:", _error);
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get chats by user id"
@@ -202,31 +187,22 @@ export async function getChatsByUserId({
 
 export async function getLocalChatById({ id }: { id: string }) {
   try {
-    console.log("getLocalChatById called with id:", id);
     const selectedChat = await getLocalChat(id);
-    console.log("getLocalChat returned:", selectedChat);
     if (!selectedChat) {
-      console.log("No chat found with id:", id);
       return null;
     }
 
-    console.log("Found chat:", selectedChat);
     return selectedChat;
   } catch (_error) {
-    console.error("Error in getLocalChatById:", _error);
     throw new ChatSDKError("bad_request:database", "Failed to get chat by id");
   }
 }
 
 export async function getLocalMessagesByChatId({ id }: { id: string }) {
   try {
-    console.log("getLocalMessagesByChatId called with id:", id);
     const messages = await getLocalMessages(id);
-    console.log("getLocalMessages returned:", messages);
-    console.log("Number of messages found:", messages.length);
     return messages;
   } catch (_error) {
-    console.error("Error in getLocalMessagesByChatId:", _error);
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get messages by chat id"
@@ -458,7 +434,7 @@ export async function getAllCustomProviders() {
     if (!userId) {
       return [];
     }
-    
+
     return await getAllLocalProviders(userId);
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to get providers");

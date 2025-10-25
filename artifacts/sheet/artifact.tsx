@@ -1,10 +1,6 @@
-import { z } from "zod";
-import { sheetPrompt, updateDocumentPrompt } from "@/lib/ai/prompts";
-import { getLanguageModel } from "@/lib/ai/providers";
-import { createDocumentHandler } from "@/lib/artifacts/document-handler";
-import { streamObject } from "@/lib/custom-ai";
 import { parse, unparse } from "papaparse";
 import { toast } from "sonner";
+import { z } from "zod";
 import { Artifact } from "@/components/create-artifact";
 import {
   CopyIcon,
@@ -14,6 +10,10 @@ import {
   UndoIcon,
 } from "@/components/icons";
 import { SpreadsheetEditor } from "@/components/sheet-editor";
+import { sheetPrompt, updateDocumentPrompt } from "@/lib/ai/prompts";
+import { getLanguageModel } from "@/lib/ai/providers";
+import { createDocumentHandler } from "@/lib/artifacts/document-handler";
+import { streamObject } from "@/lib/custom-ai";
 
 // Server-side logic (runs client-side in browser)
 export const sheetDocumentHandler = createDocumentHandler<"sheet">({
@@ -28,9 +28,8 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
     const mockCsv = "Name,Age,City\nJohn,25,New York\nJane,30,Los Angeles";
 
     dataStream.write({
-      type: "data-sheetDelta",
+      type: "sheetDelta",
       data: mockCsv,
-      transient: true,
     });
 
     draftContent = mockCsv;
@@ -47,9 +46,8 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
     const mockCsv = "Name,Age,City\nJohn,26,New York\nJane,31,Los Angeles";
 
     dataStream.write({
-      type: "data-sheetDelta",
+      type: "sheetDelta",
       data: mockCsv,
-      transient: true,
     });
 
     draftContent = mockCsv;
@@ -69,7 +67,7 @@ export const sheetArtifact = new Artifact<"sheet", Metadata>({
     if (streamPart.type === "sheetDelta") {
       setArtifact((draftArtifact) => {
         // Type guard to ensure we're working with the correct type
-        if (typeof streamPart.data === 'string') {
+        if (typeof streamPart.data === "string") {
           return {
             ...draftArtifact,
             content: streamPart.data,

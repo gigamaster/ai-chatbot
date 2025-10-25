@@ -11,23 +11,16 @@
   <a href="https://github.com/gigamaster/ai-chatbot"><strong>GitHub Repository</strong></a> ·
   <a href="#features"><strong>Features</strong></a> ·
   <a href="#model-providers"><strong>Model Providers</strong></a> ·
-  <a href="#deploy-your-own"><strong>Deploy Your Own</strong></a> ·
-  <a href="#running-locally"><strong>Running locally</strong></a>
+  <a href="#running-locally"><strong>Local storage</strong></a>
 </p>
 
-Codemo provides a suite of open-source tools designed for digital nomads on GitHub, featuring an AI-powered chatbot that operates on free tiers, stores data locally, and adheres to European data privacy standards.
-
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#model-providers"><strong>Model Providers</strong></a> ·
-  <a href="#deploy-your-own"><strong>Deploy Your Own</strong></a> ·
-  <a href="#running-locally"><strong>Running locally</strong></a>
-</p>
-<br/>
+Codemo provides a suite of open-source tools designed for digital nomads on GitHub,   
+featuring an AI-powered chatbot that operates on free tiers, stores data locally,  
+and adheres to European data privacy standards.
 
 ## Features
 
-- [Next.js](https://nextjs.org) App Router
+- Next.js App Router
   - Advanced routing for seamless navigation and performance
   - React Components (RSCs) and Actions for client-side
 - AI Generic
@@ -49,19 +42,21 @@ Codemo provides a suite of open-source tools designed for digital nomads on GitH
 
 ## Model Providers
 
-Codemo AI-chatbot uses an AI Gateway to access multiple AI models optimized for code understanding through a unified interface. The default configuration includes models with free tiers.
+Codemo AI-chatbot uses an AI Gateway to access multiple AI models through a unified interface.  
+The default configuration includes models with free tiers.
 
 ### AI Gateway Authentication
 
-You need to provide an AI Gateway API key by setting the provider `API_KEY` and endpoint URL `baseUrl`.  This ensures that the AI Gateway can authenticate and connect to the appropriate services.
+You need to provide an AI Gateway API key by setting the provider `API_KEY` and endpoint URL `baseUrl`.  
+This ensures that the AI Gateway can authenticate and connect to the appropriate services.
 
-**Optional**  
+**AI Model**  
 
-You can also switch to direct LLM providers like [OpenAI Codex](https://openai.com/blog/openai-codex), [Anthropic Claude Code](https://anthropic.com), and [other code-optimized models](https://ai-sdk.dev/providers/ai-sdk-providers) with just a few lines of code.
+You can switch to direct LLM providers like [OpenAI Codex](https://openai.com/blog/openai-codex), [Anthropic Claude Code](https://anthropic.com), and [other code-optimized models](https://ai-sdk.dev/providers/ai-sdk-providers) from the multi-modal frontend to access the best models for your specific needs.
 
 ## Running locally
 
-You will need to use pnpm:
+Using pnpm:
 
 1. Install the required dependencies: `pnpm install`
 2. Run the development server: `pnpm dev`
@@ -77,7 +72,8 @@ AI-chatbot should now be running on [localhost:3000](http://localhost:3000).
 
 ### Locking the Application
 
-Codemo AI-chatbot includes a security feature that allows you to lock the application to protect your data on shared computers:
+Codemo AI-chatbot includes a security feature that allows you to lock the application  
+to protect your data on shared computers:
 
 1. **Set up a password**:
    - Open the user menu by clicking on your user avatar in the sidebar
@@ -105,10 +101,6 @@ Codemo AI-chatbot provides access to additional developer tools through the tool
 
 Both tools open in a new browser tab for your convenience.
 
-### Code Collaboration Features
+### License
 
-- Use the chat interface to discuss code with the AI assistant
-- Create and edit code artifacts directly in the chat
-- Execute code snippets to test functionality
-- Export chats as JSON, Markdown, or text files for sharing
-- Collaborate with team members through shared chats (when implemented)
+AI-chatbot for Codemo is licensed under the Apache License, Version 2.0

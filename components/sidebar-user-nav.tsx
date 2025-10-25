@@ -34,10 +34,10 @@ function getUserInitial(email: string | undefined): string {
 // First letter avatar component
 function UserAvatar({ email }: { email: string | undefined }) {
   const initial = getUserInitial(email);
-  
+
   return (
-    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600">
-      <span className="text-white text-xs font-medium">{initial}</span>
+    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-indigo-600">
+      <span className="font-medium text-white text-xs">{initial}</span>
     </div>
   );
 }

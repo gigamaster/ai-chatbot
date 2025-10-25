@@ -246,10 +246,6 @@ export const stepCountIs = (count: number) => {
 };
 
 export const streamText = (options: any) => {
-  console.log(
-    "=== streamText called with options ===",
-    JSON.stringify(options, null, 2)
-  );
 
   // Extract options
   const { model, system, messages } = options;
@@ -269,8 +265,6 @@ export const streamText = (options: any) => {
             fullPrompt += `\nAssistant: ${msg.content}`;
           }
         });
-
-        console.log("Full prompt to send to LLM:", fullPrompt);
 
         // Get response from the model
         const response = await model(fullPrompt);

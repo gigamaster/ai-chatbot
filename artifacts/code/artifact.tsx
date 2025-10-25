@@ -1,25 +1,21 @@
+import { toast } from "sonner";
 import { z } from "zod";
+import { Artifact } from "@/components/create-artifact";
+import { CodeEditor } from "@/components/code-editor";
+import { Console } from "@/components/console";
+import { 
+  CopyIcon, 
+  LogsIcon, 
+  MessageIcon, 
+  PlayIcon, 
+  RedoIcon, 
+  UndoIcon 
+} from "@/components/icons";
 import { codePrompt, updateDocumentPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocumentHandler } from "@/lib/artifacts/document-handler";
 import { smoothStream, streamObject } from "@/lib/custom-ai";
-import { toast } from "sonner";
-import { CodeEditor } from "@/components/code-editor";
-import {
-  Console,
-  type ConsoleOutput,
-  type ConsoleOutputContent,
-} from "@/components/console";
-import {
-  CopyIcon,
-  LogsIcon,
-  MessageIcon,
-  PlayIcon,
-  RedoIcon,
-  UndoIcon,
-} from "@/components/icons";
 import { generateUUID } from "@/lib/utils";
-import { Artifact } from "@/components/create-artifact";
 
 // Server-side logic (runs client-side in browser)
 export const codeDocumentHandler = createDocumentHandler<"code">({
@@ -38,9 +34,8 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
 
     if (mockDraft.explanation) {
       dataStream.write({
-        type: "data-explanation",
+        type: "textDelta",
         data: mockDraft.explanation,
-        transient: true,
       });
 
       draftContent += `// ${mockDraft.explanation}\n\n`;
@@ -48,9 +43,8 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
 
     if (mockDraft.code) {
       dataStream.write({
-        type: "data-code",
+        type: "codeDelta",
         data: mockDraft.code,
-        transient: true,
       });
 
       draftContent += mockDraft.code;
@@ -72,9 +66,8 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
 
     if (mockDraft.explanation) {
       dataStream.write({
-        type: "data-explanation",
+        type: "textDelta",
         data: mockDraft.explanation,
-        transient: true,
       });
 
       draftContent += `// ${mockDraft.explanation}\n\n`;
@@ -82,9 +75,8 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
 
     if (mockDraft.code) {
       dataStream.write({
-        type: "data-code",
+        type: "codeDelta",
         data: mockDraft.code,
-        transient: true,
       });
 
       draftContent += mockDraft.code;
@@ -141,7 +133,7 @@ function detectRequiredHandlers(code: string): string[] {
 }
 
 type Metadata = {
-  outputs: ConsoleOutput[];
+  outputs: any[];
 };
 
 // Client-side UI component
@@ -182,7 +174,6 @@ export const codeArtifact = new Artifact<"code", Metadata>({
         <div className="px-1">
           <CodeEditor {...props} />
         </div>
-
         {metadata?.outputs && (
           <Console
             consoleOutputs={metadata.outputs}
@@ -204,7 +195,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
       description: "Execute code",
       onClick: async ({ content, setMetadata }) => {
         const runId = generateUUID();
-        const outputContent: ConsoleOutputContent[] = [];
+        const outputContent: any[] = [];
 
         setMetadata((metadata) => ({
           ...metadata,
@@ -227,9 +218,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
           currentPyodideInstance.setStdout({
             batched: (output: string) => {
               outputContent.push({
-                type: output.startsWith("data:image/png;base64")
-                  ? "image"
-                  : "text",
+                type: output.startsWith("data:image/png;base64") ? "image" : "text",
                 value: output,
               });
             },

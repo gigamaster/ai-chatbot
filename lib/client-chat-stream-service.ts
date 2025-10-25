@@ -1,13 +1,16 @@
 "use client";
 
-import { createUIMessageStream, JsonToSseTransformStream } from "@/lib/custom-ai";
 import { differenceInSeconds } from "date-fns";
+import {
+  createUIMessageStream,
+  JsonToSseTransformStream,
+} from "@/lib/custom-ai";
+import { ChatSDKError } from "@/lib/errors";
+import type { Chat } from "@/lib/local-db";
 import {
   getLocalChatById,
   getLocalMessagesByChatId,
 } from "@/lib/local-db-queries";
-import type { Chat } from "@/lib/local-db";
-import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
 
 // Client-side service to replace the local-chat stream API route
@@ -42,7 +45,7 @@ export class ClientChatStreamService {
         const emptyDataStream = createUIMessageStream({
           execute: () => {},
         });
-        
+
         return emptyDataStream;
       }
 
@@ -50,7 +53,7 @@ export class ClientChatStreamService {
         const emptyDataStream = createUIMessageStream({
           execute: () => {},
         });
-        
+
         return emptyDataStream;
       }
 
@@ -60,7 +63,7 @@ export class ClientChatStreamService {
         const emptyDataStream = createUIMessageStream({
           execute: () => {},
         });
-        
+
         return emptyDataStream;
       }
 
@@ -79,7 +82,10 @@ export class ClientChatStreamService {
       if (error instanceof ChatSDKError) {
         throw error;
       }
-      throw new ChatSDKError("bad_request:chat", `Failed to get chat stream: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new ChatSDKError(
+        "bad_request:chat",
+        `Failed to get chat stream: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
   }
 }

@@ -29,7 +29,7 @@ import {
   deleteCustomProvider,
   getAllCustomProviders,
   saveCustomProvider,
-} from "@/lib/local-db";
+} from "@/lib/local-db-queries";
 import { getCustomProvider } from "@/lib/local-db-queries";
 
 // Define the provider configuration type

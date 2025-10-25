@@ -33,7 +33,6 @@ function PureMessages({
   isReadonly,
   selectedModelId,
 }: MessagesProps) {
-
   const {
     containerRef: messagesContainerRef,
     endRef: messagesEndRef,

@@ -77,7 +77,7 @@ export function LockProvider({ children }: { children: ReactNode }) {
   // Activity tracking for auto-lock
   useEffect(() => {
     if (!isInitialized) return; // Don't track until initialized
-    
+
     const handleActivity = () => {
       setLastActivity(Date.now());
     };
@@ -113,7 +113,7 @@ export function LockProvider({ children }: { children: ReactNode }) {
 
   const unlock = async (password: string) => {
     if (!isInitialized) return false; // Don't unlock until initialized
-    
+
     try {
       const storedPassword = await getStoredPassword();
 

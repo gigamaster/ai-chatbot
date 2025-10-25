@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getUserId } from "@/lib/auth-utils";
+import {
+  checkChatExists,
+  generateTitleFromUserMessage,
+  saveChatAfterFirstResponse,
+  saveMessagesToIndexedDB,
+} from "@/lib/chat-storage-service";
 import { clientChatService } from "@/lib/client-chat-service";
 import type { ChatMessage } from "@/lib/types";
 import { generateUUID } from "@/lib/utils";
-import { 
-  checkChatExists, 
-  saveMessagesToIndexedDB, 
-  saveChatAfterFirstResponse,
-  generateTitleFromUserMessage
-} from "@/lib/chat-storage-service";
-import { getUserId } from "@/lib/auth-utils";
 
 // TODO: llm.js types to replace custom types
 export type UseChatHelpers = {
@@ -361,7 +361,6 @@ export function useCustomChat(options: UseChatOptions): UseChatHelpers {
 
   const sendMessage = useCallback(
     async (message?: any, options?: any) => {
-
       if (message) {
         messageQueueRef.current.push({ message, options });
         if (

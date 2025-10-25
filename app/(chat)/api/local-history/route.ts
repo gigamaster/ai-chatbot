@@ -1,44 +1,36 @@
 import type { NextRequest } from "next/server";
-import { getChatsByUserId, deleteAllChatsByUserId } from "@/lib/local-db-queries";
 import { ChatSDKError } from "@/lib/errors";
+import {
+  deleteAllChatsByUserId,
+  getChatsByUserId,
+} from "@/lib/local-db-queries";
 
 // Helper function to get local user from cookies
 function getLocalUserFromCookies(cookieHeader: string | null) {
   if (!cookieHeader) {
-    console.log("No cookie header provided");
     return null;
   }
-  
-  console.log("Cookie header:", cookieHeader);
-  
+
   // More robust cookie parsing
   const cookies: Record<string, string> = {};
-  cookieHeader.split(";").forEach(cookie => {
+  cookieHeader.split(";").forEach((cookie) => {
     const [name, value] = cookie.trim().split("=");
     if (name && value !== undefined) {
       cookies[name.trim()] = value.trim();
     }
   });
-  
-  console.log("Parsed cookies:", cookies);
-  
+
   const localUserCookie = cookies["local_user"];
   if (!localUserCookie) {
-    console.log("No local_user cookie found");
     return null;
   }
-  
-  console.log("Found local_user cookie:", localUserCookie);
-  
+
   try {
     // Properly decode the cookie value
     const decoded = decodeURIComponent(localUserCookie);
-    console.log("Decoded cookie:", decoded);
     const parsed = JSON.parse(decoded);
-    console.log("Parsed user:", parsed);
     return parsed;
   } catch (e) {
-    console.error("Error parsing local_user cookie:", e);
     return null;
   }
 }
@@ -60,11 +52,8 @@ export async function GET(request: NextRequest) {
   const localUser = getLocalUserFromCookies(request.headers.get("cookie"));
 
   if (!localUser) {
-    console.log("No local user found, returning unauthorized");
     return new ChatSDKError("unauthorized:chat").toResponse();
   }
-
-  console.log("Found local user:", localUser);
 
   const chats = await getChatsByUserId({
     id: localUser.id,
@@ -73,7 +62,6 @@ export async function GET(request: NextRequest) {
     endingBefore,
   });
 
-  console.log("Returning chats:", chats);
   return Response.json(chats);
 }
 

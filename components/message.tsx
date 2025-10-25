@@ -2,48 +2,38 @@
 import equal from "fast-deep-equal";
 import { motion } from "framer-motion";
 import { memo, useState } from "react";
-import type { Vote } from "@/lib/local-db";
+import { useDataStream } from "@/components/data-stream-provider";
 import type { ChatMessage } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
-import { useDataStream } from "@/components/data-stream-provider";
-import { DocumentToolResult } from "./document";
-import { DocumentPreview } from "./document-preview";
 import { MessageContent } from "./elements/message";
 import { Response } from "./elements/response";
-import {
-  Tool,
-  ToolContent,
-  ToolHeader,
-  ToolInput,
-  ToolOutput,
-} from "./elements/tool";
 import { SparklesIcon } from "./icons";
 import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
-import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
-import { Weather } from "./weather";
 
 const PurePreviewMessage = ({
   chatId,
   message,
-  vote,
   isLoading,
   setMessages,
   regenerate,
-  isReadonly,
   requiresScrollPadding,
+  isReadonly,
+  vote,
 }: {
   chatId: string;
   message: ChatMessage;
-  vote: Vote | undefined;
   isLoading: boolean;
   setMessages: any;
   regenerate: any;
-  isReadonly: boolean;
   requiresScrollPadding: boolean;
+  isReadonly?: boolean;
+  vote?: any;
 }) => {
-  const [mode, setMode] = useState<"view" | "edit">("view");
+  const [mode, setMode] = useState<"view" | "edit">(
+    isReadonly ? "view" : "view"
+  );
 
   const attachmentsFromMessage = message.parts.filter(
     (part) => part.type === "file"
@@ -67,7 +57,15 @@ const PurePreviewMessage = ({
       >
         {message.role === "assistant" && (
           <div className="-mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-background ring-1 ring-border">
-            <SparklesIcon size={14} />
+            <div
+              className={
+                isLoading
+                  ? "animate-pulse text-blue-500 drop-shadow-[0_0_2px_rgba(59,130,246,0.5)]"
+                  : ""
+              }
+            >
+              <SparklesIcon size={14} />
+            </div>
           </div>
         )}
 
@@ -133,7 +131,7 @@ const PurePreviewMessage = ({
                 );
               }
 
-              if (mode === "edit") {
+              if (mode === "edit" && !isReadonly) {
                 return (
                   <div
                     className="flex w-full flex-row items-start gap-3"
@@ -157,12 +155,11 @@ const PurePreviewMessage = ({
             return null;
           })}
 
-          {message.role === "assistant" && (
+          {message.role === "assistant" && !isReadonly && (
             <MessageActions
               chatId={chatId}
-              message={message}
-              vote={vote}
               isLoading={isLoading}
+              message={message}
               setMode={setMode}
             />
           )}
@@ -178,10 +175,13 @@ export const PreviewMessage = memo(
     if (prevProps.isLoading !== nextProps.isLoading) {
       return false;
     }
-    if (!equal(prevProps.message, nextProps.message)) {
+    if (prevProps.isReadonly !== nextProps.isReadonly) {
       return false;
     }
     if (!equal(prevProps.vote, nextProps.vote)) {
+      return false;
+    }
+    if (!equal(prevProps.message, nextProps.message)) {
       return false;
     }
 
@@ -197,7 +197,9 @@ export function ThinkingMessage() {
       initial={{ opacity: 0 }}
     >
       <div className="-mt-1 flex size-8 shrink-0 items-center justify-center rounded-full bg-background ring-1 ring-border">
-        <SparklesIcon size={14} />
+        <div className="animate-pulse text-blue-500 drop-shadow-[0_0_2px_rgba(59,130,246,0.5)]">
+          <SparklesIcon size={14} />
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">

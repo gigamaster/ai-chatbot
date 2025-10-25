@@ -1,26 +1,32 @@
-import { createUIMessageStream, JsonToSseTransformStream } from "@/lib/custom-ai";
 import { differenceInSeconds } from "date-fns";
+import {
+  createUIMessageStream,
+  JsonToSseTransformStream,
+} from "@/lib/custom-ai";
+import { ChatSDKError } from "@/lib/errors";
+import type { Chat } from "@/lib/local-db";
 import {
   getLocalChatById,
   getLocalMessagesByChatId,
 } from "@/lib/local-db-queries";
-import type { Chat } from "@/lib/local-db";
-import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
 
 // Helper function to get local user from cookies
 function getLocalUserFromCookies(cookieHeader: string | null) {
   if (!cookieHeader) return null;
-  
-  const cookies = cookieHeader.split(";").reduce((acc, cookie) => {
-    const [name, value] = cookie.trim().split("=");
-    acc[name] = value;
-    return acc;
-  }, {} as Record<string, string>);
-  
+
+  const cookies = cookieHeader.split(";").reduce(
+    (acc, cookie) => {
+      const [name, value] = cookie.trim().split("=");
+      acc[name] = value;
+      return acc;
+    },
+    {} as Record<string, string>
+  );
+
   const localUserCookie = cookies["local_user"];
   if (!localUserCookie) return null;
-  
+
   try {
     return JSON.parse(decodeURIComponent(localUserCookie));
   } catch (e) {
@@ -61,7 +67,7 @@ export async function GET(
 
   // For local implementation, we'll simplify the stream handling
   // In a full implementation, you would need to store stream IDs in IndexedDB
-  
+
   const messages = await getLocalMessagesByChatId({ id: chatId });
   const mostRecentMessage = messages.at(-1);
 
@@ -70,7 +76,7 @@ export async function GET(
       // biome-ignore lint/suspicious/noEmptyBlockStatements: "Needs to exist"
       execute: () => {},
     });
-    
+
     return new Response(emptyDataStream, { status: 200 });
   }
 
@@ -79,7 +85,7 @@ export async function GET(
       // biome-ignore lint/suspicious/noEmptyBlockStatements: "Needs to exist"
       execute: () => {},
     });
-    
+
     return new Response(emptyDataStream, { status: 200 });
   }
 
@@ -90,7 +96,7 @@ export async function GET(
       // biome-ignore lint/suspicious/noEmptyBlockStatements: "Needs to exist"
       execute: () => {},
     });
-    
+
     return new Response(emptyDataStream, { status: 200 });
   }
 

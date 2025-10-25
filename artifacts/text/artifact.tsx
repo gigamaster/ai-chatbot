@@ -1,10 +1,6 @@
-import { z } from "zod";
-import { updateDocumentPrompt } from "@/lib/ai/prompts";
-import { getLanguageModel } from "@/lib/ai/providers";
-import { createDocumentHandler } from "@/lib/artifacts/document-handler";
-import { smoothStream, streamText } from "@/lib/custom-ai";
 import { formatISO } from "date-fns";
 import { toast } from "sonner";
+import { z } from "zod";
 import { Artifact } from "@/components/create-artifact";
 import { DiffView } from "@/components/diffview";
 import { DocumentSkeleton } from "@/components/document-skeleton";
@@ -17,8 +13,12 @@ import {
   UndoIcon,
 } from "@/components/icons";
 import { Editor } from "@/components/text-editor";
-import type { Suggestion } from "@/lib/local-db";
+import { updateDocumentPrompt } from "@/lib/ai/prompts";
+import { getLanguageModel } from "@/lib/ai/providers";
+import { createDocumentHandler } from "@/lib/artifacts/document-handler";
 import { getSuggestions } from "@/lib/client-actions";
+import { smoothStream, streamText } from "@/lib/custom-ai";
+import type { Suggestion } from "@/lib/local-db";
 
 // Server-side logic (runs client-side in browser)
 export const textDocumentHandler = createDocumentHandler<"text">({
@@ -35,9 +35,8 @@ export const textDocumentHandler = createDocumentHandler<"text">({
     draftContent = mockText;
 
     dataStream.write({
-      type: "data-textDelta",
+      type: "textDelta",
       data: mockText,
-      transient: true,
     });
 
     return draftContent;
@@ -54,9 +53,8 @@ export const textDocumentHandler = createDocumentHandler<"text">({
     draftContent = mockText;
 
     dataStream.write({
-      type: "data-textDelta",
+      type: "textDelta",
       data: mockText,
-      transient: true,
     });
 
     return draftContent;
@@ -94,7 +92,7 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
     if (streamPart.type === "textDelta") {
       setArtifact((draftArtifact) => {
         // Type guard to ensure we're working with the correct type
-        if (typeof streamPart.data === 'string') {
+        if (typeof streamPart.data === "string") {
           return {
             ...draftArtifact,
             content: draftArtifact.content + streamPart.data,

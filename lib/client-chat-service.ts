@@ -1,8 +1,8 @@
+import { getUserId } from "@/lib/auth-utils";
+import { generateTitleFromUserMessage } from "@/lib/chat-storage-service";
 import { ChatSDKError } from "@/lib/errors";
 import { saveLocalChat } from "@/lib/local-db-queries";
 import { getProviderById } from "@/lib/provider-model-service";
-import { getUserId } from "@/lib/auth-utils";
-import { generateTitleFromUserMessage } from "@/lib/chat-storage-service";
 
 /**
  * Client-side chat service for GitHub Pages deployment

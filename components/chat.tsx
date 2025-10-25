@@ -3,7 +3,6 @@
 import { useSearchParams } from "next/navigation";
 import { startTransition, useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
-import { saveChatModelAsCookie } from "@/lib/client-actions";
 import { ChatHeader } from "@/components/chat-header";
 import {
   AlertDialog,
@@ -16,6 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useArtifactSelector } from "@/hooks/use-artifact";
+import { saveChatModelAsCookie } from "@/lib/client-actions";
 import { ChatSDKError } from "@/lib/custom-ai";
 import type { Vote } from "@/lib/local-db";
 import type { Attachment, ChatMessage } from "@/lib/types";
@@ -51,7 +51,6 @@ export function Chat({
   initialLastContext?: AppUsage;
   initialProviderId?: string;
 }) {
-
   const { mutate } = useSWRConfig();
   // TODO: data stream provider usage
   // const { setDataStream } = useDataStream();
@@ -130,7 +129,7 @@ export function Chat({
       }
     },
     onFinish: () => {
-      // Chat saving is now handled in the custom chat hook after first response
+      // Chat saving is handled in the custom chat hook after first response
       // No need to dispatch chatSaved event here
       console.log("Stream finished, chat saving handled elsewhere");
     },

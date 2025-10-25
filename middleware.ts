@@ -3,8 +3,6 @@ import { type NextRequest, NextResponse } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  console.log("Middleware processing request for:", pathname);
-
   /*
    * Playwright starts the dev server and requires a 200 status to
    * begin the tests, so this ensures that the tests can start
@@ -15,17 +13,14 @@ export function middleware(request: NextRequest) {
 
   // Skip middleware for API routes to prevent infinite loops
   if (pathname.startsWith("/api/")) {
-    console.log("Skipping middleware for API route");
     return NextResponse.next();
   }
 
   // Check for local user in cookies
   const localUserCookie = request.cookies.get("local_user");
-  console.log("Local user cookie:", localUserCookie);
 
   // If no local user, allow access to root page which will handle client-side auth
   if (!localUserCookie) {
-    console.log("No user found, allowing access to root page for client-side auth");
     // Allow access to root page and auth pages
     if (
       pathname === "/" ||
@@ -34,7 +29,7 @@ export function middleware(request: NextRequest) {
     ) {
       return NextResponse.next();
     }
-    
+
     // Redirect other pages to root for client-side auth handling
     return NextResponse.redirect(new URL("/", request.url));
   }

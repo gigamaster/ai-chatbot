@@ -1,28 +1,22 @@
+import { downloadZip } from "client-zip";
 import { memo } from "react";
-//import equal from "fast-deep-equal";
 import { toast } from "sonner";
-import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
-import type { Vote } from "@/lib/local-db";
 import type { ChatMessage } from "@/lib/types";
 import { Action, Actions } from "./elements/actions";
 import { CopyIcon, DownloadIcon, FileIcon, PencilEditIcon } from "./icons";
-import { downloadZip } from "client-zip";
 
 export function PureMessageActions({
   chatId,
   message,
-  vote,
   isLoading,
   setMode,
 }: {
   chatId: string;
   message: ChatMessage;
-  vote: Vote | undefined;
   isLoading: boolean;
   setMode?: (mode: "view" | "edit") => void;
 }) {
-  const { mutate } = useSWRConfig();
   const [_, copyToClipboard] = useCopyToClipboard();
 
   if (isLoading) {
@@ -46,7 +40,7 @@ export function PureMessageActions({
   };
 
   // Download message as JSON
-  const handleDownloadJson = async () => {
+  const handleDownloadJson = () => {
     try {
       const messageData = {
         id: message.id,
@@ -54,17 +48,17 @@ export function PureMessageActions({
         role: message.role,
         parts: message.parts,
         metadata: message.metadata,
-        exportedAt: new Date().toISOString()
+        exportedAt: new Date().toISOString(),
       };
-      
+
       const dataStr = JSON.stringify(messageData, null, 2);
-      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+      const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
       const exportFileDefaultName = `message-${message.id}.json`;
-      const linkElement = document.createElement('a');
-      linkElement.setAttribute('href', dataUri);
-      linkElement.setAttribute('download', exportFileDefaultName);
+      const linkElement = document.createElement("a");
+      linkElement.setAttribute("href", dataUri);
+      linkElement.setAttribute("download", exportFileDefaultName);
       linkElement.click();
-      
+
       toast.success("Message downloaded as JSON!");
     } catch (error) {
       console.error("Failed to download message as JSON:", error);
@@ -81,30 +75,30 @@ export function PureMessageActions({
         role: message.role,
         parts: message.parts,
         metadata: message.metadata,
-        exportedAt: new Date().toISOString()
+        exportedAt: new Date().toISOString(),
       };
-      
+
       // Prepare files for ZIP
       const files = [
         {
           name: `message-${message.id}.json`,
           lastModified: new Date(),
-          input: JSON.stringify(messageData, null, 2)
+          input: JSON.stringify(messageData, null, 2),
         },
         {
           name: `message-${message.id}.md`,
           lastModified: new Date(),
-          input: textFromParts || ""
-        }
+          input: textFromParts || "",
+        },
       ];
-      
+
       // Create and download ZIP
       const blob = await downloadZip(files).blob();
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = `message-${message.id}.zip`;
       link.click();
-      
+
       toast.success("Message downloaded as ZIP!");
     } catch (error) {
       console.error("Failed to download message as ZIP:", error);
@@ -140,10 +134,7 @@ export function PureMessageActions({
         <CopyIcon />
       </Action>
 
-      <Action
-        onClick={handleDownloadJson}
-        tooltip="Download as JSON"
-      >
+      <Action onClick={handleDownloadJson} tooltip="Download as JSON">
         <FileIcon />
       </Action>
 

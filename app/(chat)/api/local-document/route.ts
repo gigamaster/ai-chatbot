@@ -1,23 +1,23 @@
 import type { ArtifactKind } from "@/components/artifact";
-import {
-  getDocumentById,
-  saveDocument,
-} from "@/lib/local-db-queries";
 import { ChatSDKError } from "@/lib/errors";
+import { getDocumentById, saveDocument } from "@/lib/local-db-queries";
 
 // Helper function to get local user from cookies
 function getLocalUserFromCookies(cookieHeader: string | null) {
   if (!cookieHeader) return null;
-  
-  const cookies = cookieHeader.split(";").reduce((acc, cookie) => {
-    const [name, value] = cookie.trim().split("=");
-    acc[name] = value;
-    return acc;
-  }, {} as Record<string, string>);
-  
+
+  const cookies = cookieHeader.split(";").reduce(
+    (acc, cookie) => {
+      const [name, value] = cookie.trim().split("=");
+      acc[name] = value;
+      return acc;
+    },
+    {} as Record<string, string>
+  );
+
   const localUserCookie = cookies["local_user"];
   if (!localUserCookie) return null;
-  
+
   try {
     return JSON.parse(decodeURIComponent(localUserCookie));
   } catch (e) {
@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     return new ChatSDKError("unauthorized:document").toResponse();
   }
 
-  const document = await getDocumentById({ id });
+  const document = await getDocumentById(id);
 
   if (!document) {
     return new ChatSDKError("not_found:document").toResponse();
@@ -79,12 +79,10 @@ export async function POST(request: Request) {
   }: { content: string; title: string; kind: ArtifactKind } =
     await request.json();
 
-  const document = await getDocumentById({ id });
+  const document = await getDocumentById(id);
 
-  if (document) {
-    if (document.userId !== localUser.id) {
-      return new ChatSDKError("forbidden:document").toResponse();
-    }
+  if (document && document.userId !== localUser.id) {
+    return new ChatSDKError("forbidden:document").toResponse();
   }
 
   const savedDocument = await saveDocument({

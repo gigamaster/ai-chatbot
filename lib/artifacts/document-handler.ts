@@ -7,12 +7,12 @@ export function createDocumentHandler<T extends string>(config: {
   kind: T;
   onCreateDocument: (args: {
     title: string;
-    dataStream: any;
+    dataStream: UIMessageStreamWriter<CustomUIDataTypes>;
   }) => Promise<string>;
   onUpdateDocument: (args: {
     document: any;
     description: string;
-    dataStream: any;
+    dataStream: UIMessageStreamWriter<CustomUIDataTypes>;
   }) => Promise<string>;
 }) {
   return config;

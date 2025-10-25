@@ -16,9 +16,8 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
     const mockCsv = "Name,Age,City\nJohn,25,New York\nJane,30,Los Angeles";
 
     dataStream.write({
-      type: "data-sheetDelta",
+      type: "sheetDelta",
       data: mockCsv,
-      transient: true,
     });
 
     draftContent = mockCsv;
@@ -35,9 +34,8 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
     const mockCsv = "Name,Age,City\nJohn,26,New York\nJane,31,Los Angeles";
 
     dataStream.write({
-      type: "data-sheetDelta",
+      type: "sheetDelta",
       data: mockCsv,
-      transient: true,
     });
 
     draftContent = mockCsv;

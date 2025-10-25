@@ -156,12 +156,12 @@ async function getDb() {
         }
 
         // Handle upgrade from version 2 to 3 - add userId to providers
-        if (oldVersion < 3) {
-          if (db.objectStoreNames.contains("providers")) {
-            // Note: In a production environment, you would want to migrate existing data
-            // For now, we'll just note that existing providers will need to be re-added
-            console.warn("Providers schema updated - existing providers may need to be re-added");
-          }
+        if (oldVersion < 3 && db.objectStoreNames.contains("providers")) {
+          // Note: In a production environment, you would want to migrate existing data
+          // For now, we'll just note that existing providers will need to be re-added
+          console.warn(
+            "Providers schema updated - existing providers may need to be re-added"
+          );
         }
       },
       blocked() {},
@@ -176,16 +176,13 @@ async function getDb() {
 // Chat operations
 export async function saveLocalChat(chatData: any) {
   try {
-    console.log("saveLocalChat called with data:", chatData);
     const db = await getDb();
-    console.log("Database instance:", db);
 
     const result = await db.put("chats", {
       ...chatData,
       createdAt: chatData.createdAt || new Date(),
       lastModified: new Date().toISOString(),
     });
-    console.log("IndexedDB save result:", result);
     return result;
   } catch (error) {
     console.error("Failed to save chat locally:", error);
@@ -197,10 +194,8 @@ export async function saveLocalChat(chatData: any) {
 export async function getLocalChat(chatId: string) {
   try {
     const db = await getDb();
-    console.log("getLocalChat called with chatId:", chatId);
 
     const result = await db.get("chats", chatId);
-    console.log("getLocalChat returned:", result);
     return result;
   } catch (error) {
     console.error("Failed to retrieve chat:", error);
@@ -224,21 +219,14 @@ export async function deleteLocalChat(chatId: string) {
 
 export async function getAllLocalChats(userId: string) {
   try {
-    console.log("getAllLocalChats called with userId:", userId);
     const db = await getDb();
 
-    console.log("Using IndexedDB");
     const allChats = await db.getAll("chats");
-    console.log("All chats from IndexedDB:", allChats);
     const filteredChats = allChats.filter((chat: any) => {
-      console.log(
-        `Comparing chat userId: "${chat.userId}" with requested userId: "${userId}"`
-      );
+
       const match = chat.userId === userId;
-      console.log(`Match result: ${match}`);
       return match;
     });
-    console.log("Filtered chats for userId:", userId, filteredChats);
     return filteredChats;
   } catch (error) {
     console.error("Failed to retrieve chats:", error);
@@ -249,12 +237,10 @@ export async function getAllLocalChats(userId: string) {
 // Delete all chats for a user
 export async function deleteAllLocalChats(userId: string) {
   try {
-    console.log("deleteAllLocalChats called with userId:", userId);
     const db = await getDb();
 
     // Get all chats for the user
     const allChats = await getAllLocalChats(userId);
-    console.log("Chats to delete:", allChats);
 
     // Delete each chat
     const transaction = db.transaction(["chats", "messages"], "readwrite");
@@ -264,16 +250,17 @@ export async function deleteAllLocalChats(userId: string) {
     for (const chat of allChats) {
       // Delete the chat
       await chatStore.delete(chat.id);
-      
+
       // Delete all messages associated with this chat
-      const chatMessages = await messageStore.index("by-chat").getAllKeys(chat.id);
+      const chatMessages = await messageStore
+        .index("by-chat")
+        .getAllKeys(chat.id);
       for (const messageId of chatMessages) {
         await messageStore.delete(messageId);
       }
     }
 
     await transaction.done;
-    console.log("All chats and messages deleted successfully");
     return true;
   } catch (error) {
     console.error("Failed to delete all chats:", error);
@@ -285,31 +272,22 @@ export async function deleteAllLocalChats(userId: string) {
 export async function saveLocalMessages(chatId: string, messages: any[]) {
   try {
     const db = await getDb();
-    console.log(
-      "saveLocalMessages called with chatId:",
-      chatId,
-      "messages:",
-      messages
-    );
 
     const transaction = db.transaction("messages", "readwrite");
     const store = transaction.objectStore("messages");
 
     // Clear existing messages for this chat
     const chatMessages = await store.index("by-chat").getAll(chatId);
-    console.log("Existing messages for chat:", chatMessages);
     for (const message of chatMessages) {
       await store.delete(message.id);
     }
 
     // Add new messages
-    console.log("Saving new messages:", messages);
     for (const message of messages) {
       await store.add(message);
     }
 
     await transaction.done;
-    console.log("Messages saved successfully");
     return true;
   } catch (error) {
     console.error("Failed to save messages locally:", error);
@@ -320,11 +298,8 @@ export async function saveLocalMessages(chatId: string, messages: any[]) {
 export async function getLocalMessages(chatId: string) {
   try {
     const db = await getDb();
-    console.log("getLocalMessages called with chatId:", chatId);
 
     const result = await db.getAllFromIndex("messages", "by-chat", chatId);
-    console.log("getLocalMessages returned:", result);
-    console.log("Number of messages:", result.length);
     return result;
   } catch (error) {
     console.error("Failed to retrieve messages:", error);
@@ -496,7 +471,7 @@ export async function hasUsersInDatabase(): Promise<boolean> {
     if (typeof window === "undefined") {
       return false;
     }
-    
+
     const db = await getDb();
     const tx = db.transaction("users", "readonly");
     const store = tx.objectStore("users");

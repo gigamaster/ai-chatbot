@@ -53,27 +53,17 @@ export async function fetchWithErrorHandlers(
   input: RequestInfo | URL,
   init?: RequestInit,
 ) {
-  try {
-    console.log("=== fetchWithErrorHandlers called ===");
-    console.log("Input:", input);
-    console.log("Init:", JSON.stringify(init, null, 2));
-    
+  try {    
     const response = await fetch(input, init);
-    
-    console.log("Response status:", response.status);
-    console.log("Response headers:", [...response.headers.entries()]);
 
     if (!response.ok) {
-      console.log("Response not ok, trying to parse error");
       // Check if the response has JSON content type
       const contentType = response.headers.get('content-type');
-      console.log("Response content type:", contentType);
       
       if (contentType && contentType.includes('application/json')) {
         try {
           // Try to parse the error response as JSON
           const errorData = await response.json();
-          console.log("Error data:", JSON.stringify(errorData, null, 2));
           // Check if it has the expected ChatSDKError format
           if (errorData && errorData.code) {
             throw new ChatSDKError(errorData.code as ErrorCode, errorData.cause);
@@ -89,15 +79,12 @@ export async function fetchWithErrorHandlers(
       } else {
         // For non-JSON responses, create a generic error
         const text = await response.text();
-        console.log("Non-JSON response text:", text);
         throw new ChatSDKError('bad_request:api', response.statusText || text || 'Request failed');
       }
     }
 
     return response;
   } catch (error: unknown) {
-    console.error("=== fetchWithErrorHandlers caught error ===");
-    console.error("Error:", error);
     
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       throw new ChatSDKError('offline:chat');
@@ -162,9 +149,7 @@ export function sanitizeText(text: string) {
   return text.replace('<has_function_call>', '');
 }
 
-export function convertToUIMessages(messages: any[]): ChatMessage[] {
-  console.log("convertToUIMessages called with:", messages);
-  
+export function convertToUIMessages(messages: any[]): ChatMessage[] {  
   // Sort messages by createdAt timestamp to ensure correct order
   const sortedMessages = [...messages].sort((a, b) => {
     const timeA = new Date(a.createdAt).getTime();
@@ -180,7 +165,6 @@ export function convertToUIMessages(messages: any[]): ChatMessage[] {
       createdAt: formatISO(message.createdAt),
     },
   }));
-  console.log("convertToUIMessages result:", result);
   return result;
 }
 

@@ -111,10 +111,8 @@ export function SidebarHistory({ user }: { user: any | undefined }) {
       // Small delay to ensure IndexedDB operation is fully completed
       await new Promise((resolve) => setTimeout(resolve, 50));
       const chats = await fetchChatsFromIndexedDB(user.id);
-      console.log("Setting chat history:", chats);
       setChatHistory(chats);
     } catch (error) {
-      console.error("Error fetching chats:", error);
     } finally {
       setIsLoading(false);
       setIsValidating(false);
@@ -127,13 +125,11 @@ export function SidebarHistory({ user }: { user: any | undefined }) {
 
     // Listen for chatSaved events to refresh the chat history
     const handleChatSaved = () => {
-      console.log("Received chatSaved event");
       fetchChats();
     };
 
     // Listen for chatHistoryUpdated events (e.g., after deleting all chats)
     const handleChatHistoryUpdated = () => {
-      console.log("Received chatHistoryUpdated event");
       fetchChats();
     };
 
@@ -164,10 +160,9 @@ export function SidebarHistory({ user }: { user: any | undefined }) {
 
       // Dispatch a custom event to refresh the sidebar (consistent with delete all chats)
       if (typeof window !== "undefined") {
-        console.log("Dispatching chatHistoryUpdated event after single chat delete");
         window.dispatchEvent(new CustomEvent("chatHistoryUpdated"));
       }
-      
+
       // Show success message after sidebar refresh
       toast.success("Chat deleted successfully");
     } catch (error) {

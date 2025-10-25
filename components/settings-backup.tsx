@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { getAllCustomProviders } from "@/lib/local-db-queries";
-import { getAllLocalChats, getLocalMessages } from "@/lib/local-db";
-import { useLocalAuth } from "@/contexts/local-auth-context";
 import { downloadZip } from "client-zip";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLocalAuth } from "@/contexts/local-auth-context";
+import { getAllLocalChats, getLocalMessages } from "@/lib/local-db";
+import { getAllCustomProviders } from "@/lib/local-db-queries";
 
 export function DatabaseStats() {
   const { user: localUser } = useLocalAuth();
@@ -15,7 +15,7 @@ export function DatabaseStats() {
     totalModels: 0,
     totalChats: 0,
     totalMessages: 0,
-    userId: ""
+    userId: "",
   });
   const [loading, setLoading] = useState(true);
 
@@ -29,26 +29,26 @@ export function DatabaseStats() {
       try {
         // Get all providers
         const providers = await getAllCustomProviders();
-        
+
         // Get all chats for user
         const chats = await getAllLocalChats(localUser.id);
-        
+
         // Get messages for all chats
         let totalMessages = 0;
         for (const chat of chats) {
           const messages = await getLocalMessages(chat.id);
           totalMessages += messages.length;
         }
-        
+
         // Calculate models from providers
         const models = providers.length; // Each provider has one model
-        
+
         setDatabaseStats({
           totalProviders: providers.length,
           totalModels: models,
           totalChats: chats.length,
-          totalMessages: totalMessages,
-          userId: localUser.id
+          totalMessages,
+          userId: localUser.id,
         });
       } catch (error) {
         console.error("Failed to fetch database stats:", error);
@@ -62,7 +62,7 @@ export function DatabaseStats() {
 
   const exportDatabaseAsJson = async () => {
     if (!localUser?.id) return;
-    
+
     try {
       // Collect all data
       const providers = await getAllCustomProviders();
@@ -70,23 +70,24 @@ export function DatabaseStats() {
       const allData = {
         userId: localUser.id,
         exportedAt: new Date().toISOString(),
-        providers: providers,
-        chats: chats,
-        messages: {} as Record<string, any[]>
+        providers,
+        chats,
+        messages: {} as Record<string, any[]>,
       };
-      
+
       // Get messages for each chat
       for (const chat of chats) {
         allData.messages[chat.id] = await getLocalMessages(chat.id);
       }
-      
+
       // Create downloadable JSON file
       const dataStr = JSON.stringify(allData, null, 2);
-      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+      const dataUri =
+        "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
       const exportFileDefaultName = `database-backup-${localUser.id}.json`;
-      const linkElement = document.createElement('a');
-      linkElement.setAttribute('href', dataUri);
-      linkElement.setAttribute('download', exportFileDefaultName);
+      const linkElement = document.createElement("a");
+      linkElement.setAttribute("href", dataUri);
+      linkElement.setAttribute("download", exportFileDefaultName);
       linkElement.click();
     } catch (error) {
       console.error("Failed to export database as JSON:", error);
@@ -95,58 +96,57 @@ export function DatabaseStats() {
 
   const exportDatabaseAsZip = async () => {
     if (!localUser?.id) return;
-    
+
     try {
       // Collect all data
       const providers = await getAllCustomProviders();
       const chats = await getAllLocalChats(localUser.id);
-      
+
       // Prepare files for ZIP
       const files = [];
-      
+
       // Add providers file
       files.push({
         name: "providers.json",
         lastModified: new Date(),
-        input: JSON.stringify(providers, null, 2)
+        input: JSON.stringify(providers, null, 2),
       });
-      
+
       // Add chats file
       files.push({
         name: "chats.json",
         lastModified: new Date(),
-        input: JSON.stringify(chats, null, 2)
+        input: JSON.stringify(chats, null, 2),
       });
-      
+
       // Add messages files (one per chat)
       for (const chat of chats) {
         const messages = await getLocalMessages(chat.id);
         files.push({
           name: `messages-${chat.id}.json`,
           lastModified: new Date(),
-          input: JSON.stringify(messages, null, 2)
+          input: JSON.stringify(messages, null, 2),
         });
       }
-      
+
       // Add metadata file
       const metadata = {
         userId: localUser.id,
         exportedAt: new Date().toISOString(),
-        stats: databaseStats
+        stats: databaseStats,
       };
       files.push({
         name: "metadata.json",
         lastModified: new Date(),
-        input: JSON.stringify(metadata, null, 2)
+        input: JSON.stringify(metadata, null, 2),
       });
-      
+
       // Create and download ZIP
       const blob = await downloadZip(files).blob();
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = `ai-chatbot-backup-${new Date().toISOString().slice(0, 10)}.zip`;
       link.click();
-      
     } catch (error) {
       console.error("Failed to export database as ZIP:", error);
       alert("Failed to export database as ZIP. Check console for details.");
@@ -158,13 +158,13 @@ export function DatabaseStats() {
       <div className="space-y-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="rounded-lg border p-4">
+            <div className="rounded-lg border p-4" key={i}>
               <div className="h-8 w-12 animate-pulse rounded-md bg-muted" />
               <div className="mt-2 h-4 w-24 animate-pulse rounded-md bg-muted" />
             </div>
           ))}
         </div>
-        
+
         <Card>
           <CardHeader>
             <div className="h-6 w-32 animate-pulse rounded-md bg-muted" />
@@ -190,7 +190,9 @@ export function DatabaseStats() {
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         <div className="rounded-lg border p-4">
-          <div className="font-bold text-2xl">{databaseStats.totalProviders}</div>
+          <div className="font-bold text-2xl">
+            {databaseStats.totalProviders}
+          </div>
           <div className="text-muted-foreground text-sm">Total Providers</div>
         </div>
         <div className="rounded-lg border p-4">
@@ -202,7 +204,9 @@ export function DatabaseStats() {
           <div className="text-muted-foreground text-sm">Total Chats</div>
         </div>
         <div className="rounded-lg border p-4">
-          <div className="font-bold text-2xl">{databaseStats.totalMessages}</div>
+          <div className="font-bold text-2xl">
+            {databaseStats.totalMessages}
+          </div>
           <div className="text-muted-foreground text-sm">Total Messages</div>
         </div>
       </div>
@@ -218,19 +222,21 @@ export function DatabaseStats() {
         <CardContent>
           <div className="space-y-4">
             <div className="flex items-center justify-between rounded-lg border p-3">
-              <div className="font-medium">{localUser?.email || databaseStats.userId}</div>
+              <div className="font-medium">
+                {localUser?.email || databaseStats.userId}
+              </div>
               <div className="flex gap-4">
-                <Button 
-                  onClick={exportDatabaseAsJson}
+                <Button
                   className="text-sm"
+                  onClick={exportDatabaseAsJson}
                   size="sm"
                   variant="secondary"
                 >
                   Export Json
                 </Button>
-                <Button 
-                  onClick={exportDatabaseAsZip}
+                <Button
                   className="text-sm"
+                  onClick={exportDatabaseAsZip}
                   size="sm"
                   variant="secondary"
                 >

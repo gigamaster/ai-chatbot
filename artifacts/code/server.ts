@@ -20,9 +20,8 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
 
     if (mockDraft.explanation) {
       dataStream.write({
-        type: "data-explanation",
+        type: "textDelta",
         data: mockDraft.explanation,
-        transient: true,
       });
 
       draftContent += `// ${mockDraft.explanation}\n\n`;
@@ -30,9 +29,8 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
 
     if (mockDraft.code) {
       dataStream.write({
-        type: "data-code",
+        type: "codeDelta",
         data: mockDraft.code,
-        transient: true,
       });
 
       draftContent += mockDraft.code;
@@ -54,9 +52,8 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
 
     if (mockDraft.explanation) {
       dataStream.write({
-        type: "data-explanation",
+        type: "textDelta",
         data: mockDraft.explanation,
-        transient: true,
       });
 
       draftContent += `// ${mockDraft.explanation}\n\n`;
@@ -64,9 +61,8 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
 
     if (mockDraft.code) {
       dataStream.write({
-        type: "data-code",
+        type: "codeDelta",
         data: mockDraft.code,
-        transient: true,
       });
 
       draftContent += mockDraft.code;

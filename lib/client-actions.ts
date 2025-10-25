@@ -2,12 +2,12 @@
 
 import { createLanguageModel, getLanguageModel } from "@/lib/ai/providers";
 import { generateText, type UIMessage } from "@/lib/custom-ai";
+import { saveLocalMessages } from "@/lib/local-db";
 import {
   deleteChatById,
   getLocalMessagesByChatId,
+  getLocalSuggestionsByDocumentId,
 } from "@/lib/local-db-queries";
-import { getLocalSuggestionsByDocumentId } from "@/lib/local-db-queries";
-import { saveLocalMessages } from "@/lib/local-db";
 
 // Client-side implementation of saveChatModelAsCookie
 export async function saveChatModelAsCookie(
@@ -66,14 +66,14 @@ export async function deleteTrailingMessages({ id }: { id: string }) {
   try {
     // Get all messages for this chat
     const messages = await getLocalMessagesByChatId({ id });
-    
+
     if (messages.length > 0) {
       // Keep only the first message (delete trailing messages)
       const firstMessage = messages[0];
       await saveLocalMessages(id, [firstMessage]);
       return { success: true };
     }
-    
+
     return { success: true };
   } catch (error) {
     console.error("Error deleting trailing messages:", error);

@@ -16,9 +16,9 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
-import { saveChatModelAsCookie } from "@/lib/client-actions";
 import { SelectItem } from "@/components/ui/select";
 import { chatModels } from "@/lib/ai/models";
+import { saveChatModelAsCookie } from "@/lib/client-actions";
 import type { UIMessage } from "@/lib/custom-ai";
 import { getAllProviders } from "@/lib/provider-model-service";
 import type { Attachment, ChatMessage } from "@/lib/types";
@@ -178,7 +178,6 @@ function PureMultimodalInput({
   }, [setAttachments]);
 
   const submitForm = useCallback(async () => {
-
     // Validate that we have a selected model
     if (!selectedModelId) {
       toast.error("Please select a model before sending a message");
@@ -412,7 +411,6 @@ function PureMultimodalInput({
             />
             <ModelSelectorCompact
               onModelChange={(modelId, providerId) => {
-                console.log("Model changed:", { modelId, providerId });
                 onModelChange?.(modelId, providerId);
               }}
               selectedModelId={selectedModelId}

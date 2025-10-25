@@ -134,14 +134,8 @@ export const Context = ({ className, usage, ...props }: ContextProps) => {
             <Progress className="h-2 bg-muted" value={usedPercent} />
           </div>
           <div className="mt-1 space-y-1">
-            <InfoRow
-              label="Input"
-              tokens={usage?.inputTokens}
-            />
-            <InfoRow
-              label="Output"
-              tokens={usage?.outputTokens}
-            />
+            <InfoRow label="Input" tokens={usage?.inputTokens} />
+            <InfoRow label="Output" tokens={usage?.outputTokens} />
           </div>
         </div>
       </DropdownMenuContent>

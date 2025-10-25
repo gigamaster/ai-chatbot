@@ -6,9 +6,8 @@ export const collabHandlers = createDocumentHandler<"collab">({
   onCreateDocument: async ({ title, dataStream }) => {
     const content = `# ${title}\n\n# Start coding collaboratively here\n`;
     dataStream.write({
-      type: "data-codeDelta",
+      type: "codeDelta",
       data: content,
-      transient: true,
     });
     return content;
   },
@@ -17,9 +16,8 @@ export const collabHandlers = createDocumentHandler<"collab">({
     // This is a placeholder implementation
     const content = document.content ?? "";
     dataStream.write({
-      type: "data-codeDelta",
+      type: "codeDelta",
       data: content,
-      transient: true,
     });
     return content;
   },

@@ -3,15 +3,17 @@
  * Consolidates all chat saving and retrieval functionality
  */
 
-import { generateUUID } from "@/lib/utils";
 import { getUserId } from "@/lib/auth-utils";
+import { generateUUID } from "@/lib/utils";
 
 /**
  * Generate a title from a user message
  * @param userMessage The user message to generate a title from
  * @returns A generated title string
  */
-export async function generateTitleFromUserMessage(userMessage: any): Promise<string> {
+export async function generateTitleFromUserMessage(
+  userMessage: any
+): Promise<string> {
   try {
     // Extract text content from the user message
     const textContent = userMessage.parts
@@ -52,7 +54,6 @@ export async function saveChatAfterFirstResponse(
     // Get user ID
     const userId = getUserId();
     if (!userId) {
-      console.log("No user ID found, skipping chat save");
       return null;
     }
 
@@ -61,7 +62,6 @@ export async function saveChatAfterFirstResponse(
     try {
       title = await generateTitleFromUserMessage(userMessage);
     } catch (titleError) {
-      console.error("Error generating title:", titleError);
       title = "New Chat";
     }
 
@@ -72,7 +72,7 @@ export async function saveChatAfterFirstResponse(
 
     // Import the saveLocalChat function
     const { saveLocalChat } = await import("@/lib/local-db-queries");
-    
+
     // Save the chat to the database
     const savedChat = await saveLocalChat({
       id: chatId,

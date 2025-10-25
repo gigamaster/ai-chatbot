@@ -17,6 +17,7 @@ import {
   SidebarMenu,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useLocalAuth } from "@/contexts/local-auth-context";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,7 +29,6 @@ import {
   AlertDialogTitle,
 } from "./ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { useLocalAuth } from "@/contexts/local-auth-context";
 
 // Define a local user type that matches our local authentication system
 type LocalUser = {
@@ -38,12 +38,16 @@ type LocalUser = {
   image?: string;
 };
 
-export function AppSidebar({ user: propUser }: { user?: LocalUser | undefined }) {
+export function AppSidebar({
+  user: propUser,
+}: {
+  user?: LocalUser | undefined;
+}) {
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
   const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
-  
+
   // Get user from context if not provided via props
   const { user: contextUser } = useLocalAuth();
   const user = propUser !== undefined ? propUser : contextUser;

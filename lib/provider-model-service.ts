@@ -1,3 +1,4 @@
+import { getUserId } from "@/lib/auth-utils";
 import { testProviderConnection } from "@/lib/client-test-provider";
 import {
   deleteCustomProvider,
@@ -5,7 +6,6 @@ import {
   getCustomProvider,
   saveCustomProvider,
 } from "@/lib/local-db-queries";
-import { getUserId } from "@/lib/auth-utils";
 
 // Define types - using 'enabled' for consistency with UI, but mapping to 'isEnabled' for database
 export interface ProviderModel {
@@ -71,7 +71,7 @@ export async function saveProvider(provider: ProviderModel): Promise<boolean> {
       console.error("No user ID found, cannot save provider");
       return false;
     }
-    
+
     // Map interface field 'enabled' to database field 'isEnabled' and add userId
     const providerToSave = {
       ...provider,

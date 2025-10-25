@@ -12,8 +12,8 @@ import {
   UndoIcon,
 } from "@/components/icons";
 import { Editor } from "@/components/text-editor";
-import type { Suggestion } from "@/lib/local-db";
 import { getSuggestions } from "@/lib/client-actions";
+import type { Suggestion } from "@/lib/local-db";
 
 type TextArtifactMetadata = {
   suggestions: Suggestion[];
@@ -45,7 +45,7 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
     if (streamPart.type === "textDelta") {
       setArtifact((draftArtifact) => {
         // Type guard to ensure we're working with the correct type
-        if (typeof streamPart.data === 'string') {
+        if (typeof streamPart.data === "string") {
           return {
             ...draftArtifact,
             content: draftArtifact.content + streamPart.data,

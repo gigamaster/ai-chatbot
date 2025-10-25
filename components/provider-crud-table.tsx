@@ -289,8 +289,8 @@ export function ProviderCRUDTable() {
               <div className="space-y-2">
                 <Label htmlFor="model">Model Name</Label>
                 <Input
-                  id="model"
                   className="rounded-sm border"
+                  id="model"
                   onChange={(e) =>
                     setFormData({ ...formData, model: e.target.value })
                   }
@@ -302,8 +302,8 @@ export function ProviderCRUDTable() {
               <div className="space-y-2">
                 <Label htmlFor="baseUrl">Base URL</Label>
                 <Input
-                  id="baseUrl"
                   className="rounded-sm"
+                  id="baseUrl"
                   onChange={(e) =>
                     setFormData({ ...formData, baseUrl: e.target.value })
                   }

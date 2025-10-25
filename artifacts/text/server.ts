@@ -17,9 +17,8 @@ export const textDocumentHandler = createDocumentHandler<"text">({
     draftContent = mockText;
 
     dataStream.write({
-      type: "data-textDelta",
+      type: "textDelta",
       data: mockText,
-      transient: true,
     });
 
     return draftContent;
@@ -36,9 +35,8 @@ export const textDocumentHandler = createDocumentHandler<"text">({
     draftContent = mockText;
 
     dataStream.write({
-      type: "data-textDelta",
+      type: "textDelta",
       data: mockText,
-      transient: true,
     });
 
     return draftContent;

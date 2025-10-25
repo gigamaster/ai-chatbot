@@ -1,10 +1,10 @@
 "use client";
 
 import type { ArtifactKind } from "@/components/artifact";
+import { getUserId } from "@/lib/auth-utils";
 import { ChatSDKError } from "@/lib/errors";
 import type { Document } from "@/lib/local-db";
 import { getDocumentById, saveDocument } from "@/lib/local-db-queries";
-import { getUserId } from "@/lib/auth-utils";
 
 // Client-side document service for GitHub Pages deployment
 export class ClientDocumentService {

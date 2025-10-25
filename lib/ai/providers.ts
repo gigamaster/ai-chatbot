@@ -4,21 +4,13 @@ import { DEFAULT_CHAT_MODEL, getModelById } from "./models";
 // This completely removes built-in providers and simplifies validation
 export const getAllAvailableProviders = async () => {
   try {
-    console.log("=== DEBUG: getAllAvailableProviders called ===");
-    // Get providers from the LLMService (only saved providers)
     const { getProviders } = await import("../llm-service");
-    console.log("Imported getProviders function");
 
     const savedProviders = await getProviders();
-    console.log(
-      "DEBUG: Raw saved providers from database:",
-      JSON.stringify(savedProviders, null, 2)
-    );
 
     // Return all saved providers - no validation filtering
     // If they're saved, they should be available
     const result = savedProviders || [];
-    console.log("DEBUG: Returning providers:", JSON.stringify(result, null, 2));
     return result;
   } catch (error: any) {
     console.error("=== DEBUG: FAILED to load saved providers ===");
@@ -36,7 +28,6 @@ export const createLanguageModel = async (
   maybeModelId?: string
 ) => {
   try {
-    console.log("=== createLanguageModel called ===");
     let providerId: string;
     let modelId: string;
 
@@ -58,8 +49,6 @@ export const createLanguageModel = async (
         providerId = modelInfo?.provider || "google"; // Default to google if not found
       }
     }
-    console.log("Provider:", providerId);
-    console.log("Model:", modelId);
 
     // Get provider configuration from LLMService (only saved providers)
     const { getProviderConfig } = await import("../llm-service");
@@ -86,10 +75,6 @@ export const createLanguageModel = async (
       }
     }
 
-    console.log(
-      "Creating LLM with generic OpenAI options:",
-      JSON.stringify(options, null, 2)
-    );
     // Dynamically import LLM to avoid immediate instantiation
     const LLMModule = await import("@themaximalist/llm.js");
     const LLM = LLMModule.default;
@@ -106,9 +91,6 @@ export const createLanguageModel = async (
 // Function to get a language model for immediate use
 export const getLanguageModel = async (modelType = "default") => {
   try {
-    console.log("=== getLanguageModel called ===");
-    console.log("Model type:", modelType);
-    console.log("typeof window:", typeof window);
 
     // TODO: get modelId from modelType, and fallback to DEFAULT_CHAT_MODEL
     let modelId: string = modelType;

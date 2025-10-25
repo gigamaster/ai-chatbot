@@ -7,7 +7,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { getCurrentUser, saveUser, removeUser } from "@/lib/auth-utils";
+import { getCurrentUser, removeUser, saveUser } from "@/lib/auth-utils";
 
 type LocalUser = {
   id: string;

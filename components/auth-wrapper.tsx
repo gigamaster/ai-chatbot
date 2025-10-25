@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useLocalAuth } from "@/contexts/local-auth-context";
-import { hasUsersInDatabase } from "@/lib/local-db";
 import { useLock } from "@/contexts/lock-context";
+import { hasUsersInDatabase } from "@/lib/local-db";
 
 export function AuthWrapper({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user } = useLocalAuth();
   const { isLocked } = useLock();
-  const [authState, setAuthState] = useState<"loading" | "redirecting" | "ready">("loading");
+  const [authState, setAuthState] = useState<
+    "loading" | "redirecting" | "ready"
+  >("loading");
 
   useEffect(() => {
     const checkAuthStatus = async () => {
@@ -29,7 +31,7 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
       // No user authenticated, check if any users exist in database
       try {
         const hasUsers = await hasUsersInDatabase();
-        
+
         if (hasUsers) {
           // Users exist, redirect to login
           setAuthState("redirecting");
@@ -55,7 +57,7 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
-          <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+          <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-current border-r-transparent border-solid align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
           <p>Checking authentication status...</p>
         </div>
       </div>

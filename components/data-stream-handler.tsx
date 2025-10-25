@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { initialArtifactData, useArtifact } from "@/hooks/use-artifact";
-import { artifactDefinitions } from "./artifact";
 // Use a relative import with the correct path
 import { useDataStream } from "@/components/data-stream-provider";
+import { initialArtifactData, useArtifact } from "@/hooks/use-artifact";
+import { artifactDefinitions } from "./artifact";
 
 export function DataStreamHandler() {
   const { dataStream } = useDataStream();
