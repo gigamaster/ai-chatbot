@@ -12,6 +12,7 @@ node_modules
 .pnp.js
 
 # testing
+.github/workflows/playwright.yml
 coverage
 playwright.config.ts
 /__tests__
@@ -49,5 +50,3 @@ yarn-error.log*
 
 # turbo
 .turbo
-lib/__tests__/clear-database.ts
-.github/workflows/playwright.yml
