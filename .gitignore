@@ -50,3 +50,4 @@ yarn-error.log*
 # turbo
 .turbo
 lib/__tests__/clear-database.ts
+.github/workflows/playwright.yml
