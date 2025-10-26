@@ -21,6 +21,8 @@ const nextConfig: NextConfig = {
   // Configure for static export to support GitHub Pages deployment
   output: "export",
   distDir: "out",
+  // Set the base path for GitHub Pages deployment
+  basePath: "/ai-chatbot",
   // Exclude API routes from static export since they're not compatible
   eslint: {
     ignoreDuringBuilds: true,
