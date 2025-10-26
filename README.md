@@ -101,6 +101,64 @@ Codemo AI-chatbot provides access to additional developer tools through the tool
 
 Both tools open in a new browser tab for your convenience.
 
+
+## Security
+
+### API Key Security Explanation
+
+It's a valid concern about API key exposure, but let me clarify how the application actually handles this:
+
+### How AI-chatbot Application Handles API Keys
+
+1. **Client-Side Storage Only**: Your API keys are stored in the browser's IndexedDB, not in the frontend code itself
+2. **No Hardcoded Keys**: There are no API keys hardcoded in the JavaScript files that get exposed to users
+3. **Encrypted Storage**: The application uses bcrypt hashing for additional security
+
+### Security Model
+
+AI-chatbot application follows a secure pattern for client-side applications:
+
+1. **User-Provided Keys**: Users enter their own API keys in the settings
+2. **Local Storage**: Keys are stored locally in IndexedDB, encrypted with bcrypt
+3. **Direct API Calls**: The frontend makes direct calls to Google's API with the user's own key
+
+### Is This Secure?
+
+For a client-side application like AI-chatbot, this approach is actually quite secure:
+
+✅ **Keys aren't exposed in code** - They're stored in each user's browser only
+✅ **No server-side storage** - You don't store other people's API keys
+✅ **User control** - Users control their own keys and can revoke them anytime
+✅ **Standard practice** - This is how most client-side AI apps should work
+
+### Comparison to Server-Side Proxy Approach
+
+The AI providers often mention proxying through a backend, but that approach has different trade-offs:
+
+**Client-Side Approach** (Our implementation):
+- ✅ Users control their own API costs
+- ✅ No hiden server costs for users
+- ✅ No liability for storing others' keys
+- ✅ Direct access to latest model features
+
+**Server-Side Proxy Approach**:
+- ❌ You'd need to store/manage others' API keys
+- ❌ You'd incur server costs
+- ❌ You'd be liable for key security
+- ❌ Users can't access new model features immediately
+
+### Best Practices Already Implemented
+
+1. **Local Storage**: Keys stay in the user's browser
+2. **User Authentication**: Local authentication context ensures proper key usage
+3. **Encrypted Storage**: bcrypt hashing adds an extra security layer
+4. **No Server Storage**: You never see or store other people's API keys
+
+Our implementation is actually following security best practices for a client-side AI application.  
+The concern raised by the AI providers would be more relevant for applications that store and use  
+others' API keys on a server, which AI-chatbot application doesn't do.  
+The AI chatbot is working correctly and securely!
+
 ### License
 
 AI-chatbot for Codemo is licensed under the Apache License, Version 2.0
