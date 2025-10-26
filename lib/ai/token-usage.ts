@@ -179,8 +179,8 @@ export function resetUsageStats() {
   console.log("Usage statistics reset");
 }
 
-// Export telemetry object
-export const telemetry = {
+// Export token usage object
+export const tokenUsage = {
   recordModelUsage,
   getUsageStats,
   resetUsageStats,

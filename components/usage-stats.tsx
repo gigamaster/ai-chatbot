@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { telemetry } from "../lib/ai/telemetry";
+import { tokenUsage as telemetry } from "../lib/ai/token-usage";
 
 export function UsageStats() {
   const [usageStats, setUsageStats] = useState({
