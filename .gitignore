@@ -6,17 +6,28 @@ backup/
 docs/
 
 # dependencies
+pnpm-lock.yaml
 node_modules
 .pnp
 .pnp.js
 
 # testing
 coverage
+playwright.config.ts
+/__tests__
+/lib/__tests__
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/*
+/tests
+tests/
 
 # next.js
 .next/
 out/
 build
+tsconfig.tsbuildinfo
 
 # misc
 .DS_Store
@@ -29,6 +40,8 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # local env files
+.env
+.env*.local
 .env.local
 .env.development.local
 .env.test.local
@@ -36,12 +49,4 @@ yarn-error.log*
 
 # turbo
 .turbo
-
-.env
-.env*.local
-
-# Playwright
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/*
+lib/__tests__/clear-database.ts
