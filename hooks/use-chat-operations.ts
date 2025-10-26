@@ -4,10 +4,8 @@ import { useCallback, useState } from "react";
 import type { ArtifactKind } from "@/components/artifact";
 import {
   deleteLocalChat,
-  getAllLocalChats,
   getLocalDocument,
   getLocalFile,
-  getLocalMessages,
   getLocalSuggestions,
   getLocalVotes,
   saveLocalChat,

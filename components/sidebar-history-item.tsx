@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { memo } from "react";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,10 +30,10 @@ const PureChatItem = ({
   setOpenMobile: (open: boolean) => void;
 }) => {
   // Handle chat export
-  const handleExport = async (format: "json" | "markdown" | "text") => {
+  const handleExport = async (format: "json" | "markdown" | "text" | "zip") => {
     try {
-      // Import the export service dynamically
-      const { ChatExportService } = await import("@/lib/chat-export-service");
+      // Import the export functions dynamically
+      const exportService = await import("@/lib/chat-export-service");
 
       // Get messages for this chat
       const { getLocalMessagesByChatId } = await import(
@@ -47,7 +46,11 @@ const PureChatItem = ({
       const uiMessages = convertToUIMessages(messages);
 
       // Export the chat
-      ChatExportService.exportChat(chat, uiMessages, format);
+      if (format === "zip") {
+        await exportService.exportChatAsZip(chat, uiMessages);
+      } else {
+        exportService.exportChat(chat, uiMessages, format);
+      }
     } catch (error) {
       console.error("Error exporting chat:", error);
       // TODO: Show error to user
@@ -103,6 +106,14 @@ const PureChatItem = ({
                 >
                   <div className="flex flex-row items-center gap-2">
                     <span>Plain Text</span>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer flex-row justify-between"
+                  onClick={() => handleExport("zip")}
+                >
+                  <div className="flex flex-row items-center gap-2">
+                    <span>ZIP Archive</span>
                   </div>
                 </DropdownMenuItem>
               </DropdownMenuSubContent>

@@ -1,7 +1,7 @@
 "use client";
 
-import { Pencil, Plus, TestTube, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -34,14 +34,14 @@ import {
 import { generateUUID } from "@/lib/utils";
 import { ProviderTestButton } from "./provider-test-button";
 
-interface Provider {
+type Provider = {
   id: string;
   name: string;
   apiKey: string;
   baseUrl?: string;
   model: string;
   enabled: boolean;
-}
+};
 
 export function ProviderCRUDTable() {
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -58,7 +58,7 @@ export function ProviderCRUDTable() {
     enabled: true,
   });
 
-  const loadProviders = async () => {
+  const loadProviders = useCallback(async () => {
     try {
       setLoading(true);
       const providerList = await getAllProviders();
@@ -69,11 +69,11 @@ export function ProviderCRUDTable() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadProviders();
-  }, []);
+  }, [loadProviders]);
 
   const handleCreate = () => {
     setEditingProvider(null);

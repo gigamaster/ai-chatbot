@@ -1,7 +1,7 @@
 "use client";
 
-import { notFound, redirect, useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { notFound, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Chat } from "@/components/chat";
 import { DataStreamHandler } from "@/components/data-stream-handler";
 import { useLocalAuth } from "@/contexts/local-auth-context";
@@ -62,7 +62,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
         setChat({ ...chatData, isOwner });
         setMessages(uiMessages);
-      } catch (err) {
+      } catch (_err) {
         setError("Failed to load chat data");
       } finally {
         setLoading(false);
@@ -102,7 +102,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   }
 
   // Even stricter check - count how many messages there are
-  const userMessages = messages.filter((msg) => msg.role === "user");
+  const _userMessages = messages.filter((msg) => msg.role === "user");
   const assistantMessages = messages.filter((msg) => msg.role === "assistant");
   const hasAssistantMessages = assistantMessages.length > 0;
   const shouldEnableAutoResume = hasAssistantMessages;

@@ -1,4 +1,3 @@
-import { z } from "zod";
 import type { UIMessageStreamWriter } from "@/lib/custom-ai";
 import type { CustomUIDataTypes } from "@/lib/types";
 

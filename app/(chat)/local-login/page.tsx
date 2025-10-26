@@ -11,17 +11,17 @@ import { useLocalAuth } from "@/contexts/local-auth-context";
 export default function LocalLoginPage() {
   const router = useRouter();
   const { login } = useLocalAuth();
-  const [email, setEmail] = useState("");
+  const [email, _setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (formData: FormData) => {
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+    const emailValue = formData.get("email") as string;
+    const passwordValue = formData.get("password") as string;
 
     setIsSubmitting(true);
 
     try {
-      const success = await login(email, password);
+      const success = await login(emailValue, passwordValue);
 
       if (success) {
         router.push("/");
@@ -32,7 +32,7 @@ export default function LocalLoginPage() {
           description: "Invalid credentials!",
         });
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         type: "error",
         description: "Failed to authenticate!",

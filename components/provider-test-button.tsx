@@ -21,7 +21,9 @@ export function ProviderTestButton({
   } | null>(null);
 
   const handleTest = async () => {
-    if (!provider) return;
+    if (!provider) {
+      return;
+    }
 
     setTesting(true);
     setResult(null);

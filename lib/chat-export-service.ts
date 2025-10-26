@@ -1,123 +1,184 @@
+import { downloadZip } from "client-zip";
 import type { Chat } from "@/lib/local-db";
 import type { ChatMessage } from "@/lib/types";
 
 export type ExportFormat = "json" | "markdown" | "text";
 
-export interface ChatExportData {
+export type ChatExportData = {
   id: string;
   title: string;
   createdAt: Date;
   messages: ChatMessage[];
   exportedAt: Date;
+};
+
+/**
+ * Export chat data as JSON
+ */
+export function exportAsJson(chatData: ChatExportData): string {
+  return JSON.stringify(chatData, null, 2);
 }
 
-export class ChatExportService {
-  /**
-   * Export chat data as JSON
-   */
-  static exportAsJson(chatData: ChatExportData): string {
-    return JSON.stringify(chatData, null, 2);
+/**
+ * Export chat data as Markdown
+ */
+export function exportAsMarkdown(chatData: ChatExportData): string {
+  let markdown = `# ${chatData.title}\n\n`;
+  markdown += `Exported on: ${chatData.exportedAt.toISOString()}\n\n`;
+
+  for (const message of chatData.messages) {
+    const role = message.role === "user" ? "User" : "Assistant";
+    const timestamp = message.metadata?.createdAt || "";
+
+    markdown += `## ${role}${timestamp ? ` (${timestamp})` : ""}\n`;
+
+    // Extract text content from message parts
+    const textContent = message.parts
+      .filter((part) => part.type === "text")
+      .map((part) => part.text)
+      .join("\n\n");
+
+    markdown += `${textContent}\n\n`;
   }
 
-  /**
-   * Export chat data as Markdown
-   */
-  static exportAsMarkdown(chatData: ChatExportData): string {
-    let markdown = `# ${chatData.title}\n\n`;
-    markdown += `Exported on: ${chatData.exportedAt.toISOString()}\n\n`;
+  markdown += "---\n";
+  markdown += `Chat ID: ${chatData.id}\n`;
 
-    for (const message of chatData.messages) {
-      const role = message.role === "user" ? "User" : "Assistant";
-      const timestamp = message.metadata?.createdAt || "";
+  return markdown;
+}
 
-      markdown += `## ${role}${timestamp ? ` (${timestamp})` : ""}\n`;
+/**
+ * Export chat data as plain text
+ */
+export function exportAsText(chatData: ChatExportData): string {
+  let text = `Chat: ${chatData.title}\n`;
+  text += `Exported on: ${chatData.exportedAt.toISOString()}\n`;
+  text += `Chat ID: ${chatData.id}\n`;
+  text += `\n${"=".repeat(50)}\n\n`;
 
-      // Extract text content from message parts
-      const textContent = message.parts
-        .filter((part) => part.type === "text")
-        .map((part) => part.text)
-        .join("\n\n");
+  for (const message of chatData.messages) {
+    const role = message.role === "user" ? "User" : "Assistant";
+    const timestamp = message.metadata?.createdAt || "";
 
-      markdown += `${textContent}\n\n`;
-    }
+    text += `${role}${timestamp ? ` (${timestamp})` : ""}:\n`;
 
-    markdown += "---\n";
-    markdown += `Chat ID: ${chatData.id}\n`;
+    // Extract text content from message parts
+    const textContent = message.parts
+      .filter((part) => part.type === "text")
+      .map((part) => part.text)
+      .join("\n\n");
 
-    return markdown;
+    text += `${textContent}\n\n`;
   }
 
-  /**
-   * Export chat data as plain text
-   */
-  static exportAsText(chatData: ChatExportData): string {
-    let text = `Chat: ${chatData.title}\n`;
-    text += `Exported on: ${chatData.exportedAt.toISOString()}\n`;
-    text += `Chat ID: ${chatData.id}\n`;
-    text += "\n" + "=".repeat(50) + "\n\n";
+  return text;
+}
 
-    for (const message of chatData.messages) {
-      const role = message.role === "user" ? "User" : "Assistant";
-      const timestamp = message.metadata?.createdAt || "";
+/**
+ * Trigger browser download of exported content
+ */
+export function download(
+  content: string,
+  filename: string,
+  mimeType: string
+): void {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
-      text += `${role}${timestamp ? ` (${timestamp})` : ""}:\n`;
+/**
+ * Trigger browser download of Blob content
+ */
+export function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
-      // Extract text content from message parts
-      const textContent = message.parts
-        .filter((part) => part.type === "text")
-        .map((part) => part.text)
-        .join("\n\n");
+/**
+ * Generate filename based on chat title and export format
+ */
+export function generateFilename(title: string, format: ExportFormat): string {
+  // Sanitize title for filename use
+  const sanitizedTitle = title
+    .replace(/[^a-z0-9]/gi, "_")
+    .toLowerCase()
+    .substring(0, 50);
 
-      text += `${textContent}\n\n`;
-    }
+  const timestamp = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
-    return text;
+  const extensions = {
+    json: "json",
+    markdown: "md",
+    text: "txt",
+  };
+
+  return `${sanitizedTitle}_${timestamp}.${extensions[format]}`;
+}
+
+/**
+ * Export chat with specified format
+ */
+export function exportChat(
+  chat: Chat,
+  messages: ChatMessage[],
+  format: ExportFormat
+): void {
+  const exportData: ChatExportData = {
+    id: chat.id,
+    title: chat.title,
+    createdAt: chat.createdAt,
+    messages,
+    exportedAt: new Date(),
+  };
+
+  let content: string;
+  let filename: string;
+  let mimeType: string;
+
+  switch (format) {
+    case "json":
+      content = exportAsJson(exportData);
+      filename = generateFilename(chat.title, "json");
+      mimeType = "application/json";
+      break;
+    case "markdown":
+      content = exportAsMarkdown(exportData);
+      filename = generateFilename(chat.title, "markdown");
+      mimeType = "text/markdown";
+      break;
+    case "text":
+      content = exportAsText(exportData);
+      filename = generateFilename(chat.title, "text");
+      mimeType = "text/plain";
+      break;
+    default:
+      throw new Error(`Unsupported export format: ${format}`);
   }
 
-  /**
-   * Trigger browser download of exported content
-   */
-  static download(content: string, filename: string, mimeType: string): void {
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
+  download(content, filename, mimeType);
+}
 
-  /**
-   * Generate filename based on chat title and export format
-   */
-  static generateFilename(title: string, format: ExportFormat): string {
-    // Sanitize title for filename use
-    const sanitizedTitle = title
-      .replace(/[^a-z0-9]/gi, "_")
-      .toLowerCase()
-      .substring(0, 50);
-
-    const timestamp = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-
-    const extensions = {
-      json: "json",
-      markdown: "md",
-      text: "txt",
-    };
-
-    return `${sanitizedTitle}_${timestamp}.${extensions[format]}`;
-  }
-
-  /**
-   * Export chat with specified format
-   */
-  static exportChat(
-    chat: Chat,
-    messages: ChatMessage[],
-    format: ExportFormat
-  ): void {
+/**
+ * Export chat as ZIP containing multiple formats
+ */
+export async function exportChatAsZip(
+  chat: Chat,
+  messages: ChatMessage[]
+): Promise<void> {
+  try {
     const exportData: ChatExportData = {
       id: chat.id,
       title: chat.title,
@@ -126,30 +187,34 @@ export class ChatExportService {
       exportedAt: new Date(),
     };
 
-    let content: string;
-    let filename: string;
-    let mimeType: string;
+    // Prepare files for ZIP
+    const files = [
+      {
+        name: `${generateFilename(chat.title, "json")}`,
+        lastModified: new Date(),
+        input: exportAsJson(exportData),
+      },
+      {
+        name: `${generateFilename(chat.title, "markdown")}`,
+        lastModified: new Date(),
+        input: exportAsMarkdown(exportData),
+      },
+      {
+        name: `${generateFilename(chat.title, "text")}`,
+        lastModified: new Date(),
+        input: exportAsText(exportData),
+      },
+    ];
 
-    switch (format) {
-      case "json":
-        content = ChatExportService.exportAsJson(exportData);
-        filename = ChatExportService.generateFilename(chat.title, "json");
-        mimeType = "application/json";
-        break;
-      case "markdown":
-        content = ChatExportService.exportAsMarkdown(exportData);
-        filename = ChatExportService.generateFilename(chat.title, "markdown");
-        mimeType = "text/markdown";
-        break;
-      case "text":
-        content = ChatExportService.exportAsText(exportData);
-        filename = ChatExportService.generateFilename(chat.title, "text");
-        mimeType = "text/plain";
-        break;
-      default:
-        throw new Error(`Unsupported export format: ${format}`);
-    }
-
-    ChatExportService.download(content, filename, mimeType);
+    // Create and download ZIP
+    const blob = await downloadZip(files).blob();
+    const filename = `${chat.title
+      .replace(/[^a-z0-9]/gi, "_")
+      .toLowerCase()
+      .substring(0, 50)}_${new Date().toISOString().split("T")[0]}.zip`;
+    downloadBlob(blob, filename);
+  } catch (error) {
+    console.error("Failed to export chat as ZIP:", error);
+    throw new Error("Failed to export chat as ZIP");
   }
 }

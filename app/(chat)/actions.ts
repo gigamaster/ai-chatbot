@@ -3,10 +3,7 @@
 import { cookies } from "next/headers";
 import { createLanguageModel, getLanguageModel } from "@/lib/ai/providers";
 import { generateText, type UIMessage } from "@/lib/custom-ai";
-import {
-  deleteChatById,
-  getLocalMessagesByChatId,
-} from "@/lib/local-db-queries";
+import { getLocalMessagesByChatId } from "@/lib/local-db-queries";
 
 export async function saveChatModelAsCookie(
   model: string,
@@ -27,7 +24,7 @@ export async function generateTitleFromUserMessage({
   selectedChatModel?: string;
 }) {
   try {
-    let languageModel;
+    let languageModel: any;
 
     // If a specific model is provided, use it directly
     if (selectedChatModel) {
@@ -56,7 +53,7 @@ export async function generateTitleFromUserMessage({
 }
 
 export async function deleteTrailingMessages({ id }: { id: string }) {
-  const [message] = await getLocalMessagesByChatId({ id });
+  const [_message] = await getLocalMessagesByChatId({ id });
 
   // Note: This functionality needs to be implemented in the local database
   // For now, we'll just log that it's not implemented

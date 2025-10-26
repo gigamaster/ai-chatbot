@@ -1,5 +1,4 @@
-import { MockLanguageModelV2, simulateReadableStream } from "@/lib/custom-ai";
-import { getResponseChunksByPrompt } from "@/tests/prompts/utils";
+import { MockLanguageModelV2 } from "@/lib/custom-ai";
 
 export const chatModel = new MockLanguageModelV2({
   modelId: "chat-model",

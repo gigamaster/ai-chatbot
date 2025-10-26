@@ -1,7 +1,7 @@
 "use client";
 
 import { RefreshCwIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,18 +11,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  getAllProviders,
-  getProviderModelPairs,
-} from "@/lib/provider-model-service";
+import { getProviderModelPairs } from "@/lib/provider-model-service";
 
-interface ProviderModelOption {
+type ProviderModelOption = {
   id: string;
   name: string;
   modelName: string;
   providerName: string;
   providerId: string;
-}
+};
 
 export function ProviderModelSelector({
   value,
@@ -41,7 +38,7 @@ export function ProviderModelSelector({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadProviderModels = async () => {
+  const loadProviderModels = useCallback(async () => {
     try {
       setLoading(true);
       const pairs = await getProviderModelPairs();
@@ -52,11 +49,11 @@ export function ProviderModelSelector({
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadProviderModels();
-  }, []);
+  }, [loadProviderModels]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

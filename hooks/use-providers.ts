@@ -1,6 +1,6 @@
 import useSWR from "swr";
 
-interface Provider {
+type Provider = {
   id: string;
   name: string;
   baseUrl: string;
@@ -9,7 +9,7 @@ interface Provider {
   createdAt: string;
   updatedAt: string;
   isEnabled: boolean;
-}
+};
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 

@@ -2,34 +2,22 @@
 
 import { useSearchParams } from "next/navigation";
 import { startTransition, useEffect, useRef, useState } from "react";
-import useSWR, { useSWRConfig } from "swr";
+
 import { ChatHeader } from "@/components/chat-header";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { useArtifactSelector } from "@/hooks/use-artifact";
 import { saveChatModelAsCookie } from "@/lib/client-actions";
 import { ChatSDKError } from "@/lib/custom-ai";
-import type { Vote } from "@/lib/local-db";
+import { useCustomChat } from "@/lib/custom-chat";
+import { getAllProviders } from "@/lib/provider-model-service";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import type { AppUsage } from "@/lib/usage";
-import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
+import { generateUUID } from "@/lib/utils";
 import { Artifact } from "./artifact";
 
 // Remove unused imports
 // import { useAutoResume } from "@/hooks/use-auto-resume";
 // import { useDataStream } from "./data-stream-provider";
 
-import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
-import { useCustomChat } from "@/lib/custom-chat";
-import { getAllProviders, getProviderById } from "@/lib/provider-model-service";
 import { Messages } from "./messages";
 import { MultimodalInput } from "./multimodal-input";
 import { toast } from "./toast";
@@ -39,7 +27,6 @@ export function Chat({
   initialMessages,
   initialChatModel,
   isReadonly,
-  autoResume,
   initialLastContext,
   initialProviderId,
 }: {
@@ -51,7 +38,6 @@ export function Chat({
   initialLastContext?: AppUsage;
   initialProviderId?: string;
 }) {
-  const { mutate } = useSWRConfig();
   // TODO: data stream provider usage
   // const { setDataStream } = useDataStream();
 
@@ -109,12 +95,12 @@ export function Chat({
 
   const {
     messages,
-    setMessages,
-    sendMessage,
-    status,
     stop,
     regenerate,
-    resumeStream,
+    sendMessage,
+    setMessages,
+    status,
+    // resumeStream, // Removed unused variable
   } = useCustomChat({
     id,
     messages: initialMessages,

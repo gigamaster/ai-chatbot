@@ -1,17 +1,13 @@
 "use client";
 
 import { differenceInSeconds } from "date-fns";
-import {
-  createUIMessageStream,
-  JsonToSseTransformStream,
-} from "@/lib/custom-ai";
+import { createUIMessageStream } from "@/lib/custom-ai";
 import { ChatSDKError } from "@/lib/errors";
 import type { Chat } from "@/lib/local-db";
 import {
   getLocalChatById,
   getLocalMessagesByChatId,
 } from "@/lib/local-db-queries";
-import type { ChatMessage } from "@/lib/types";
 
 // Client-side service to replace the local-chat stream API route
 export class ClientChatStreamService {
@@ -43,7 +39,9 @@ export class ClientChatStreamService {
 
       if (!mostRecentMessage) {
         const emptyDataStream = createUIMessageStream({
-          execute: () => {},
+          execute: () => {
+            // Empty execution for placeholder stream when no recent message
+          },
         });
 
         return emptyDataStream;
@@ -51,7 +49,9 @@ export class ClientChatStreamService {
 
       if (mostRecentMessage.role !== "assistant") {
         const emptyDataStream = createUIMessageStream({
-          execute: () => {},
+          execute: () => {
+            // Empty execution for placeholder stream when last message is not assistant
+          },
         });
 
         return emptyDataStream;
@@ -61,7 +61,9 @@ export class ClientChatStreamService {
 
       if (differenceInSeconds(new Date(), messageCreatedAt) > 15) {
         const emptyDataStream = createUIMessageStream({
-          execute: () => {},
+          execute: () => {
+            // Empty execution for placeholder stream when message is too old
+          },
         });
 
         return emptyDataStream;

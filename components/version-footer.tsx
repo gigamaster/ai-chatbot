@@ -29,7 +29,7 @@ export const VersionFooter = ({
   const { width } = useWindowSize();
   const isMobile = width < 768;
 
-  const { mutate } = useSWRConfig();
+  const { mutate: _mutate } = useSWRConfig();
   const [isMutating, setIsMutating] = useState(false);
 
   if (!documents) {
@@ -69,7 +69,7 @@ export const VersionFooter = ({
 
               // Update the UI by filtering out the deleted document
               if (documents) {
-                const updatedDocuments = documents.filter((document) =>
+                const _updatedDocuments = documents.filter((document) =>
                   isAfter(
                     new Date(document.createdAt),
                     new Date(

@@ -14,7 +14,7 @@ export async function getLocalUserFromCookies() {
   try {
     const localUser = JSON.parse(localUserCookie.value);
     return localUser;
-  } catch (e) {
+  } catch (_e) {
     return null;
   }
 }

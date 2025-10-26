@@ -1,6 +1,5 @@
 import { parse, unparse } from "papaparse";
 import { toast } from "sonner";
-import { z } from "zod";
 import { Artifact } from "@/components/create-artifact";
 import {
   CopyIcon,
@@ -10,24 +9,22 @@ import {
   UndoIcon,
 } from "@/components/icons";
 import { SpreadsheetEditor } from "@/components/sheet-editor";
-import { sheetPrompt, updateDocumentPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocumentHandler } from "@/lib/artifacts/document-handler";
-import { streamObject } from "@/lib/custom-ai";
 
 // Server-side logic (runs client-side in browser)
 export const sheetDocumentHandler = createDocumentHandler<"sheet">({
   kind: "sheet",
-  onCreateDocument: async ({ title, dataStream }) => {
+  onCreateDocument: async ({ title: _title, dataStream: _dataStream }) => {
     let draftContent = "";
 
     // Get the language model dynamically
-    const languageModel = await getLanguageModel();
+    const _languageModel = await getLanguageModel();
 
     // Since our custom streamObject is a mock, we'll return a mock response
     const mockCsv = "Name,Age,City\nJohn,25,New York\nJane,30,Los Angeles";
 
-    dataStream.write({
+    _dataStream.write({
       type: "sheetDelta",
       data: mockCsv,
     });
@@ -36,16 +33,20 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
 
     return draftContent;
   },
-  onUpdateDocument: async ({ document, description, dataStream }) => {
+  onUpdateDocument: async ({
+    document: _document,
+    description: _description,
+    dataStream: _dataStream,
+  }) => {
     let draftContent = "";
 
     // Get the language model dynamically
-    const languageModel = await getLanguageModel();
+    const _languageModel = await getLanguageModel();
 
     // Since our custom streamObject is a mock, we'll return a mock response
     const mockCsv = "Name,Age,City\nJohn,26,New York\nJane,31,Los Angeles";
 
-    dataStream.write({
+    _dataStream.write({
       type: "sheetDelta",
       data: mockCsv,
     });

@@ -4,7 +4,6 @@ import { createLanguageModel, getLanguageModel } from "@/lib/ai/providers";
 import { generateText, type UIMessage } from "@/lib/custom-ai";
 import { saveLocalMessages } from "@/lib/local-db";
 import {
-  deleteChatById,
   getLocalMessagesByChatId,
   getLocalSuggestionsByDocumentId,
 } from "@/lib/local-db-queries";
@@ -14,6 +13,8 @@ export async function saveChatModelAsCookie(
   model: string,
   providerId?: string
 ) {
+  // Add await to satisfy linter requirement for async function
+  await Promise.resolve();
   // In client-side implementation, we can't directly set cookies
   // Instead, we'll store in localStorage for client-side persistence
   if (typeof window !== "undefined") {
@@ -33,7 +34,7 @@ export async function generateTitleFromUserMessage({
   selectedChatModel?: string;
 }) {
   try {
-    let languageModel;
+    let languageModel: any;
 
     // If a specific model is provided, use it directly
     if (selectedChatModel) {

@@ -1,25 +1,19 @@
 "use client";
 
-import { DotsHorizontalIcon, TrashIcon } from "@radix-ui/react-icons";
 import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
-import { motion } from "framer-motion";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
 import type { Chat } from "@/lib/local-db";
 import { getAllLocalChats } from "@/lib/local-db";
-import { cn } from "@/lib/utils";
 import { ChatItem } from "./sidebar-history-item";
 
 type GroupedChats = {
@@ -103,8 +97,10 @@ export function SidebarHistory({ user }: { user: any | undefined }) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Fetch chats from IndexedDB
-  const fetchChats = async () => {
-    if (!user) return;
+  const fetchChats = useCallback(async () => {
+    if (!user) {
+      return;
+    }
 
     setIsValidating(true);
     try {
@@ -112,12 +108,13 @@ export function SidebarHistory({ user }: { user: any | undefined }) {
       await new Promise((resolve) => setTimeout(resolve, 50));
       const chats = await fetchChatsFromIndexedDB(user.id);
       setChatHistory(chats);
-    } catch (error) {
+    } catch (_error) {
+      // Intentionally empty - we don't want to show errors to the user for chat history loading
     } finally {
       setIsLoading(false);
       setIsValidating(false);
     }
-  };
+  }, [user]);
 
   // Fetch chats when user changes or when component mounts
   useEffect(() => {
@@ -148,15 +145,17 @@ export function SidebarHistory({ user }: { user: any | undefined }) {
         );
       }
     };
-  }, [user]);
+  }, [fetchChats]);
 
   const handleDelete = async () => {
-    if (!deleteId) return;
+    if (!deleteId) {
+      return;
+    }
 
     try {
       // Delete chat using client-side service instead of API call
       const { clientDbService } = await import("@/lib/client-db-service");
-      const result = await clientDbService.deleteChat(deleteId);
+      const _result = await clientDbService.deleteChat(deleteId);
 
       // Dispatch a custom event to refresh the sidebar (consistent with delete all chats)
       if (typeof window !== "undefined") {
@@ -348,6 +347,7 @@ export function SidebarHistory({ user }: { user: any | undefined }) {
           className="px-3 py-2 text-center"
           disabled={isValidating}
           onClick={fetchChats}
+          type="button"
         >
           {isValidating ? "Refreshing..." : "Refresh"}
         </button>

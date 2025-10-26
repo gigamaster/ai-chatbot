@@ -1,30 +1,27 @@
 import { toast } from "sonner";
-import { z } from "zod";
-import { Artifact } from "@/components/create-artifact";
 import { CodeEditor } from "@/components/code-editor";
 import { Console } from "@/components/console";
-import { 
-  CopyIcon, 
-  LogsIcon, 
-  MessageIcon, 
-  PlayIcon, 
-  RedoIcon, 
-  UndoIcon 
+import { Artifact } from "@/components/create-artifact";
+import {
+  CopyIcon,
+  LogsIcon,
+  MessageIcon,
+  PlayIcon,
+  RedoIcon,
+  UndoIcon,
 } from "@/components/icons";
-import { codePrompt, updateDocumentPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocumentHandler } from "@/lib/artifacts/document-handler";
-import { smoothStream, streamObject } from "@/lib/custom-ai";
 import { generateUUID } from "@/lib/utils";
 
 // Server-side logic (runs client-side in browser)
 export const codeDocumentHandler = createDocumentHandler<"code">({
   kind: "code",
-  onCreateDocument: async ({ title, dataStream }) => {
+  onCreateDocument: async ({ title: _title, dataStream: _dataStream }) => {
     let draftContent = "";
 
     // Get the language model dynamically
-    const languageModel = await getLanguageModel();
+    const _languageModel = await getLanguageModel();
 
     // Since our custom streamObject is a mock, we'll return a mock response
     const mockDraft = {
@@ -33,7 +30,7 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
     };
 
     if (mockDraft.explanation) {
-      dataStream.write({
+      _dataStream.write({
         type: "textDelta",
         data: mockDraft.explanation,
       });
@@ -42,7 +39,7 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
     }
 
     if (mockDraft.code) {
-      dataStream.write({
+      _dataStream.write({
         type: "codeDelta",
         data: mockDraft.code,
       });
@@ -52,11 +49,15 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
 
     return draftContent;
   },
-  onUpdateDocument: async ({ document, description, dataStream }) => {
+  onUpdateDocument: async ({
+    document: _document,
+    description: _description,
+    dataStream: _dataStream,
+  }) => {
     let draftContent = "";
 
     // Get the language model dynamically
-    const languageModel = await getLanguageModel();
+    const _languageModel = await getLanguageModel();
 
     // Since our custom streamObject is a mock, we'll return a mock response
     const mockDraft = {
@@ -65,7 +66,7 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
     };
 
     if (mockDraft.explanation) {
-      dataStream.write({
+      _dataStream.write({
         type: "textDelta",
         data: mockDraft.explanation,
       });
@@ -74,7 +75,7 @@ export const codeDocumentHandler = createDocumentHandler<"code">({
     }
 
     if (mockDraft.code) {
-      dataStream.write({
+      _dataStream.write({
         type: "codeDelta",
         data: mockDraft.code,
       });
@@ -150,7 +151,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
     if (streamPart.type === "codeDelta") {
       setArtifact((draftArtifact) => {
         // Type guard to ensure we're working with the correct type
-        if (typeof streamPart.data === 'string') {
+        if (typeof streamPart.data === "string") {
           return {
             ...draftArtifact,
             content: streamPart.data,
@@ -218,7 +219,9 @@ export const codeArtifact = new Artifact<"code", Metadata>({
           currentPyodideInstance.setStdout({
             batched: (output: string) => {
               outputContent.push({
-                type: output.startsWith("data:image/png;base64") ? "image" : "text",
+                type: output.startsWith("data:image/png;base64")
+                  ? "image"
+                  : "text",
                 value: output,
               });
             },

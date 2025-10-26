@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useMemo, useState } from "react";
 import type { DataUIPart } from "@/lib/custom-ai";
 import type { CustomUIDataTypes } from "@/lib/types";
 
@@ -39,8 +39,8 @@ export function DataStreamProvider({
 export function useDataStream() {
   return {
     dataStream: [] as DataUIPart<CustomUIDataTypes>[],
-    setDataStream: (() => {}) as React.Dispatch<
-      React.SetStateAction<DataUIPart<CustomUIDataTypes>[]>
-    >,
+    setDataStream: (() => {
+      // Empty implementation for placeholder data stream
+    }) as React.Dispatch<React.SetStateAction<DataUIPart<CustomUIDataTypes>[]>>,
   };
 }

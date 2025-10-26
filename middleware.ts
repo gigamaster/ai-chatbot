@@ -35,11 +35,11 @@ export function middleware(request: NextRequest) {
   }
 
   // Parse the local user
-  let localUser = null;
+  let localUser: { id: string; email: string } | null = null;
   try {
     localUser = JSON.parse(localUserCookie.value);
     console.log("Parsed user:", localUser);
-  } catch (e) {
+  } catch (_e) {
     console.log("Failed to parse user cookie, allowing access to root page");
     // If parsing fails, allow access to root page for client-side handling
     if (pathname === "/") {

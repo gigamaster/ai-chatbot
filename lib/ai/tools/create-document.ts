@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { artifactKinds } from "@/lib/artifacts/document-handlers";
-import { tool, type UIMessageStreamWriter } from "@/lib/custom-ai";
+import { tool } from "@/lib/custom-ai";
 import { generateUUID } from "@/lib/utils";
 
 export const createDocument = () =>
@@ -12,7 +12,7 @@ export const createDocument = () =>
       title: z.string(),
       kind: z.enum(artifactKinds),
     }),
-    execute: async (args: { title: string; kind: string }) => {
+    execute: (args: { title: string; kind: string }) => {
       const { title, kind } = args;
       const id = generateUUID();
 

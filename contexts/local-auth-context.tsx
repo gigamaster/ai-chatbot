@@ -27,11 +27,11 @@ const LocalAuthContext = createContext<LocalAuthContextType | undefined>(
 
 export function LocalAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<LocalUser>(null);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
 
   // Load user from localStorage or cookie on mount
   useEffect(() => {
-    const loadUser = async () => {
+    const loadUser = () => {
       try {
         // Use the consolidated utility function
         const currentUser = getCurrentUser();
@@ -54,11 +54,11 @@ export function LocalAuthProvider({ children }: { children: ReactNode }) {
     try {
       // Directly call the local authentication function (client-side)
       const { authenticateLocalUser } = await import("@/lib/local-auth");
-      const user = await authenticateLocalUser(email, password);
+      const authenticatedUser = await authenticateLocalUser(email, password);
 
-      if (user) {
-        saveUser(user);
-        setUser(user);
+      if (authenticatedUser) {
+        saveUser(authenticatedUser);
+        setUser(authenticatedUser);
         return true;
       }
     } catch (error) {
@@ -76,11 +76,11 @@ export function LocalAuthProvider({ children }: { children: ReactNode }) {
     try {
       // Directly call the local registration function (client-side)
       const { registerLocalUser } = await import("@/lib/local-auth");
-      const user = await registerLocalUser(email, password);
+      const registeredUser = await registerLocalUser(email, password);
 
-      if (user) {
-        saveUser(user);
-        setUser(user);
+      if (registeredUser) {
+        saveUser(registeredUser);
+        setUser(registeredUser);
         return true;
       }
     } catch (error: any) {

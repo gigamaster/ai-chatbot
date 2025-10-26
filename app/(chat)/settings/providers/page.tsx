@@ -2,7 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { nanoid } from "nanoid";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,10 +30,9 @@ import {
   getAllCustomProviders,
   saveCustomProvider,
 } from "@/lib/local-db-queries";
-import { getCustomProvider } from "@/lib/local-db-queries";
 
 // Define the provider configuration type
-interface CustomProviderConfig {
+type CustomProviderConfig = {
   id: string;
   name: string;
   baseUrl: string;
@@ -42,7 +41,7 @@ interface CustomProviderConfig {
   createdAt: string;
   updatedAt: string;
   isEnabled: boolean;
-}
+};
 
 export default function ProviderManagementPage() {
   const [providers, setProviders] = useState<CustomProviderConfig[]>([]);
@@ -63,12 +62,7 @@ export default function ProviderManagementPage() {
   const [model, setModel] = useState("");
   const [isEnabled, setIsEnabled] = useState(true);
 
-  // Load providers on component mount
-  useEffect(() => {
-    loadProviders();
-  }, []);
-
-  const loadProviders = async () => {
+  const loadProviders = useCallback(async () => {
     try {
       const providerList = await getAllCustomProviders();
       setProviders(providerList);
@@ -76,7 +70,12 @@ export default function ProviderManagementPage() {
       console.error("Failed to load providers:", error);
       toast.error("Failed to load providers");
     }
-  };
+  }, []);
+
+  // Load providers on component mount
+  useEffect(() => {
+    loadProviders();
+  }, [loadProviders]);
 
   const resetForm = () => {
     setName("");

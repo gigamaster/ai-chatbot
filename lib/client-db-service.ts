@@ -108,8 +108,8 @@ export class ClientDbService {
 
       // Apply pagination
       if (params.limit) {
-        const limit = Number.parseInt(params.limit);
-        const offset = params.offset ? Number.parseInt(params.offset) : 0;
+        const limit = Number.parseInt(params.limit, 10);
+        const offset = params.offset ? Number.parseInt(params.offset, 10) : 0;
         chats = chats.slice(offset, offset + limit);
       }
 
@@ -127,7 +127,9 @@ export class ClientDbService {
       let deletedCount = 0;
       for (const chat of userChats) {
         const result = await deleteLocalChat(chat.id);
-        if (result) deletedCount++;
+        if (result) {
+          deletedCount++;
+        }
       }
       return { deletedCount };
     } catch (error) {

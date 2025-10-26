@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useSWRConfig } from "swr";
+
 import { PlusIcon, TrashIcon } from "@/components/icons";
 import { SidebarHistory } from "@/components/sidebar-history";
 import { SidebarUserNav } from "@/components/sidebar-user-nav";
@@ -45,7 +45,6 @@ export function AppSidebar({
 }) {
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
-  const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
 
   // Get user from context if not provided via props
@@ -53,14 +52,16 @@ export function AppSidebar({
   const user = propUser !== undefined ? propUser : contextUser;
 
   const handleDeleteAll = async () => {
-    if (!user) return;
+    if (!user) {
+      return;
+    }
 
     try {
       // Use client-side service instead of API call
       const { clientHistoryService } = await import(
         "@/lib/client-history-service"
       );
-      const result = await clientHistoryService.deleteAllChats(user);
+      const _result = await clientHistoryService.deleteAllChats(user);
 
       // Small delay to ensure IndexedDB operation is fully completed
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -74,7 +75,7 @@ export function AppSidebar({
       router.push("/");
       setShowDeleteAllDialog(false);
       toast.success("All chats deleted successfully");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to delete all chats");
     }
   };

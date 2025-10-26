@@ -12,7 +12,7 @@ export default async function Page() {
   const cookieStore = await cookies();
   const localUserCookie = cookieStore.get("local_user");
 
-  let localUser;
+  let localUser: { id: string; email: string } | null = null;
   if (localUserCookie) {
     try {
       localUser = JSON.parse(decodeURIComponent(localUserCookie.value));

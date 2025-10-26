@@ -1,5 +1,3 @@
-import { hash } from "bcrypt-ts";
-
 export const isProductionEnvironment = process.env.NODE_ENV === "production";
 export const isDevelopmentEnvironment = process.env.NODE_ENV === "development";
 export const isTestEnvironment = Boolean(
@@ -9,7 +7,7 @@ export const isTestEnvironment = Boolean(
 );
 
 // Helper function to generate dummy password
-function hashSync(password: string, saltRounds: number): string {
+function _hashSync(_password: string, _saltRounds: number): string {
   // In a real implementation, this would use bcrypt to hash the password
   // For now, we'll return a fixed value for simplicity
   return "dummy-hashed-password";

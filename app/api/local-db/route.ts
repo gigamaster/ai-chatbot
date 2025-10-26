@@ -70,7 +70,9 @@ export async function POST(request: Request) {
         let deletedCount = 0;
         for (const chat of userChats) {
           const result = await deleteLocalChat(chat.id);
-          if (result) deletedCount++;
+          if (result) {
+            deletedCount++;
+          }
         }
         return NextResponse.json({ deletedCount });
       }
@@ -127,7 +129,7 @@ export async function GET(request: Request) {
     const params = Object.fromEntries(searchParams.entries());
 
     // Remove operation from params
-    delete params.operation;
+    params.operation = undefined;
 
     switch (operation) {
       // User operations
@@ -160,8 +162,8 @@ export async function GET(request: Request) {
 
         // Apply pagination
         if (params.limit) {
-          const limit = Number.parseInt(params.limit);
-          const offset = params.offset ? Number.parseInt(params.offset) : 0;
+          const limit = Number.parseInt(params.limit, 10);
+          const offset = params.offset ? Number.parseInt(params.offset, 10) : 0;
           sortedChats = sortedChats.slice(offset, offset + limit);
         }
 
@@ -217,7 +219,7 @@ export async function DELETE(request: Request) {
     const params = Object.fromEntries(searchParams.entries());
 
     // Remove operation from params
-    delete params.operation;
+    params.operation = undefined;
 
     switch (operation) {
       case "deleteChat": {
@@ -230,7 +232,9 @@ export async function DELETE(request: Request) {
         let deletedCount = 0;
         for (const chat of userChats) {
           const result = await deleteLocalChat(chat.id);
-          if (result) deletedCount++;
+          if (result) {
+            deletedCount++;
+          }
         }
         return NextResponse.json({ deletedCount });
       }

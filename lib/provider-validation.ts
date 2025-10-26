@@ -1,9 +1,9 @@
 // Validation utilities for AI provider configurations
 
-export interface ProviderValidationResult {
+export type ProviderValidationResult = {
   isValid: boolean;
   errors: string[];
-}
+};
 
 /**
  * Validates a custom provider configuration
@@ -82,7 +82,7 @@ function isValidUrl(urlString: string): boolean {
   try {
     new URL(urlString);
     return true;
-  } catch (e) {
+  } catch (_e) {
     return false;
   }
 }
