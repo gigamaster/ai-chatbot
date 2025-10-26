@@ -1,9 +1,8 @@
 import { z } from "zod";
-import { streamObject, tool } from "@/lib/custom-ai";
+import { tool } from "@/lib/custom-ai";
 import type { Suggestion } from "@/lib/local-db";
 import { getDocumentById, saveLocalSuggestions } from "@/lib/local-db-queries";
 import { generateUUID } from "@/lib/utils";
-import { getLanguageModel } from "../providers";
 
 export const requestSuggestions = () =>
   tool({
@@ -36,7 +35,7 @@ export const requestSuggestions = () =>
       const suggestions: Omit<
         Suggestion,
         "userId" | "createdAt" | "documentCreatedAt"
-      >[] = mockSuggestions.map((mock, index) => ({
+      >[] = mockSuggestions.map((mock, _index) => ({
         id: generateUUID(),
         documentId,
         content: mock.suggestedSentence,

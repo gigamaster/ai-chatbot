@@ -1,5 +1,4 @@
 import { getUserId } from "@/lib/auth-utils";
-import { testProviderConnection } from "@/lib/client-test-provider";
 import {
   deleteCustomProvider,
   getAllCustomProviders,
@@ -8,17 +7,17 @@ import {
 } from "@/lib/local-db-queries";
 
 // Define types - using 'enabled' for consistency with UI, but mapping to 'isEnabled' for database
-export interface ProviderModel {
+export type ProviderModel = {
   id: string;
   name: string;
   apiKey: string;
   baseUrl?: string;
   model: string;
   enabled: boolean; // Using 'enabled' for UI consistency
-}
+};
 
 // Internal type for database operations
-interface DatabaseProvider {
+type DatabaseProvider = {
   id: string;
   name: string;
   apiKey: string;
@@ -26,7 +25,7 @@ interface DatabaseProvider {
   model: string;
   isEnabled: boolean; // Database uses 'isEnabled'
   userId: string; // Add userId for user isolation
-}
+};
 
 // Get all available providers for the current user
 export async function getAllProviders(): Promise<ProviderModel[]> {
@@ -50,7 +49,9 @@ export async function getProviderById(
 ): Promise<ProviderModel | null> {
   try {
     const provider = await getCustomProvider(providerId);
-    if (!provider) return null;
+    if (!provider) {
+      return null;
+    }
     // Map database field 'isEnabled' to interface field 'enabled'
     return {
       ...provider,

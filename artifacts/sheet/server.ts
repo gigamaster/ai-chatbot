@@ -1,16 +1,13 @@
-import { z } from "zod";
-import { sheetPrompt, updateDocumentPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocumentHandler } from "@/lib/artifacts/server";
-import { streamObject } from "@/lib/custom-ai";
 
 export const sheetDocumentHandler = createDocumentHandler<"sheet">({
   kind: "sheet",
-  onCreateDocument: async ({ title, dataStream }) => {
+  onCreateDocument: async ({ title: _title, dataStream }) => {
     let draftContent = "";
 
     // Get the language model dynamically
-    const languageModel = await getLanguageModel();
+    const _languageModel = await getLanguageModel();
 
     // Since our custom streamObject is a mock, we'll return a mock response
     const mockCsv = "Name,Age,City\nJohn,25,New York\nJane,30,Los Angeles";
@@ -24,11 +21,15 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
 
     return draftContent;
   },
-  onUpdateDocument: async ({ document, description, dataStream }) => {
+  onUpdateDocument: async ({
+    document: _document,
+    description: _description,
+    dataStream,
+  }) => {
     let draftContent = "";
 
     // Get the language model dynamically
-    const languageModel = await getLanguageModel();
+    const _languageModel = await getLanguageModel();
 
     // Since our custom streamObject is a mock, we'll return a mock response
     const mockCsv = "Name,Age,City\nJohn,26,New York\nJane,31,Los Angeles";

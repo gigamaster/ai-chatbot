@@ -119,7 +119,7 @@ export const collabArtifact = new Artifact<"collab", Metadata>({
       icon: <PlayIcon size={18} />,
       label: "Run",
       description: "Execute code",
-      onClick: async ({ content, setMetadata }) => {
+      onClick: async ({ content: _content, setMetadata }) => {
         const runId = generateUUID();
         const outputContent: ConsoleOutputContent[] = [];
 
@@ -175,7 +175,7 @@ export const collabArtifact = new Artifact<"collab", Metadata>({
       icon: <UsersIcon />,
       label: "Invite",
       description: "Invite collaborators",
-      onClick: async ({ content }) => {
+      onClick: ({ content: _content }) => {
         // In a real implementation, this would open a collaboration invitation dialog
         toast.success("Collaboration link copied to clipboard!");
         // Use content or other available parameters to generate the link

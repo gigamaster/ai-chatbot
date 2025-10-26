@@ -23,11 +23,12 @@ import {
 import { useLocalAuth } from "@/contexts/local-auth-context";
 import { useLock } from "@/contexts/lock-context";
 import { LoaderIcon } from "./icons";
-import { toast } from "./toast";
 
 // Helper function to get the first letter of the user's email
 function getUserInitial(email: string | undefined): string {
-  if (!email) return "U"; // Default to "U" if no email
+  if (!email) {
+    return "U"; // Default to "U" if no email
+  }
   return email.charAt(0).toUpperCase();
 }
 
@@ -42,7 +43,7 @@ function UserAvatar({ email }: { email: string | undefined }) {
   );
 }
 
-export function SidebarUserNav({ user }: { user: any }) {
+export function SidebarUserNav({ user: _user }: { user: any }) {
   const router = useRouter();
   const { user: localUser, logout } = useLocalAuth();
   const { setTheme, resolvedTheme } = useTheme();

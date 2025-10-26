@@ -91,7 +91,6 @@ export const createLanguageModel = async (
 // Function to get a language model for immediate use
 export const getLanguageModel = async (modelType = "default") => {
   try {
-
     // TODO: get modelId from modelType, and fallback to DEFAULT_CHAT_MODEL
     let modelId: string = modelType;
     if (modelType === "default") {
@@ -113,7 +112,7 @@ export const getLanguageModel = async (modelType = "default") => {
 
 // Function to get model name for specific purposes (maintains compatibility)
 export const getModelNameForPurpose = (
-  purpose: string,
+  _purpose: string,
   userConfiguredModel: string
 ) => {
   // For all purposes, we use the user's configured model to maintain simplicity

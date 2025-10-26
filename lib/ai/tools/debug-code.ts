@@ -15,12 +15,8 @@ export const debugCode = () =>
         ),
       error: z.string().optional().describe("The error message, if any"),
     }),
-    execute: async (args: {
-      code: string;
-      language: string;
-      error?: string;
-    }) => {
-      const { code, language, error } = args;
+    execute: (args: { code: string; language: string; error?: string }) => {
+      const { code: _code, language, error } = args;
 
       // Since our custom tool implementation is a mock, we'll just return a mock response
       return {

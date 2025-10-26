@@ -22,7 +22,7 @@ export default function SettingsPage() {
     setIsSaving(true);
     try {
       // Get all providers from local database
-      const providers = await getAllProviders();
+      const _providers = await getAllProviders();
 
       // For GitHub Pages deployment, this runs entirely client-side using IndexedDB
       // Providers are stored exclusively in per-user IndexedDB

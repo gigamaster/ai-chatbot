@@ -1,14 +1,14 @@
 import { getServerProviders, setServerProviders } from "./server-providers";
 
 // Define types for our providers
-export interface Provider {
+export type Provider = {
   id: string;
   name: string;
   apiKey: string;
   baseUrl?: string;
   model: string;
   enabled: boolean;
-}
+};
 
 // LLM.js service wrapper
 export class LLMService {
@@ -32,10 +32,12 @@ export class LLMService {
   }
 
   // Initialize the service with user's providers from server storage
-  async initialize() {
+  initialize() {
     try {
       const providers = getServerProviders();
-      if (providers) this.providers = providers;
+      if (providers) {
+        this.providers = providers;
+      }
 
       return true;
     } catch (error) {
@@ -50,7 +52,7 @@ export class LLMService {
   }
 
   // Add or update a provider
-  async addProvider(provider: Provider) {
+  addProvider(provider: Provider) {
     const existingIndex = this.providers.findIndex((p) => p.id === provider.id);
 
     if (existingIndex >= 0) {
@@ -62,7 +64,7 @@ export class LLMService {
   }
 
   // Remove a provider
-  async removeProvider(providerId: string) {
+  removeProvider(providerId: string) {
     this.providers = this.providers.filter((p) => p.id !== providerId);
     setServerProviders(this.providers);
   }
@@ -107,9 +109,11 @@ export class LLMService {
   }
 
   // Get available models for a provider
-  async getModels(providerId: string) {
+  getModels(providerId: string) {
     const provider = this.providers.find((p) => p.id === providerId);
-    if (!provider || !provider.model) return [];
+    if (!provider || !provider.model) {
+      return [];
+    }
 
     return [provider.model];
   }
@@ -137,12 +141,12 @@ export async function getProviders(): Promise<any[]> {
   }
 }
 
-export async function saveProviders(_userId: string, providers: any[]) {
+export function saveProviders(_userId: string, providers: any[]) {
   setServerProviders(providers);
   return true;
 }
 
-export async function getProviderConfig(providerId: string) {
+export function getProviderConfig(providerId: string) {
   const providers = getServerProviders() || [];
   const provider = providers.find((p: any) => p.id === providerId);
 

@@ -1,4 +1,3 @@
-import { formatISO } from "date-fns";
 import { toast } from "sonner";
 import { Artifact } from "@/components/create-artifact";
 import { DiffView } from "@/components/diffview";
@@ -29,7 +28,7 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
       suggestions,
     });
   },
-  onStreamPart: ({ streamPart, setMetadata, setArtifact }) => {
+  onStreamPart: ({ streamPart, setMetadata: _setMetadata, setArtifact }) => {
     // Note: "suggestion" type doesn't exist in CustomUIDataTypes, so we'll comment this out
     // for now to fix the build errors
     /*

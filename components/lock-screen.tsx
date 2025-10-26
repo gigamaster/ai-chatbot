@@ -17,7 +17,7 @@ export function LockScreen() {
   // Reset attempt count when the component mounts or when isLocked changes
   useEffect(() => {
     setAttemptCount(0);
-  }, [isLocked]);
+  }, []);
 
   // Only render the lock screen when the app is locked
   if (!isLocked) {
@@ -73,8 +73,8 @@ export function LockScreen() {
         setPasswordInput("");
         setError("");
         setAttemptCount(0);
-      } catch (error) {
-        console.error("Error resetting password:", error);
+      } catch (err) {
+        console.error("Error resetting password:", err);
         setError("Failed to reset password. Please try again.");
       }
     }

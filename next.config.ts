@@ -1,6 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { NextConfig } from "next";
-import { readFileSync } from "fs";
-import { join } from "path";
 
 // Read package.json directly to avoid import issues
 const packageJson = JSON.parse(

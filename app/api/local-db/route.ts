@@ -70,7 +70,9 @@ export async function POST(request: Request) {
         let deletedCount = 0;
         for (const chat of userChats) {
           const result = await deleteLocalChat(chat.id);
-          if (result) deletedCount++;
+          if (result) {
+            deletedCount++;
+          }
         }
         return NextResponse.json({ deletedCount });
       }
@@ -124,9 +126,12 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const operation = searchParams.get("operation");
-    const params = Object.fromEntries(searchParams.entries());
+    const params: Record<string, string> = Object.fromEntries(
+      searchParams.entries()
+    );
 
     // Remove operation from params
+    // biome-ignore lint/performance/noDelete: Need to remove the operation property from params
     delete params.operation;
 
     switch (operation) {
@@ -160,8 +165,8 @@ export async function GET(request: Request) {
 
         // Apply pagination
         if (params.limit) {
-          const limit = Number.parseInt(params.limit);
-          const offset = params.offset ? Number.parseInt(params.offset) : 0;
+          const limit = Number.parseInt(params.limit, 10);
+          const offset = params.offset ? Number.parseInt(params.offset, 10) : 0;
           sortedChats = sortedChats.slice(offset, offset + limit);
         }
 
@@ -214,9 +219,12 @@ export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const operation = searchParams.get("operation");
-    const params = Object.fromEntries(searchParams.entries());
+    const params: Record<string, string> = Object.fromEntries(
+      searchParams.entries()
+    );
 
     // Remove operation from params
+    // biome-ignore lint/performance/noDelete: Need to remove the operation property from params
     delete params.operation;
 
     switch (operation) {
@@ -230,7 +238,9 @@ export async function DELETE(request: Request) {
         let deletedCount = 0;
         for (const chat of userChats) {
           const result = await deleteLocalChat(chat.id);
-          if (result) deletedCount++;
+          if (result) {
+            deletedCount++;
+          }
         }
         return NextResponse.json({ deletedCount });
       }

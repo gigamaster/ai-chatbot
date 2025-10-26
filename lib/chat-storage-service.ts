@@ -4,16 +4,13 @@
  */
 
 import { getUserId } from "@/lib/auth-utils";
-import { generateUUID } from "@/lib/utils";
 
 /**
  * Generate a title from a user message
  * @param userMessage The user message to generate a title from
  * @returns A generated title string
  */
-export async function generateTitleFromUserMessage(
-  userMessage: any
-): Promise<string> {
+export function generateTitleFromUserMessage(userMessage: any): string {
   try {
     // Extract text content from the user message
     const textContent = userMessage.parts
@@ -61,7 +58,7 @@ export async function saveChatAfterFirstResponse(
     let title = "";
     try {
       title = await generateTitleFromUserMessage(userMessage);
-    } catch (titleError) {
+    } catch (_titleError) {
       title = "New Chat";
     }
 

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 
 export default function ClearDatabasePage() {
-  const handleClearDatabase = async () => {
+  const handleClearDatabase = () => {
     if (typeof window !== "undefined" && window.indexedDB) {
       try {
         // Close any open connections first

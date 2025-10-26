@@ -1,6 +1,4 @@
-import { formatISO } from "date-fns";
 import { toast } from "sonner";
-import { z } from "zod";
 import { Artifact } from "@/components/create-artifact";
 import { DiffView } from "@/components/diffview";
 import { DocumentSkeleton } from "@/components/document-skeleton";
@@ -13,46 +11,48 @@ import {
   UndoIcon,
 } from "@/components/icons";
 import { Editor } from "@/components/text-editor";
-import { updateDocumentPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocumentHandler } from "@/lib/artifacts/document-handler";
 import { getSuggestions } from "@/lib/client-actions";
-import { smoothStream, streamText } from "@/lib/custom-ai";
 import type { Suggestion } from "@/lib/local-db";
 
 // Server-side logic (runs client-side in browser)
 export const textDocumentHandler = createDocumentHandler<"text">({
   kind: "text",
-  onCreateDocument: async ({ title, dataStream }) => {
+  onCreateDocument: async ({ title: _title, dataStream: _dataStream }) => {
     let draftContent = "";
 
     // Get the language model dynamically
-    const languageModel = await getLanguageModel();
+    const _languageModel = await getLanguageModel();
 
     // Since our custom streamText is a mock, we'll return a mock response
-    const mockText = `# ${title}\n\nThis is a mock response for the text artifact.`;
+    const mockText = `# ${_title}\n\nThis is a mock response for the text artifact.`;
 
     draftContent = mockText;
 
-    dataStream.write({
+    _dataStream.write({
       type: "textDelta",
       data: mockText,
     });
 
     return draftContent;
   },
-  onUpdateDocument: async ({ document, description, dataStream }) => {
+  onUpdateDocument: async ({
+    document: _document,
+    description: _description,
+    dataStream: _dataStream,
+  }) => {
     let draftContent = "";
 
     // Get the language model dynamically
-    const languageModel = await getLanguageModel();
+    const _languageModel = await getLanguageModel();
 
     // Since our custom streamText is a mock, we'll return a mock response
-    const mockText = `${document.content}\n\nThis is an updated mock response for the text artifact.`;
+    const mockText = `${_document.content}\n\nThis is an updated mock response for the text artifact.`;
 
     draftContent = mockText;
 
-    dataStream.write({
+    _dataStream.write({
       type: "textDelta",
       data: mockText,
     });
@@ -76,7 +76,7 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
       suggestions,
     });
   },
-  onStreamPart: ({ streamPart, setMetadata, setArtifact }) => {
+  onStreamPart: ({ streamPart, setMetadata: _setMetadata, setArtifact }) => {
     // Note: "suggestion" type doesn't exist in CustomUIDataTypes, so we'll comment this out
     // for now to fix the build errors
     /*

@@ -16,7 +16,7 @@ export function getUserId(): string | null {
       if (storedUser) {
         try {
           const user = JSON.parse(storedUser);
-          if (user && user.id) {
+          if (user?.id) {
             return user.id;
           }
         } catch (parseError) {
@@ -35,11 +35,11 @@ export function getUserId(): string | null {
         {} as Record<string, string>
       );
 
-      const userCookie = cookies["local_user"];
+      const userCookie = cookies.local_user;
       if (userCookie) {
         try {
           const user = JSON.parse(decodeURIComponent(userCookie));
-          if (user && user.id) {
+          if (user?.id) {
             // Save to localStorage for future visits
             localStorage.setItem("local_user", JSON.stringify(user));
             return user.id;
@@ -79,7 +79,7 @@ export function getCurrentUser(): any | null {
         {} as Record<string, string>
       );
 
-      const userCookie = cookies["local_user"];
+      const userCookie = cookies.local_user;
       if (userCookie) {
         const user = JSON.parse(decodeURIComponent(userCookie));
         // Save to localStorage for future visits
@@ -103,6 +103,7 @@ export function saveUser(user: any): void {
       const userString = JSON.stringify(user);
       localStorage.setItem("local_user", userString);
       // Also set cookie for middleware to detect
+      // biome-ignore lint/suspicious/noDocumentCookie: Intentionally using document.cookie for middleware compatibility
       document.cookie = `local_user=${encodeURIComponent(userString)}; path=/;`;
     }
   } catch (error) {
@@ -118,6 +119,7 @@ export function removeUser(): void {
     if (typeof window !== "undefined") {
       localStorage.removeItem("local_user");
       // Also remove cookie if it exists
+      // biome-ignore lint/suspicious/noDocumentCookie: Intentionally using document.cookie for middleware compatibility
       document.cookie =
         "local_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     }

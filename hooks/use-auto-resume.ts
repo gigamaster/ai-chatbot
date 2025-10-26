@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useDataStream } from "@/components/data-stream-provider";
+import type { useDataStream } from "@/components/data-stream-provider";
 import type { UseChatHelpers } from "@/lib/custom-chat";
 import type { ChatMessage } from "@/lib/types";
 
@@ -16,42 +16,20 @@ export type UseAutoResumeParams = {
   status: UseChatHelpers["status"];
   // Add setDataStream to clear processed items
   setDataStream: ReturnType<typeof useDataStream>["setDataStream"];
+  // Add dataStream to process data stream items
+  dataStream: any[];
 };
 
 export function useAutoResume({
-  autoResume,
   initialMessages,
-  resumeStream,
-  setMessages,
   currentMessages,
+  setMessages,
   status,
+  resumeStream,
+  dataStream,
   setDataStream,
 }: UseAutoResumeParams) {
-  const { dataStream } = useDataStream();
-
-  // CRITICAL SAFEGUARD: Additional check to prevent autoResume on first message
-  // Count assistant messages in initial messages
-  const initialAssistantMessages = initialMessages.filter(
-    (msg) => msg.role === "assistant"
-  );
-  const hasInitialAssistantMessages = initialAssistantMessages.length > 0;
-
-  // If there are no assistant messages in initial messages, this is a new chat
-  // and we should NEVER autoResume regardless of the autoResume prop
-  if (!hasInitialAssistantMessages) {
-    return;
-  }
-
-  // Return early if autoResume is disabled - this is the key fix
-  if (!autoResume) {
-    return;
-  }
-
-  // Also return early if there are no initial messages (new chat session)
-  if (initialMessages.length === 0) {
-    return;
-  }
-
+  // Move useEffect to the top to fix the hook order issue
   useEffect(() => {
     const mostRecentMessage = initialMessages.at(-1);
 
@@ -61,7 +39,7 @@ export function useAutoResume({
 
     // we intentionally run this once
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoResume, initialMessages.at, resumeStream]);
+  }, [initialMessages.at, resumeStream]);
 
   useEffect(() => {
     // Don't process data stream if we're currently streaming or submitting
@@ -87,57 +65,58 @@ export function useAutoResume({
     for (let i = 0; i < dataStream.length; i++) {
       const dataPart = dataStream[i];
 
-      if (dataPart.type === "data-appendMessage") {
-        // Type guard to ensure data is a string before parsing
-        if (typeof dataPart.data === "string") {
-          const message = JSON.parse(dataPart.data);
+      if (
+        dataPart.type === "data-appendMessage" &&
+        typeof dataPart.data === "string"
+      ) {
+        const message = JSON.parse(dataPart.data);
 
-          // Check if message already exists in initial messages
-          const existingMessageInInitial = initialMessages.find(
-            (msg) => msg.id === message.id
-          );
+        // Check if message already exists in initial messages
+        const existingMessageInInitial = initialMessages.find(
+          (msg: ChatMessage) => msg.id === message.id
+        );
 
-          // Check if message exists in current messages
-          const existingMessageInCurrent = currentMessages.find(
-            (msg) => msg.id === message.id
-          );
+        // Check if message exists in current messages
+        const existingMessageInCurrent = currentMessages.find(
+          (msg: ChatMessage) => msg.id === message.id
+        );
 
-          // CRITICAL FIX: Also check if there's an assistant message at the end of current messages
-          // This handles the case where processMessage has created an assistant message but
-          // it might not yet be reflected in currentMessages due to React state update timing
-          const lastMessage = currentMessages[currentMessages.length - 1];
-          const isLastMessageAssistantWithSameId =
-            lastMessage &&
-            lastMessage.role === "assistant" &&
-            lastMessage.id === message.id;
+        // CRITICAL FIX: Also check if there's an assistant message at the end of current messages
+        // This handles the case where processMessage has created an assistant message but
+        // it might not yet be reflected in currentMessages due to React state update timing
+        const lastMessage = currentMessages.at(-1);
+        const isLastMessageAssistantWithSameId =
+          lastMessage &&
+          lastMessage.role === "assistant" &&
+          lastMessage.id === message.id;
 
-          // Only add the message if it doesn't exist in either initial or current messages
-          // This prevents duplication when viewing existing chats where all messages are already loaded
-          if (
-            !existingMessageInInitial &&
-            !existingMessageInCurrent &&
-            !isLastMessageAssistantWithSameId
-          ) {
-            setMessages((prev) => [...prev, message]);
-          }
-
-          // Mark this item as processed
-          processedIndices.push(i);
+        // Only add the message if it doesn't exist in either initial or current messages
+        // This prevents duplication when viewing existing chats where all messages are already loaded
+        if (
+          !existingMessageInInitial &&
+          !existingMessageInCurrent &&
+          !isLastMessageAssistantWithSameId
+        ) {
+          setMessages((prev: ChatMessage[]) => [...prev, message]);
         }
+
+        // Mark this item as processed
+        processedIndices.push(i);
       }
     }
 
     // Clear processed items from the data stream
     if (processedIndices.length > 0) {
-      setDataStream((prev) => {
+      setDataStream((prev: any[]) => {
         // Filter out processed items, keeping only unprocessed ones
         return prev
-          ? prev.filter((_, index) => !processedIndices.includes(index))
+          ? prev.filter(
+              (_: any, index: number) => !processedIndices.includes(index)
+            )
           : prev;
       });
     }
   }, [
-    autoResume,
     dataStream,
     initialMessages,
     currentMessages,
@@ -145,4 +124,9 @@ export function useAutoResume({
     status,
     setDataStream,
   ]);
+
+  // Early return if there are no initial messages (new chat session)
+  if (initialMessages.length === 0) {
+    return;
+  }
 }

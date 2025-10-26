@@ -3,22 +3,22 @@
 // All data remains on the user's device and is never sent to external servers
 // Complies with European data privacy standards
 
-interface ModelUsage {
+type ModelUsage = {
   requests: number;
   inputTokens: number;
   outputTokens: number;
   tokens: number;
   cost: number;
-}
+};
 
-interface UsageStats {
+type UsageStats = {
   totalRequests: number;
   totalInputTokens: number;
   totalOutputTokens: number;
   totalTokens: number;
   totalCost: number;
   byModel: Record<string, ModelUsage>;
-}
+};
 
 // In-memory cache for usage stats
 let usageStatsCache: UsageStats | null = null;

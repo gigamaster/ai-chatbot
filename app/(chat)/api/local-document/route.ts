@@ -4,7 +4,9 @@ import { getDocumentById, saveDocument } from "@/lib/local-db-queries";
 
 // Helper function to get local user from cookies
 function getLocalUserFromCookies(cookieHeader: string | null) {
-  if (!cookieHeader) return null;
+  if (!cookieHeader) {
+    return null;
+  }
 
   const cookies = cookieHeader.split(";").reduce(
     (acc, cookie) => {
@@ -15,12 +17,14 @@ function getLocalUserFromCookies(cookieHeader: string | null) {
     {} as Record<string, string>
   );
 
-  const localUserCookie = cookies["local_user"];
-  if (!localUserCookie) return null;
+  const localUserCookie = cookies.local_user;
+  if (!localUserCookie) {
+    return null;
+  }
 
   try {
     return JSON.parse(decodeURIComponent(localUserCookie));
-  } catch (e) {
+  } catch (_e) {
     return null;
   }
 }
@@ -96,7 +100,7 @@ export async function POST(request: Request) {
   return Response.json(savedDocument, { status: 200 });
 }
 
-export async function DELETE(request: Request) {
+export function DELETE(_request: Request) {
   // For local implementation, we'll just return a success response
   // since we don't have a delete function implemented yet
   return Response.json({ deletedCount: 0 }, { status: 200 });

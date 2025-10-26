@@ -1,9 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCallback, useEffect, useState } from "react";
 import { getAllAvailableProviders } from "@/lib/ai/providers";
 
 export function ModelSelector() {
@@ -14,12 +11,7 @@ export function ModelSelector() {
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Load available providers
-    loadAvailableProviders();
-  }, []);
-
-  const loadAvailableProviders = async () => {
+  const loadAvailableProviders = useCallback(async () => {
     try {
       setIsLoading(true);
       const providers = await getAllAvailableProviders();
@@ -42,22 +34,38 @@ export function ModelSelector() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadAvailableProviders();
+  }, [
+    // Load available providers
+    loadAvailableProviders,
+  ]);
 
   // Don't render the selector until we have data to avoid hydration issues
   if (isLoading) {
     return (
       <div className="space-y-4">
         <div className="space-y-2">
-          <label className="font-medium text-sm">Active AI Provider</label>
-          <div className="rounded-md bg-muted p-2 text-sm">
+          <label className="font-medium text-sm" htmlFor="loading-provider">
+            Active AI Provider
+          </label>
+          <div
+            className="rounded-md bg-muted p-2 text-sm"
+            id="loading-provider"
+          >
             Loading provider information...
           </div>
         </div>
 
         <div className="space-y-2">
-          <label className="font-medium text-sm">Model</label>
-          <div className="rounded-md bg-muted p-2 text-sm">Loading...</div>
+          <label className="font-medium text-sm" htmlFor="loading-model">
+            Model
+          </label>
+          <div className="rounded-md bg-muted p-2 text-sm" id="loading-model">
+            Loading...
+          </div>
         </div>
 
         <div className="pt-2 text-muted-foreground text-xs">
@@ -82,15 +90,22 @@ export function ModelSelector() {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <label className="font-medium text-sm">Active AI Provider</label>
-        <div className="rounded-md bg-muted p-2 text-sm">
+        <label className="font-medium text-sm" htmlFor="active-ai-provider">
+          Active AI Provider
+        </label>
+        <div
+          className="rounded-md bg-muted p-2 text-sm"
+          id="active-ai-provider"
+        >
           {providerInfo.name} {providerInfo.type === "custom" ? "(Custom)" : ""}
         </div>
       </div>
 
       <div className="space-y-2">
-        <label className="font-medium text-sm">Model</label>
-        <div className="rounded-md bg-muted p-2 text-sm">
+        <label className="font-medium text-sm" htmlFor="model-info">
+          Model
+        </label>
+        <div className="rounded-md bg-muted p-2 text-sm" id="model-info">
           {providerInfo.model}
         </div>
       </div>

@@ -34,7 +34,7 @@ export function LockProvider({ children }: { children: ReactNode }) {
   const [lastActivity, setLastActivity] = useState(Date.now());
   const [isInitialized, setIsInitialized] = useState(false);
 
-  const { user: localUser } = useLocalAuth();
+  const { user: _localUser } = useLocalAuth();
 
   // Load async lock state values from storage on mount
   useEffect(() => {
@@ -48,7 +48,7 @@ export function LockProvider({ children }: { children: ReactNode }) {
         const savedLockTime = localStorage.getItem("codemo_lock_time");
         if (savedLockTime) {
           const parsedTime = Number.parseInt(savedLockTime, 10);
-          if (!isNaN(parsedTime)) {
+          if (!Number.isNaN(parsedTime)) {
             setLockTime(parsedTime);
           }
         }
@@ -70,13 +70,17 @@ export function LockProvider({ children }: { children: ReactNode }) {
 
   // Save lock state to localStorage when it changes
   useEffect(() => {
-    if (!isInitialized) return; // Don't save until initialized
+    if (!isInitialized) {
+      return; // Don't save until initialized
+    }
     localStorage.setItem("codemo_is_locked", isLocked.toString());
   }, [isLocked, isInitialized]);
 
   // Activity tracking for auto-lock
   useEffect(() => {
-    if (!isInitialized) return; // Don't track until initialized
+    if (!isInitialized) {
+      return; // Don't track until initialized
+    }
 
     const handleActivity = () => {
       setLastActivity(Date.now());
@@ -112,7 +116,9 @@ export function LockProvider({ children }: { children: ReactNode }) {
   };
 
   const unlock = async (password: string) => {
-    if (!isInitialized) return false; // Don't unlock until initialized
+    if (!isInitialized) {
+      return false; // Don't unlock until initialized
+    }
 
     try {
       const storedPassword = await getStoredPassword();

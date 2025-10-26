@@ -13,14 +13,14 @@ function getLocalUserFromCookies(cookieHeader: string | null) {
 
   // More robust cookie parsing
   const cookies: Record<string, string> = {};
-  cookieHeader.split(";").forEach((cookie) => {
+  for (const cookie of cookieHeader.split(";")) {
     const [name, value] = cookie.trim().split("=");
     if (name && value !== undefined) {
       cookies[name.trim()] = value.trim();
     }
-  });
+  }
 
-  const localUserCookie = cookies["local_user"];
+  const localUserCookie = cookies.local_user;
   if (!localUserCookie) {
     return null;
   }
@@ -30,7 +30,7 @@ function getLocalUserFromCookies(cookieHeader: string | null) {
     const decoded = decodeURIComponent(localUserCookie);
     const parsed = JSON.parse(decoded);
     return parsed;
-  } catch (e) {
+  } catch (_e) {
     return null;
   }
 }

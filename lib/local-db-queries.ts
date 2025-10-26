@@ -12,7 +12,6 @@ import {
   getLocalMessages,
   getLocalProvider,
   getLocalSuggestions,
-  getLocalUser,
   getLocalUserByEmail,
   getLocalVotes,
   saveLocalChat as saveChatToDb,
@@ -25,8 +24,6 @@ import {
   saveLocalMessages as saveMessagesToDb,
 } from "@/lib/local-db";
 import { hashPassword } from "@/lib/lock-utils";
-import type { AppUsage } from "@/lib/usage";
-import { generateUUID } from "@/lib/utils";
 
 // User operations
 export async function getUser(email: string) {
@@ -212,7 +209,9 @@ export async function getLocalMessagesByChatId({ id }: { id: string }) {
 
 export async function saveLocalMessages({ messages }: { messages: any[] }) {
   try {
-    if (messages.length === 0) return true;
+    if (messages.length === 0) {
+      return true;
+    }
 
     const chatId = messages[0].chatId;
     return await saveMessagesToDb(chatId, messages);
@@ -221,9 +220,9 @@ export async function saveLocalMessages({ messages }: { messages: any[] }) {
   }
 }
 
-export async function getLocalMessageCountByUserId({
-  id,
-  differenceInHours,
+export function getLocalMessageCountByUserId({
+  id: _id,
+  differenceInHours: _differenceInHours,
 }: {
   id: string;
   differenceInHours: number;
@@ -458,6 +457,7 @@ export async function deleteCustomProvider(providerId: string) {
 }
 
 // Re-export functions for compatibility with existing code
+// biome-ignore lint/performance/noBarrelFile: This barrel file is used for backward compatibility across the codebase
 export {
   getLocalDocument as getDocumentById,
   getLocalSuggestions,

@@ -61,7 +61,9 @@ export function DatabaseStats() {
   }, [localUser?.id]);
 
   const exportDatabaseAsJson = async () => {
-    if (!localUser?.id) return;
+    if (!localUser?.id) {
+      return;
+    }
 
     try {
       // Collect all data
@@ -82,8 +84,7 @@ export function DatabaseStats() {
 
       // Create downloadable JSON file
       const dataStr = JSON.stringify(allData, null, 2);
-      const dataUri =
-        "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+      const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
       const exportFileDefaultName = `database-backup-${localUser.id}.json`;
       const linkElement = document.createElement("a");
       linkElement.setAttribute("href", dataUri);
@@ -95,7 +96,9 @@ export function DatabaseStats() {
   };
 
   const exportDatabaseAsZip = async () => {
-    if (!localUser?.id) return;
+    if (!localUser?.id) {
+      return;
+    }
 
     try {
       // Collect all data
@@ -103,7 +106,7 @@ export function DatabaseStats() {
       const chats = await getAllLocalChats(localUser.id);
 
       // Prepare files for ZIP
-      const files = [];
+      const files: any[] = [];
 
       // Add providers file
       files.push({

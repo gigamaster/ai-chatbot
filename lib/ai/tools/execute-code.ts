@@ -14,8 +14,8 @@ export const executeCode = () =>
           "The programming language of the code (e.g., 'javascript', 'python', 'java')"
         ),
     }),
-    execute: async (args: { code: string; language: string }) => {
-      const { code, language } = args;
+    execute: (args: { code: string; language: string }) => {
+      const { code: _code, language } = args;
 
       // Since our custom tool implementation is a mock, we'll just return a mock response
       return {

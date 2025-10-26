@@ -1,13 +1,10 @@
 "use client";
 
-import { Trigger } from "@radix-ui/react-select";
 import equal from "fast-deep-equal";
 import {
-  type ChangeEvent,
   type Dispatch,
   memo,
   type SetStateAction,
-  startTransition,
   useCallback,
   useEffect,
   useMemo,
@@ -16,31 +13,20 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
-import { SelectItem } from "@/components/ui/select";
-import { chatModels } from "@/lib/ai/models";
-import { saveChatModelAsCookie } from "@/lib/client-actions";
 import type { UIMessage } from "@/lib/custom-ai";
 import { getAllProviders } from "@/lib/provider-model-service";
-import type { Attachment, ChatMessage } from "@/lib/types";
+import type { Attachment } from "@/lib/types";
 import type { AppUsage } from "@/lib/usage";
 import { cn } from "@/lib/utils";
 import { Context } from "./elements/context";
 import {
   PromptInput,
-  PromptInputModelSelect,
-  PromptInputModelSelectContent,
   PromptInputSubmit,
   PromptInputTextarea,
   PromptInputToolbar,
   PromptInputTools,
 } from "./elements/prompt-input";
-import {
-  ArrowUpIcon,
-  ChevronDownIcon,
-  CpuIcon,
-  PaperclipIcon,
-  StopIcon,
-} from "./icons";
+import { ArrowUpIcon, PaperclipIcon, StopIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
 import { ProviderModelSelector } from "./provider-model-selector";
 import { SuggestedActions } from "./suggested-actions";
@@ -130,9 +116,9 @@ function PureMultimodalInput({
 
   useEffect(() => {
     const handleFileSelect = async (event: Event) => {
-      const input = event.target as HTMLInputElement;
-      if (input.files && input.files.length > 0) {
-        const files = Array.from(input.files);
+      const fileInput = event.target as HTMLInputElement;
+      if (fileInput.files && fileInput.files.length > 0) {
+        const files = Array.from(fileInput.files);
         setUploadQueue(files.map((file) => file.name));
 
         try {
@@ -193,7 +179,7 @@ function PureMultimodalInput({
     // Get the provider for this model
     const providers = await getAllProviders();
 
-    let selectedProvider = null;
+    let selectedProvider: any = null;
 
     // If we have a selected provider ID, use that to find the exact provider
     if (selectedProviderId) {
@@ -246,7 +232,7 @@ function PureMultimodalInput({
     window.history.replaceState({}, "", `/chat/${chatId}`);
 
     // Create parts that match the schema
-    const parts = [];
+    const parts: any[] = [];
 
     // Add file attachments (if any)
     for (const attachment of attachments) {
@@ -462,7 +448,7 @@ export const MultimodalInput = memo(
 function PureAttachmentsButton({
   fileInputRef,
   status,
-  selectedModelId,
+  selectedModelId: _selectedModelId,
 }: {
   fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
   status: any;
@@ -492,7 +478,7 @@ function PureAttachmentsButton({
 const AttachmentsButton = memo(PureAttachmentsButton);
 
 function PureModelSelectorCompact({
-  selectedModelId,
+  selectedModelId: _selectedModelId,
   selectedProviderId,
   onModelChange,
 }: {

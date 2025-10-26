@@ -110,7 +110,7 @@ async function getDb() {
   if (!dbInstance) {
     // Updated database version to 3 to add userId to providers object store
     dbInstance = await openDB<CodemoDB>("codemo-db", 3, {
-      upgrade(db, oldVersion, newVersion, transaction) {
+      upgrade(db, oldVersion, _newVersion, _transaction) {
         // Create stores for different data types
         if (!db.objectStoreNames.contains("chats")) {
           db.createObjectStore("chats", { keyPath: "id" });
@@ -164,9 +164,15 @@ async function getDb() {
           );
         }
       },
-      blocked() {},
-      blocking() {},
-      terminated() {},
+      blocked() {
+        // Intentionally empty - no action needed when blocked
+      },
+      blocking() {
+        // Intentionally empty - no action needed when blocking
+      },
+      terminated() {
+        // Intentionally empty - no action needed when terminated
+      },
     });
   }
 
@@ -223,7 +229,6 @@ export async function getAllLocalChats(userId: string) {
 
     const allChats = await db.getAll("chats");
     const filteredChats = allChats.filter((chat: any) => {
-
       const match = chat.userId === userId;
       return match;
     });
@@ -395,7 +400,7 @@ export async function getLocalSuggestions(documentId: string) {
 export async function saveLocalSuggestions(suggestions: any[]) {
   try {
     // Save each suggestion individually
-    const results = [];
+    const results: any[] = [];
     for (const suggestion of suggestions) {
       const result = await saveLocalSuggestion(suggestion);
       results.push(result);

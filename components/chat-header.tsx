@@ -22,21 +22,20 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useLocalAuth } from "@/contexts/local-auth-context";
+
 import { useLock } from "@/contexts/lock-context";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-interface ChatHeaderProps {
+type ChatHeaderProps = {
   chatId: string;
   isReadonly: boolean;
-}
+};
 
 function PureChatHeader({ isReadonly }: ChatHeaderProps) {
   const router = useRouter();
-  const pathname = usePathname();
+  const _pathname = usePathname();
   const { open } = useSidebar();
   const { lock, hasPassword } = useLock();
-  const { user: localUser } = useLocalAuth();
   const isMobile = useIsMobile();
   const [isAboutOpen, setIsAboutOpen] = useState(false);
 
@@ -130,19 +129,24 @@ function PureChatHeader({ isReadonly }: ChatHeaderProps) {
                     <li>
                       You also need an OpenAI Compatible Endpoint and a Model.
                     </li>
-                    <li>For example, visit the{" "}
+                    <li>
+                      For example, visit the{" "}
                       <a
-                        className="text-primary hover:text-blue-400" 
+                        className="text-primary hover:text-blue-400"
                         href="https://ai.google.dev/gemini-api/docs/openai"
                         rel="noopener"
                         target="_blank"
                       >
                         Google documentation
                       </a>{" "}
-                      to learn more about using the Gemini API with an OpenAI compatible endpoint.
+                      to learn more about using the Gemini API with an OpenAI
+                      compatible endpoint.
                     </li>
                     <li>
-                      Default base url: <code className="text-xs">https://generativelanguage.googleapis.com/v1beta/openai/</code>
+                      Default base url:{" "}
+                      <code className="text-xs">
+                        https://generativelanguage.googleapis.com/v1beta/openai/
+                      </code>
                     </li>
                   </ul>
                 </div>
@@ -167,7 +171,10 @@ function PureChatHeader({ isReadonly }: ChatHeaderProps) {
 
                 <div>
                   <h4 className="font-medium">Version:</h4>
-                  <div>Version {process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0'} built for Client-side Rendering</div>
+                  <div>
+                    Version {process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0"}{" "}
+                    built for Client-side Rendering
+                  </div>
                 </div>
 
                 <div className="text-muted-foreground text-xs">

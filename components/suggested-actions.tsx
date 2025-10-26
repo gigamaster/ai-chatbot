@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import { memo } from "react";
 import type { UseChatHelpers } from "@/lib/custom-chat";
-import type { ChatMessage } from "@/lib/types";
 import { Suggestion } from "./elements/suggestion";
 
 type SuggestedActionsProps = {
@@ -14,7 +13,7 @@ type SuggestedActionsProps = {
 
 function PureSuggestedActions({
   chatId,
-  sendMessage,
+  sendMessage: _sendMessage,
   setInput,
 }: SuggestedActionsProps) {
   const suggestedActions = [

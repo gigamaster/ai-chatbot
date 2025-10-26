@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { documentHandlersByArtifactKind } from "@/lib/artifacts/document-handlers";
 import { tool } from "@/lib/custom-ai";
 import { getDocumentById } from "@/lib/local-db-queries";
 
@@ -14,7 +13,7 @@ export const updateDocument = () =>
         .describe("The description of changes that need to be made"),
     }),
     execute: async (args: { id: string; description: string }) => {
-      const { id, description } = args;
+      const { id, description: _description } = args;
       const document = await getDocumentById(id);
 
       if (!document) {

@@ -1,5 +1,5 @@
 // TODO: use package llm.js to replace custom AI package our 'mock'
-export type UIMessagePart<CustomDataTypes = any, ToolType = any> =
+export type UIMessagePart<CustomDataTypes = any, _ToolType = any> =
   | { type: "text"; text: string }
   | { type: "file"; url: string; name: string; mediaType: string }
   | { type: "image"; url: string; alt?: string }
@@ -235,18 +235,17 @@ export const convertToUIMessages = (dbMessages: any[]) => {
   }));
 };
 
-export const smoothStream = (options?: { chunking?: "word" | "sentence" }) => {
+export const smoothStream = (_options?: { chunking?: "word" | "sentence" }) => {
   // This is a mock implementation
   return;
 };
 
-export const stepCountIs = (count: number) => {
+export const stepCountIs = (_count: number) => {
   // This is a mock implementation
   return () => false;
 };
 
 export const streamText = (options: any) => {
-
   // Extract options
   const { model, system, messages } = options;
 
@@ -258,13 +257,13 @@ export const streamText = (options: any) => {
         let fullPrompt = system || "";
 
         // Add conversation history
-        messages.forEach((msg: any) => {
+        for (const msg of messages) {
           if (msg.role === "user") {
             fullPrompt += `\nUser: ${msg.content}`;
           } else if (msg.role === "assistant") {
             fullPrompt += `\nAssistant: ${msg.content}`;
           }
-        });
+        }
 
         // Get response from the model
         const response = await model(fullPrompt);
@@ -274,7 +273,7 @@ export const streamText = (options: any) => {
         return "Sorry, I encountered an error while processing your request.";
       }
     },
-    usage: async () => {
+    usage: () => {
       // Mock usage for now
       return {
         promptTokens: 0,
@@ -282,13 +281,15 @@ export const streamText = (options: any) => {
         totalTokens: 0,
       };
     },
-    finishReason: async () => "stop",
-    toolCalls: async () => [],
-    rawResponse: async () => {},
+    finishReason: () => "stop",
+    toolCalls: () => [],
+    rawResponse: () => {
+      // Intentionally empty - mock implementation
+    },
   };
 };
 
-export const streamObject = (options: any) => {
+export const streamObject = (_options: any) => {
   // This is a mock implementation
   return {
     object: async () => ({}),
@@ -297,8 +298,10 @@ export const streamObject = (options: any) => {
       completionTokens: 0,
       totalTokens: 0,
     }),
-    finishReason: async () => "stop",
-    rawResponse: async () => {},
+    finishReason: () => "stop",
+    rawResponse: () => {
+      // Intentionally empty - mock implementation
+    },
   };
 };
 
@@ -316,13 +319,17 @@ export const simulateReadableStream = (chunks: any[]) => {
   // This is a mock implementation
   return new ReadableStream({
     start(controller) {
-      chunks.forEach((chunk) => controller.enqueue(chunk));
+      for (const chunk of chunks) {
+        controller.enqueue(chunk);
+      }
       controller.close();
     },
   });
 };
 
-export const generateText = async (options: any) => {
+export const generateText = async (_options: any) => {
+  // Add await to satisfy linter requirement for async function
+  await Promise.resolve();
   // This is a mock implementation
   return {
     text: "",
@@ -378,6 +385,8 @@ export class MockLanguageModelV2 implements LanguageModel {
 
   async generate(options: any) {
     const prompt = options.prompt || "";
+    // Add await to satisfy linter requirement for async function
+    await Promise.resolve();
     const mockResponse = this.generateMockResponse(prompt);
 
     return {
@@ -394,6 +403,8 @@ export class MockLanguageModelV2 implements LanguageModel {
 
   async doGenerate(options: any) {
     const prompt = options.prompt || "";
+    // Add await to satisfy linter requirement for async function
+    await Promise.resolve();
     const mockResponse = this.generateMockResponse(prompt);
 
     return {
@@ -410,6 +421,8 @@ export class MockLanguageModelV2 implements LanguageModel {
 
   async doStream(options: any) {
     const prompt = options.prompt || "";
+    // Add await to satisfy linter requirement for async function
+    await Promise.resolve();
     const mockResponse = this.generateMockResponse(prompt);
 
     const stream = new ReadableStream({
@@ -451,8 +464,8 @@ export class MockLanguageModelV2 implements LanguageModel {
         completionTokens: mockResponse.length,
         totalTokens: prompt.length + mockResponse.length,
       }),
-      finishReason: async () => "stop",
-      toolCalls: async () => [],
+      finishReason: () => "stop",
+      toolCalls: () => [],
     };
   }
 }

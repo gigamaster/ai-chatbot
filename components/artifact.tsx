@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
-import useSWR, { useSWRConfig } from "swr";
+import { useSWRConfig } from "swr";
 import { useDebounceCallback, useWindowSize } from "usehooks-ts";
 import { codeArtifact } from "@/artifacts/code/artifact";
 import { imageArtifact } from "@/artifacts/image/artifact";
@@ -18,10 +18,8 @@ import { sheetArtifact } from "@/artifacts/sheet/artifact";
 import { textArtifact } from "@/artifacts/text/artifact";
 import { useArtifact } from "@/hooks/use-artifact";
 import { clientDocumentService } from "@/lib/client-document-service";
-import type { UseChatHelpers } from "@/lib/custom-chat";
 import type { Document, Vote } from "@/lib/local-db";
-import type { Attachment, ChatMessage } from "@/lib/types";
-import { fetcher } from "@/lib/utils";
+import type { Attachment } from "@/lib/types";
 import { ArtifactActions } from "./artifact-actions";
 import { ArtifactCloseButton } from "./artifact-close-button";
 import { ArtifactMessages } from "./artifact-messages";
@@ -54,7 +52,7 @@ export type UIArtifact = {
 };
 
 // Custom fetcher for client document service that matches SWR's expected signature
-const documentFetcher = async (url: string) => {
+const _documentFetcher = async (url: string) => {
   // Extract document ID from the URL (format: client-document-{id})
   const id = url.replace("client-document-", "");
   return await clientDocumentService.getDocument(id);

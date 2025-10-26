@@ -1,10 +1,5 @@
-import { z } from "zod";
 import type { ArtifactKind } from "@/components/artifact";
-import { createDocumentHandler } from "@/lib/artifacts/document-handler";
-import {
-  artifactKinds,
-  documentHandlersByArtifactKind,
-} from "@/lib/artifacts/document-handlers";
+
 import type { UIMessageStreamWriter } from "@/lib/custom-ai";
 import type { CustomUIDataTypes } from "@/lib/types";
 import type { Document } from "../local-db";
@@ -30,8 +25,8 @@ type LocalSession = {
 
 // artifactKinds is now imported from document-handlers.ts
 
-// createDocumentHandler is now imported from document-handler.ts
-export { createDocumentHandler };
+// biome-ignore lint/performance/noBarrelFile: This barrel file is used for backward compatibility
+export { createDocumentHandler } from "@/lib/artifacts/document-handler";
 
 export type SaveDocumentProps = {
   id: string;

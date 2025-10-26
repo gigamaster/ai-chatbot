@@ -6,15 +6,13 @@ import {
   memo,
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
-import useSWR from "swr";
 import { useArtifact } from "@/hooks/use-artifact";
 import { clientDocumentService } from "@/lib/client-document-service";
 import type { Document } from "@/lib/local-db";
-import { cn, fetcher } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { ArtifactKind, UIArtifact } from "./artifact";
 import { CodeEditor } from "./code-editor";
 import { DocumentToolCall, DocumentToolResult } from "./document";
@@ -25,7 +23,7 @@ import { SpreadsheetEditor } from "./sheet-editor";
 import { Editor } from "./text-editor";
 
 // Custom fetcher for client document service
-const documentFetcher = async (key: string) => {
+const _documentFetcher = async (key: string) => {
   // Extract document ID from the key (format: client-document-{id})
   const id = key.replace("client-document-", "");
   return await clientDocumentService.getDocument(id);
@@ -214,11 +212,12 @@ const PureHitboxLayer = ({
   return (
     <div
       // Use inert instead of aria-hidden to properly handle focus
-      ref={hitboxRef}
-      inert={true}
       className="absolute top-0 left-0 z-10 size-full rounded-xl"
+      inert={true}
       onClick={handleClick}
-      role="presentation"
+      ref={hitboxRef}
+      role="button"
+      tabIndex={0}
     >
       <div className="flex w-full items-center justify-end p-4">
         <div className="absolute top-[13px] right-[9px] rounded-md p-2 hover:bg-zinc-100 dark:hover:bg-zinc-700">

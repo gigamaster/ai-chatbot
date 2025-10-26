@@ -13,15 +13,15 @@ import { useLocalAuth } from "@/contexts/local-auth-context";
 export default function LocalRegisterPage() {
   const router = useRouter();
   const { register } = useLocalAuth();
-  const [email, setEmail] = useState("");
+  const [email, _setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (formData: FormData) => {
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-    const confirmPassword = formData.get("confirmPassword") as string;
+    const emailValue = formData.get("email") as string;
+    const passwordValue = formData.get("password") as string;
+    const confirmPasswordValue = formData.get("confirmPassword") as string;
 
-    if (password !== confirmPassword) {
+    if (passwordValue !== confirmPasswordValue) {
       toast({
         type: "error",
         description: "Passwords do not match!",
@@ -32,7 +32,7 @@ export default function LocalRegisterPage() {
     setIsSubmitting(true);
 
     try {
-      const success = await register(email, password);
+      const success = await register(emailValue, passwordValue);
 
       if (success) {
         toast({

@@ -20,7 +20,7 @@ const PurePreviewMessage = ({
   regenerate,
   requiresScrollPadding,
   isReadonly,
-  vote,
+  vote: _vote,
 }: {
   chatId: string;
   message: ChatMessage;
