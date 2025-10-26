@@ -126,10 +126,13 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const operation = searchParams.get("operation");
-    const params = Object.fromEntries(searchParams.entries());
+    const params: Record<string, string> = Object.fromEntries(
+      searchParams.entries()
+    );
 
     // Remove operation from params
-    params.operation = undefined;
+    // biome-ignore lint/performance/noDelete: Need to remove the operation property from params
+    delete params.operation;
 
     switch (operation) {
       // User operations
@@ -216,10 +219,13 @@ export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const operation = searchParams.get("operation");
-    const params = Object.fromEntries(searchParams.entries());
+    const params: Record<string, string> = Object.fromEntries(
+      searchParams.entries()
+    );
 
     // Remove operation from params
-    params.operation = undefined;
+    // biome-ignore lint/performance/noDelete: Need to remove the operation property from params
+    delete params.operation;
 
     switch (operation) {
       case "deleteChat": {
