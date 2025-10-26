@@ -1,20 +1,17 @@
-import { cookies } from "next/headers";
+"use client";
+
 import Script from "next/script";
 import { AppSidebar } from "@/components/app-sidebar";
 // import { DataStreamProvider } from "@/components/data-stream-provider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
-export const experimental_ppr = true;
-
-export default async function Layout({
+export default function Layout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Get cookies for sidebar state only (no user auth needed in server component)
-  const cookieStore = await cookies();
-  const isCollapsed = cookieStore.get("sidebar_state")?.value !== "true";
-
+  // For static export, we can't use server-side cookies
+  // We'll handle sidebar state client-side instead
   return (
     <>
       <Script
@@ -22,7 +19,7 @@ export default async function Layout({
         strategy="beforeInteractive"
       />
       {/* Remove DataStreamProvider as it's no longer needed */}
-      <SidebarProvider defaultOpen={!isCollapsed}>
+      <SidebarProvider>
         <AppSidebar />
         <SidebarInset>{children}</SidebarInset>
       </SidebarProvider>

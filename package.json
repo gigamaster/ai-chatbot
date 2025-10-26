@@ -23,7 +23,8 @@
     "start": "next start",
     "lint": "npx ultracite@latest check",
     "format": "npx ultracite@latest fix",
-    "test": "cross-env PLAYWRIGHT=True pnpm exec playwright test"
+    "test": "cross-env PLAYWRIGHT=True pnpm exec playwright test",
+    "export": "next build && next export"
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.2",

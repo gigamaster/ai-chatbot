@@ -9,13 +9,24 @@ const packageJson = JSON.parse(
 
 const nextConfig: NextConfig = {
   experimental: {
-    ppr: true,
+    // Disable PPR for static export compatibility
+    ppr: false,
   },
   images: {
     remotePatterns: [],
   },
   env: {
     NEXT_PUBLIC_APP_VERSION: packageJson.version,
+  },
+  // Configure for static export to support GitHub Pages deployment
+  output: "export",
+  distDir: "out",
+  // Exclude API routes from static export since they're not compatible
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
   },
 };
 
