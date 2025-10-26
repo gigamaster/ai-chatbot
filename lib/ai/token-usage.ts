@@ -3,6 +3,10 @@
 // All data remains on the user's device and is never sent to external servers
 // Complies with European data privacy standards
 
+import { getPreference } from "../user-preferences-service";
+import { getTokenUsage, saveTokenUsage } from "../local-db";
+import { getUserId } from "../auth-utils";
+
 type ModelUsage = {
   requests: number;
   inputTokens: number;
@@ -90,13 +94,19 @@ const MODEL_COSTS: Record<
 };
 
 // Function to record model usage (stores data locally)
-export function recordModelUsage(
+export async function recordModelUsage(
   modelId: string,
   inputTokens: number,
   outputTokens: number
 ) {
-  // In a real implementation, this would store data in IndexedDB
-  // For now, we'll just update the in-memory cache to demonstrate the concept
+  // Check if data stream usage is enabled
+  const enableDataStreamUsage = await getPreference("enableDataStreamUsage");
+  
+  // If disabled, don't record usage
+  if (!enableDataStreamUsage) {
+    return;
+  }
+  
   const totalTokens = inputTokens + outputTokens;
 
   // Get cost estimation for the model
@@ -144,14 +154,29 @@ export function recordModelUsage(
   usageStatsCache.byModel[modelId].tokens += totalTokens;
   usageStatsCache.byModel[modelId].cost += cost;
 
-  // In a full implementation, we would persist this to IndexedDB here
+  // Persist to IndexedDB
+  const userId = getUserId();
+  if (userId) {
+    await saveTokenUsage(userId, usageStatsCache);
+  }
+
   console.log(
     `Recorded usage for model ${modelId}: ${inputTokens} input tokens, ${outputTokens} output tokens`
   );
 }
 
 // Function to get current usage statistics
-export function getUsageStats() {
+export async function getUsageStats() {
+  // Always load from IndexedDB to ensure we have the latest data
+  const userId = getUserId();
+  if (userId) {
+    const savedUsage = await getTokenUsage(userId);
+    if (savedUsage && savedUsage.usageStats) {
+      usageStatsCache = savedUsage.usageStats;
+    }
+  }
+  
+  // If no data in database, initialize with default values
   if (!usageStatsCache) {
     usageStatsCache = {
       totalRequests: 0,
@@ -179,9 +204,45 @@ export function resetUsageStats() {
   console.log("Usage statistics reset");
 }
 
-// Export token usage object
-export const tokenUsage = {
+// Update the tokenUsage object to handle the async recordModelUsage function
+const tokenUsageSync = {
+  // Wrap the async function to maintain the same interface
+  recordModelUsage: (
+    modelId: string,
+    inputTokens: number,
+    outputTokens: number
+  ) => {
+    // Execute the async function without waiting for the result
+    recordModelUsage(modelId, inputTokens, outputTokens).catch((error) => {
+      console.error("Error recording model usage:", error);
+    });
+  },
+  // Wrap the async getUsageStats function
+  getUsageStats: () => {
+    // For backward compatibility, return a sync version
+    // Note: This may not have the latest data if called immediately after updates
+    // Components that need fresh data should use the async version
+    return { ...usageStatsCache || {
+      totalRequests: 0,
+      totalInputTokens: 0,
+      totalOutputTokens: 0,
+      totalTokens: 0,
+      totalCost: 0,
+      byModel: {},
+    } };
+  },
+  resetUsageStats,
+};
+
+// Async version for components that can handle async operations
+export const tokenUsageAsync = {
   recordModelUsage,
   getUsageStats,
   resetUsageStats,
 };
+
+// Export token usage object
+export const tokenUsage = tokenUsageSync;
+
+// Async version for components that can handle async operations
+export { tokenUsageAsync as tokenUsageService };

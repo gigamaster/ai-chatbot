@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { tokenUsage as telemetry } from "../lib/ai/token-usage";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { tokenUsageService as telemetry } from "../lib/ai/token-usage";
+import { getUserPreferences, setPreference } from "@/lib/user-preferences-service";
 
 export function UsageStats() {
   const [usageStats, setUsageStats] = useState({
@@ -16,20 +19,39 @@ export function UsageStats() {
       { requests: number; tokens: number; cost: number }
     >,
   });
+  
+  const [enableDataStreamUsage, setEnableDataStreamUsage] = useState(true);
 
   useEffect(() => {
     // Get initial usage stats
-    const stats = telemetry.getUsageStats();
-    setUsageStats(stats);
+    const loadUsageStats = async () => {
+      const stats = await telemetry.getUsageStats();
+      setUsageStats(stats);
+    };
+    loadUsageStats();
 
     // Update stats every 5 seconds
     const interval = setInterval(() => {
-      const updatedStats = telemetry.getUsageStats();
-      setUsageStats(updatedStats);
+      loadUsageStats();
     }, 5000);
 
     return () => clearInterval(interval);
   }, []);
+
+  // Load user preferences
+  useEffect(() => {
+    const loadPreferences = async () => {
+      const preferences = await getUserPreferences();
+      setEnableDataStreamUsage(preferences.enableDataStreamUsage);
+    };
+    
+    loadPreferences();
+  }, []);
+
+  const handleToggleChange = async (checked: boolean) => {
+    setEnableDataStreamUsage(checked);
+    await setPreference("enableDataStreamUsage", checked);
+  };
 
   return (
     <div className="space-y-4">
@@ -57,6 +79,32 @@ export function UsageStats() {
           <div className="text-muted-foreground text-sm">Estimated Cost</div>
         </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Usage Preferences</CardTitle>
+          <p className="text-muted-foreground text-sm">
+            Control how usage data is collected and displayed
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="data-stream-usage" className="font-medium">
+                Enable Data Stream Provider Usage
+              </Label>
+              <p className="text-muted-foreground text-sm">
+                When enabled, detailed token usage data will be collected and displayed
+              </p>
+            </div>
+            <Switch
+              id="data-stream-usage"
+              checked={enableDataStreamUsage}
+              onCheckedChange={handleToggleChange}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

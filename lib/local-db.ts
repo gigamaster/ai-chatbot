@@ -89,6 +89,24 @@ interface CodemoDB extends DBSchema {
       userId: string; // Add userId for user isolation
     };
   };
+  userPreferences: {
+    key: string;
+    value: {
+      userId: string;
+      enableDataStreamUsage: boolean;
+      createdAt: string; // ISO date string
+      updatedAt: string; // ISO date string
+    };
+  };
+  tokenUsage: {
+    key: string;
+    value: {
+      userId: string;
+      usageStats: any;
+      createdAt: string; // ISO date string
+      updatedAt: string; // ISO date string
+    };
+  };
 }
 
 // Export types based on the database schema
@@ -108,8 +126,8 @@ async function getDb() {
   }
 
   if (!dbInstance) {
-    // Updated database version to 3 to add userId to providers object store
-    dbInstance = await openDB<CodemoDB>("codemo-db", 3, {
+    // Updated database version to 5 to add tokenUsage object store
+    dbInstance = await openDB<CodemoDB>("codemo-db", 5, {
       upgrade(db, oldVersion, _newVersion, _transaction) {
         // Create stores for different data types
         if (!db.objectStoreNames.contains("chats")) {
@@ -162,6 +180,16 @@ async function getDb() {
           console.warn(
             "Providers schema updated - existing providers may need to be re-added"
           );
+        }
+
+        // Create userPreferences object store (new in version 4)
+        if (!db.objectStoreNames.contains("userPreferences")) {
+          db.createObjectStore("userPreferences", { keyPath: "userId" });
+        }
+
+        // Create tokenUsage object store (new in version 5)
+        if (!db.objectStoreNames.contains("tokenUsage")) {
+          db.createObjectStore("tokenUsage", { keyPath: "userId" });
         }
       },
       blocked() {
@@ -564,6 +592,62 @@ export async function deleteLocalProvider(providerId: string) {
   } catch (error) {
     console.error("Failed to delete provider:", error);
     return false;
+  }
+}
+
+// User Preferences operations
+export async function saveUserPreferences(preferencesData: any) {
+  try {
+    const db = await getDb();
+
+    const result = await db.put("userPreferences", {
+      ...preferencesData,
+      updatedAt: new Date().toISOString(),
+    });
+    return result;
+  } catch (error) {
+    console.error("Failed to save user preferences locally:", error);
+    return null;
+  }
+}
+
+export async function getUserPreferences(userId: string) {
+  try {
+    const db = await getDb();
+
+    return await db.get("userPreferences", userId);
+  } catch (error) {
+    console.error("Failed to retrieve user preferences:", error);
+    return null;
+  }
+}
+
+// Token Usage operations
+export async function saveTokenUsage(userId: string, usageStats: any) {
+  try {
+    const db = await getDb();
+
+    const result = await db.put("tokenUsage", {
+      userId,
+      usageStats,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+    return result;
+  } catch (error) {
+    console.error("Failed to save token usage locally:", error);
+    return null;
+  }
+}
+
+export async function getTokenUsage(userId: string) {
+  try {
+    const db = await getDb();
+
+    return await db.get("tokenUsage", userId);
+  } catch (error) {
+    console.error("Failed to retrieve token usage:", error);
+    return null;
   }
 }
 

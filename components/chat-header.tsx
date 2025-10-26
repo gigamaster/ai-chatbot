@@ -172,7 +172,7 @@ function PureChatHeader({ isReadonly }: ChatHeaderProps) {
                 <div>
                   <h4 className="font-medium">Version:</h4>
                   <div>
-                    Version {process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0"}{" "}
+                    Version {process.env.NEXT_PUBLIC_APP_VERSION || "1.1.0"}{" "}
                     built for Client-side Rendering
                   </div>
                 </div>

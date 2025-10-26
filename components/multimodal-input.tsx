@@ -440,6 +440,10 @@ export const MultimodalInput = memo(
     if (prevProps.selectedProviderId !== nextProps.selectedProviderId) {
       return false;
     }
+    // Add check for usage prop
+    if (!equal(prevProps.usage, nextProps.usage)) {
+      return false;
+    }
 
     return true;
   }

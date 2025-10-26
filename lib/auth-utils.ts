@@ -102,8 +102,8 @@ export function saveUser(user: any): void {
     if (typeof window !== "undefined") {
       const userString = JSON.stringify(user);
       localStorage.setItem("local_user", userString);
-      // Also set cookie for middleware to detect
-      // biome-ignore lint/suspicious/noDocumentCookie: Intentionally using document.cookie for middleware compatibility
+      // Also set cookie for client-side authentication
+      // biome-ignore lint/suspicious/noDocumentCookie: Intentionally using document.cookie for authentication compatibility
       document.cookie = `local_user=${encodeURIComponent(userString)}; path=/;`;
     }
   } catch (error) {
@@ -119,7 +119,7 @@ export function removeUser(): void {
     if (typeof window !== "undefined") {
       localStorage.removeItem("local_user");
       // Also remove cookie if it exists
-      // biome-ignore lint/suspicious/noDocumentCookie: Intentionally using document.cookie for middleware compatibility
+      // biome-ignore lint/suspicious/noDocumentCookie: Intentionally using document.cookie for authentication compatibility
       document.cookie =
         "local_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     }

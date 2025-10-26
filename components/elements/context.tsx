@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import type { AppUsage } from "@/lib/usage";
+import { getModelById } from "@/lib/ai/models";
 import { cn } from "@/lib/utils";
 
 export type ContextProps = ComponentProps<"button"> & {
@@ -100,7 +101,8 @@ function InfoRow({
 
 export const Context = ({ className, usage, ...props }: ContextProps) => {
   const used = usage?.totalTokens ?? 0;
-  const max = undefined; // We don't have context information in our AppUsage type
+  const model = usage?.modelId ? getModelById(usage.modelId) : undefined;
+  const max = model?.contextLength;
   const hasMax = typeof max === "number" && Number.isFinite(max) && max > 0;
   const usedPercent = hasMax ? Math.min(100, (used / max) * 100) : 0;
   return (
@@ -115,7 +117,7 @@ export const Context = ({ className, usage, ...props }: ContextProps) => {
           type="button"
           {...props}
         >
-          <span className="hidden font-medium text-muted-foreground">
+          <span className="font-medium text-muted-foreground">
             {usedPercent.toFixed(1)}%
           </span>
           <ContextIcon percent={usedPercent} />

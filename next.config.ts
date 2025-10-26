@@ -7,6 +7,9 @@ const packageJson = JSON.parse(
   readFileSync(join(process.cwd(), "package.json"), "utf8")
 );
 
+// Check if we're in development mode
+const isDevelopment = process.env.NODE_ENV === "development";
+
 const nextConfig: NextConfig = {
   experimental: {
     // Disable PPR for static export compatibility
@@ -21,8 +24,10 @@ const nextConfig: NextConfig = {
   // Configure for static export to support GitHub Pages deployment
   output: "export",
   distDir: "out",
-  // Set the base path for GitHub Pages deployment
-  basePath: "/ai-chatbot",
+  // Set the base path conditionally:
+  // - Empty for development (http://localhost:3000/)
+  // - /ai-chatbot for production deployment to GitHub Pages
+  basePath: isDevelopment ? "" : "/ai-chatbot",
   // Exclude API routes from static export since they're not compatible
   eslint: {
     ignoreDuringBuilds: true,

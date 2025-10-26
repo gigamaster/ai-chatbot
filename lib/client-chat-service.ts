@@ -2,6 +2,7 @@ import { getUserId } from "@/lib/auth-utils";
 import { generateTitleFromUserMessage } from "@/lib/chat-storage-service";
 import { ChatSDKError } from "@/lib/errors";
 import { getProviderById } from "@/lib/provider-model-service";
+import { getPreference } from "@/lib/user-preferences-service";
 
 /**
  * Client-side chat service for GitHub Pages deployment
@@ -21,7 +22,7 @@ function convertMessagesToOpenAIFormat(messages: any[]) {
 }
 
 // Create SSE stream from fetch response
-async function createSSEStream(response: Response) {
+async function createSSEStream(response: Response, modelId: string) {
   // Add explicit await to satisfy linter
   await Promise.resolve();
   if (!response.body) {
@@ -64,6 +65,33 @@ async function createSSEStream(response: Response) {
 
             try {
               const parsed = JSON.parse(data);
+              
+              // Check if this is a final chunk with usage data
+              if (parsed.usage || parsed.usage_metadata) {
+                const usageData = parsed.usage || parsed.usage_metadata;
+                
+                // Extract token counts
+                const inputTokens = usageData.prompt_token_count || usageData.prompt_tokens || 0;
+                const outputTokens = usageData.candidates_token_count || usageData.completion_tokens || 0;
+                const totalTokens = usageData.total_token_count || usageData.total_tokens || (inputTokens + outputTokens);
+                
+                // Format as usage data for frontend
+                const usageDeltaData = `data: ${JSON.stringify({ 
+                  type: "data-usage", 
+                  data: { 
+                    inputTokens, 
+                    outputTokens, 
+                    totalTokens,
+                    promptTokens: inputTokens,
+                    completionTokens: outputTokens,
+                    modelId: modelId
+                  }, 
+                  transient: true 
+                })}\n\n`;
+                controller.enqueue(new TextEncoder().encode(usageDeltaData));
+              }
+              
+              // Process regular content delta
               if (parsed.choices?.[0]?.delta) {
                 const content = parsed.choices[0].delta.content;
 
@@ -160,12 +188,22 @@ export class ClientChatService {
       // Prepare messages in OpenAI format
       const messages = convertMessagesToOpenAIFormat([userMessage]);
 
+      // Check if data stream usage is enabled
+      const enableDataStreamUsage = await getPreference("enableDataStreamUsage");
+      
       // Prepare the request payload
-      const payload = {
+      const payload: any = {
         model: selectedModelId,
         messages,
         stream: true,
       };
+      
+      // Add stream_options if data stream usage is enabled
+      if (enableDataStreamUsage) {
+        payload.stream_options = {
+          include_usage: true
+        };
+      }
 
       // Prepare the headers
       const headers = {
@@ -205,7 +243,7 @@ export class ClientChatService {
       }
 
       // Create SSE stream from response
-      const stream = await createSSEStream(response);
+      const stream = await createSSEStream(response, selectedModelId);
 
       // Return a Response object that mimics the server API response
       // DO NOT SAVE THE CHAT HERE - let the custom chat hook handle it after first response
