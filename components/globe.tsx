@@ -66,7 +66,7 @@ export function Globe({
       theta: 0,
       dark: 1,
       scale: 1,
-      diffuse: 0.5,
+      diffuse: 0.74,
       opacity, // Use shorthand syntax
       mapSamples: 13_000, // Add numeric separators
       mapBrightness: 5,
@@ -74,16 +74,20 @@ export function Globe({
       markerColor: hexToRgb(markerColor),
       glowColor: hexToRgb(glowColor), // Apply hex to RGB conversion
       markers: [
+        { location: [34.0549, -118.2426], size: 0.07 }, // Los Angeles (North, West)
         { location: [-22.9068, -43.1729], size: 0.05 }, // Rio de Janeiro (South, West)
         { location: [40.7128, -74.006], size: 0.05 }, // New York (North, West)
         { location: [38.7223, -9.1393], size: 0.05 }, // Lisbon (North, West)
+        { location: [51.5074, -0.1278], size: 0.05 }, // London (North, West)
+        { location: [48.8566, 2.3522], size: 0.05 }, // Paris (North, West)
         { location: [47.3769, 8.5417], size: 0.05 }, // Zurich (North, East)
         { location: [41.8967, 12.4822], size: 0.05 }, // Rome (North, East)
-        { location: [30.0444, 31.2357], size: 0.1 }, // Cairo (North, East)
+        { location: [30.0444, 31.2357], size: 0.07 }, // Cairo (North, East)
         { location: [55.7569, 37.6151], size: 0.05 }, // Moscow (North, East)
-        { location: [-26.5056, 28.0337], size: 0.05 }, // Johannesburg (South, East)
-        { location: [28.6139, 77.2088], size: 0.1 }, // New Delhi (North, East)
-        { location: [39.9042, 116.4074], size: 0.1 }, // Beijing (North, East)
+        { location: [-26.2056, 28.0337], size: 0.05 }, // Johannesburg (South, East)
+        { location: [28.6139, 77.2088], size: 0.07 }, // New Delhi (North, East)
+        { location: [39.9042, 116.4074], size: 0.07 }, // Beijing (North, East)
+        { location: [35.6895, 139.6917], size: 0.05 }, // Tokyo (North, West)
       ],
       onRender: (state) => {
         // Called on every animation frame.

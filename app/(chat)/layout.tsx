@@ -10,11 +10,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   // We'll handle sidebar state client-side instead
   return (
     <>
+      {/* TODo: future version if we need to use pyodide
       <Script
         src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"
         strategy="beforeInteractive"
       />
-      {/* Remove DataStreamProvider as it's no longer needed */}
+      */}
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>{children}</SidebarInset>

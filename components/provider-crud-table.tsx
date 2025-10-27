@@ -230,7 +230,7 @@ export function ProviderCRUDTable() {
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button size="sm" variant="outline">
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="dark:text-red-500 h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>

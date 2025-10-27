@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { downloadZip } from "client-zip";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -156,6 +157,52 @@ export function DatabaseStats() {
     }
   };
 
+  const handleClearDatabase = () => {
+    if (typeof window !== "undefined" && window.indexedDB) {
+      // Show confirmation dialog
+      const confirmed = window.confirm(
+        "Are you sure you want to clear the database? This will remove all your providers, chats, and settings. This action cannot be undone."
+      );
+      
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        // Close any open connections first
+        const openReq = indexedDB.open("codemo-db");
+        openReq.onsuccess = () => {
+          const db = openReq.result;
+          db.close();
+        };
+
+        // Delete the database
+        const deleteReq = indexedDB.deleteDatabase("codemo-db");
+
+        deleteReq.onsuccess = () => {
+          toast.success(
+            "Database cleared successfully. Please refresh the page."
+          );
+        };
+
+        deleteReq.onerror = () => {
+          toast.error("Error clearing database");
+        };
+
+        deleteReq.onblocked = () => {
+          toast.warning(
+            "Database clearing blocked. Please close all other tabs and try again."
+          );
+        };
+      } catch (error) {
+        console.error("Error:", error);
+        toast.error("Failed to clear database");
+      }
+    } else {
+      toast.error("IndexedDB not supported in this browser");
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -224,7 +271,7 @@ export function DatabaseStats() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border p-3">
+            <div className="flex items-center justify-between rounded-lg bg-secondary/50 p-3">
               <div className="font-medium">
                 {localUser?.email || databaseStats.userId}
               </div>
@@ -244,6 +291,14 @@ export function DatabaseStats() {
                   variant="secondary"
                 >
                   Export Zip
+                </Button>
+
+                <Button
+                  onClick={handleClearDatabase}
+                  variant="destructive"
+                  size="sm"
+                >
+                  Clear Database
                 </Button>
               </div>
             </div>

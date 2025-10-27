@@ -89,18 +89,15 @@ export function UsageStats() {
           <p className="text-muted-foreground text-sm">
             Control how usage data is collected and displayed
           </p>
+          <p className="text-muted-foreground text-sm">
+            When enabled, detailed token usage data will be collected and displayed
+          </p>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="data-stream-usage" className="font-medium">
-                Enable Data Stream Provider Usage
-              </Label>
-              <p className="text-muted-foreground text-sm">
-                When enabled, detailed token usage data will be collected and
-                displayed
-              </p>
-            </div>
+          <div className="flex items-center justify-between rounded-lg bg-secondary/50 p-3">
+            <Label htmlFor="data-stream-usage" className="font-normal">
+              Enable Data Stream Provider Usage
+            </Label>
             <Switch
               id="data-stream-usage"
               checked={enableDataStreamUsage}
@@ -123,7 +120,7 @@ export function UsageStats() {
             {Object.entries(usageStats.byModel).length > 0 ? (
               Object.entries(usageStats.byModel).map(([modelId, stats]) => (
                 <div
-                  className="flex items-center justify-between rounded-lg border p-3"
+                  className="flex items-center justify-between rounded-lg bg-secondary/50 p-3"
                   key={modelId}
                 >
                   <div className="font-medium">{modelId}</div>
