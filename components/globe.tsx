@@ -66,7 +66,7 @@ export function Globe({
       theta: 0,
       dark: 1,
       scale: 1,
-      diffuse: 0.74,
+      diffuse: 0.5,
       opacity, // Use shorthand syntax
       mapSamples: 13_000, // Add numeric separators
       mapBrightness: 5,
@@ -81,7 +81,7 @@ export function Globe({
         { location: [41.8967, 12.4822], size: 0.05 }, // Rome (North, East)
         { location: [30.0444, 31.2357], size: 0.1 }, // Cairo (North, East)
         { location: [55.7569, 37.6151], size: 0.05 }, // Moscow (North, East)
-        { location: [-26.2056, 28.0337], size: 0.05 }, // Johannesburg (South, East)
+        { location: [-26.5056, 28.0337], size: 0.05 }, // Johannesburg (South, East)
         { location: [28.6139, 77.2088], size: 0.1 }, // New Delhi (North, East)
         { location: [39.9042, 116.4074], size: 0.1 }, // Beijing (North, East)
       ],

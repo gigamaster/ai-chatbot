@@ -8,10 +8,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/gigamaster/ai-chatbot"><strong>GitHub Repository</strong></a> ·
   <a href="#features"><strong>Features</strong></a> ·
+  <a href="#how-to-use"><strong>How To Use</strong></a> ·
   <a href="#model-providers"><strong>Model Providers</strong></a> ·
-  <a href="#running-locally"><strong>Local storage</strong></a>
+  <a href="#security"><strong>Local storage</strong></a>
 </p>
 
 Codemo provides a suite of open-source tools designed for digital nomads on GitHub,   
@@ -43,32 +43,57 @@ and adheres to European data privacy standards.
 ## Model Providers
 
 Codemo AI-chatbot uses an AI Gateway to access multiple AI models through a unified interface.  
-The default configuration includes models with free tiers.
+Its default configuration is set to access these models using the OpenAI libraries and the REST API.
+
 
 ### AI Gateway Authentication
 
 You need to provide an AI Gateway API key by setting the provider `API_KEY` and endpoint URL `baseUrl`.  
 This ensures that the AI Gateway can authenticate and connect to the appropriate services.
 
+**Configure AI providers**
+
+To use the AI chatbot, you need to configure at least one AI provider in the settings:
+
+1. Go to the **Settings** page
+2. Navigate to the **Providers** section
+3. Add a new AI provider by specifying:
+   - Provider name (e.g., OpenAI, Anthropic, Google)
+   - Model name (e.g., gpt-4, claude-3-opus, gemini-pro)
+   - Base URL for the API endpoint
+   - API key for authentication
+
 **AI Model**  
 
-You can switch to direct LLM providers like [OpenAI Codex](https://openai.com/blog/openai-codex), [Anthropic Claude Code](https://anthropic.com), and [other code-optimized models](https://ai-sdk.dev/providers/ai-sdk-providers) from the multi-modal frontend to access the best models for your specific needs.
+You can switch to direct LLM providers like [OpenAI Codex](https://openai.com/blog/openai-codex), [Anthropic Claude Code](https://anthropic.com), [Google Gemini](https://ai.google.dev/gemini-api/docs/openai),  
+and other models from the multi-modal frontend to access the best models for your specific needs.
 
-## Running locally
+**Token Usage Tracking**
 
-Using pnpm:
+You can also enable or disable token usage tracking in the settings: 
 
-1. Install the required dependencies: `pnpm install`
-2. Run the development server: `pnpm dev`
+- Toggle **Data Stream Provider Usage** to control whether token usage  
+  information is collected and displayed
+- When enabled, you'll see token consumption statistics in the chat interface and settings page
 
-```
-pnpm install
-pnpm dev
-```
-
-AI-chatbot should now be running on [localhost:3000](http://localhost:3000).
+Once configured, you can select your preferred provider and model when starting a new chat.
 
 ## How to Use
+
+### User account 
+
+To begin, simply create your account and set a password.  
+This process automatically creates a local database and  
+encrypts your data for protection against unauthorized access.
+
+### Chatting with AI-chatbot
+
+To chat with AI-chatbot, follow these steps:
+1. **Start a New Chat**:
+   - Click the "New Chat" button in the sidebar
+   - Alternatively, you can use the "New Chat" option in the user menu
+
+
 
 ### Locking the Application
 
@@ -126,10 +151,10 @@ AI-chatbot application follows a secure pattern for client-side applications:
 
 For a client-side application like AI-chatbot, this approach is actually quite secure:
 
-✅ **Keys aren't exposed in code** - They're stored in each user's browser only
-✅ **No server-side storage** - You don't store other people's API keys
-✅ **User control** - Users control their own keys and can revoke them anytime
-✅ **Standard practice** - This is how most client-side AI apps should work
+✅ **Keys aren't exposed in code** - They're stored in each user's browser only  
+✅ **No server-side storage** - You don't store other people's API keys  
+✅ **User control** - Users control their own keys and can revoke them anytime  
+✅ **Standard practice** - This is how most client-side AI apps should work  
 
 ### Comparison to Server-Side Proxy Approach
 
@@ -158,6 +183,21 @@ Our implementation is actually following security best practices for a client-si
 The concern raised by the AI providers would be more relevant for applications that store and use  
 others' API keys on a server, which AI-chatbot application doesn't do.  
 The AI chatbot is working correctly and securely!
+
+## Running locally
+
+Using pnpm:
+
+1. Install the required dependencies: `pnpm install`
+2. Run the development server: `pnpm dev`
+
+```
+pnpm install
+pnpm dev
+```
+
+AI-chatbot should now be running on [localhost:3000](http://localhost:3000).
+
 
 ### License
 
