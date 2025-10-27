@@ -9,7 +9,10 @@ import { generateUUID } from "@/lib/utils";
 
 export default function Page() {
   const router = useRouter();
-  const [localUser, setLocalUser] = useState<{ id: string; email: string } | null>(null);
+  const [localUser, setLocalUser] = useState<{
+    id: string;
+    email: string;
+  } | null>(null);
   const [chatModel, setChatModel] = useState<string | null>(null);
   const [providerId, setProviderId] = useState<string | null>(null);
   const [id] = useState<string>(generateUUID());
@@ -43,7 +46,7 @@ export default function Page() {
 
     const modelIdFromCookie = cookies["chat-model"];
     const providerIdFromCookie = cookies["chat-provider"];
-    
+
     setChatModel(modelIdFromCookie || null);
     setProviderId(providerIdFromCookie || null);
   }, [router]);

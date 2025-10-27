@@ -65,32 +65,39 @@ async function createSSEStream(response: Response, modelId: string) {
 
             try {
               const parsed = JSON.parse(data);
-              
+
               // Check if this is a final chunk with usage data
               if (parsed.usage || parsed.usage_metadata) {
                 const usageData = parsed.usage || parsed.usage_metadata;
-                
+
                 // Extract token counts
-                const inputTokens = usageData.prompt_token_count || usageData.prompt_tokens || 0;
-                const outputTokens = usageData.candidates_token_count || usageData.completion_tokens || 0;
-                const totalTokens = usageData.total_token_count || usageData.total_tokens || (inputTokens + outputTokens);
-                
+                const inputTokens =
+                  usageData.prompt_token_count || usageData.prompt_tokens || 0;
+                const outputTokens =
+                  usageData.candidates_token_count ||
+                  usageData.completion_tokens ||
+                  0;
+                const totalTokens =
+                  usageData.total_token_count ||
+                  usageData.total_tokens ||
+                  inputTokens + outputTokens;
+
                 // Format as usage data for frontend
-                const usageDeltaData = `data: ${JSON.stringify({ 
-                  type: "data-usage", 
-                  data: { 
-                    inputTokens, 
-                    outputTokens, 
+                const usageDeltaData = `data: ${JSON.stringify({
+                  type: "data-usage",
+                  data: {
+                    inputTokens,
+                    outputTokens,
                     totalTokens,
                     promptTokens: inputTokens,
                     completionTokens: outputTokens,
-                    modelId: modelId
-                  }, 
-                  transient: true 
+                    modelId, // Use shorthand syntax
+                  },
+                  transient: true,
                 })}\n\n`;
                 controller.enqueue(new TextEncoder().encode(usageDeltaData));
               }
-              
+
               // Process regular content delta
               if (parsed.choices?.[0]?.delta) {
                 const content = parsed.choices[0].delta.content;
@@ -189,19 +196,21 @@ export class ClientChatService {
       const messages = convertMessagesToOpenAIFormat([userMessage]);
 
       // Check if data stream usage is enabled
-      const enableDataStreamUsage = await getPreference("enableDataStreamUsage");
-      
+      const enableDataStreamUsage = await getPreference(
+        "enableDataStreamUsage"
+      );
+
       // Prepare the request payload
       const payload: any = {
         model: selectedModelId,
         messages,
         stream: true,
       };
-      
+
       // Add stream_options if data stream usage is enabled
       if (enableDataStreamUsage) {
         payload.stream_options = {
-          include_usage: true
+          include_usage: true,
         };
       }
 

@@ -14,13 +14,13 @@ describe("token-usage", () => {
   describe("recordModelUsage", () => {
     it("should record usage when data stream usage is enabled", async () => {
       (getPreference as jest.Mock).mockResolvedValue(true);
-      
+
       // Call recordModelUsage
       tokenUsage.recordModelUsage("test-model", 10, 20);
-      
+
       // Wait for the async operation to complete
-      await new Promise(resolve => setTimeout(resolve, 0));
-      
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
       // Check that usage stats were recorded
       const stats = tokenUsage.getUsageStats();
       expect(stats.totalRequests).toBe(1);
@@ -30,16 +30,16 @@ describe("token-usage", () => {
 
     it("should not record usage when data stream usage is disabled", async () => {
       (getPreference as jest.Mock).mockResolvedValue(false);
-      
+
       // Reset stats first
       tokenUsage.resetUsageStats();
-      
+
       // Call recordModelUsage
       tokenUsage.recordModelUsage("test-model", 10, 20);
-      
+
       // Wait for the async operation to complete
-      await new Promise(resolve => setTimeout(resolve, 0));
-      
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
       // Check that usage stats were not recorded
       const stats = tokenUsage.getUsageStats();
       expect(stats.totalRequests).toBe(0);

@@ -18,7 +18,7 @@ export async function getUserPreferences() {
     }
 
     const preferences = await getLocalUserPreferences(userId);
-    
+
     // If no preferences exist, return defaults
     if (!preferences) {
       return DEFAULT_PREFERENCES;
@@ -71,6 +71,6 @@ export async function setPreference(key: string, value: any) {
     ...currentPreferences,
     [key]: value,
   };
-  
+
   return await saveUserPreferences(newPreferences);
 }

@@ -5,7 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { tokenUsageService as telemetry } from "../lib/ai/token-usage";
-import { getUserPreferences, setPreference } from "@/lib/user-preferences-service";
+import {
+  getUserPreferences,
+  setPreference,
+} from "@/lib/user-preferences-service";
 
 export function UsageStats() {
   const [usageStats, setUsageStats] = useState({
@@ -19,7 +22,7 @@ export function UsageStats() {
       { requests: number; tokens: number; cost: number }
     >,
   });
-  
+
   const [enableDataStreamUsage, setEnableDataStreamUsage] = useState(true);
 
   useEffect(() => {
@@ -44,7 +47,7 @@ export function UsageStats() {
       const preferences = await getUserPreferences();
       setEnableDataStreamUsage(preferences.enableDataStreamUsage);
     };
-    
+
     loadPreferences();
   }, []);
 
@@ -94,7 +97,8 @@ export function UsageStats() {
                 Enable Data Stream Provider Usage
               </Label>
               <p className="text-muted-foreground text-sm">
-                When enabled, detailed token usage data will be collected and displayed
+                When enabled, detailed token usage data will be collected and
+                displayed
               </p>
             </div>
             <Switch

@@ -55,25 +55,29 @@ export function Chat({
     const loadInitialUsage = async () => {
       try {
         const latestUsageStats = await tokenUsageService.getUsageStats();
-        
+
         // Find the most recently used model to get its usage data
         let latestModelId = "";
-        let latestModelUsage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
-        
+        let latestModelUsage = {
+          inputTokens: 0,
+          outputTokens: 0,
+          totalTokens: 0,
+        };
+
         // Get the model with the most tokens
         let maxTokens = 0;
-        Object.entries(latestUsageStats.byModel).forEach(([modelId, stats]: [string, any]) => {
+        for (const [modelId, stats] of Object.entries(latestUsageStats.byModel)) {
           if (stats.tokens > maxTokens) {
             maxTokens = stats.tokens;
             latestModelId = modelId;
             latestModelUsage = {
               inputTokens: stats.inputTokens || 0,
               outputTokens: stats.outputTokens || 0,
-              totalTokens: stats.tokens || 0
+              totalTokens: stats.tokens || 0,
             };
           }
-        });
-        
+        }
+
         // Update the usage state with the latest aggregated data
         setUsage({
           inputTokens: latestModelUsage.inputTokens,
@@ -81,13 +85,13 @@ export function Chat({
           totalTokens: latestModelUsage.totalTokens,
           promptTokens: latestModelUsage.inputTokens,
           completionTokens: latestModelUsage.outputTokens,
-          modelId: latestModelId
+          modelId: latestModelId,
         });
       } catch (error) {
         console.error("Failed to load initial usage data:", error);
       }
     };
-    
+
     // Only load if we don't already have initial context
     if (!initialLastContext) {
       loadInitialUsage();
@@ -162,10 +166,14 @@ export function Chat({
           setUsage({
             inputTokens: usageData.inputTokens || 0,
             outputTokens: usageData.outputTokens || 0,
-            totalTokens: usageData.totalTokens || (usageData.inputTokens + usageData.outputTokens) || 0,
+            totalTokens:
+              usageData.totalTokens ||
+              usageData.inputTokens + usageData.outputTokens ||
+              0,
             promptTokens: usageData.promptTokens || usageData.inputTokens || 0,
-            completionTokens: usageData.completionTokens || usageData.outputTokens || 0,
-            modelId: usageData.modelId || ""
+            completionTokens:
+              usageData.completionTokens || usageData.outputTokens || 0,
+            modelId: usageData.modelId || "",
           });
         }
       }
@@ -174,36 +182,52 @@ export function Chat({
       if (usageData) {
         // Update the usage data directly from the streaming response
         // The usageData contains the current total, not incremental values
-        setUsage(prevUsage => ({
+        setUsage((prevUsage) => ({
           inputTokens: usageData.inputTokens || prevUsage?.inputTokens || 0,
           outputTokens: usageData.outputTokens || prevUsage?.outputTokens || 0,
-          totalTokens: (usageData.inputTokens || prevUsage?.inputTokens || 0) + (usageData.outputTokens || prevUsage?.outputTokens || 0),
-          promptTokens: usageData.promptTokens || usageData.inputTokens || prevUsage?.promptTokens || prevUsage?.inputTokens || 0,
-          completionTokens: usageData.completionTokens || usageData.outputTokens || prevUsage?.completionTokens || prevUsage?.outputTokens || 0,
-          modelId: usageData.modelId || prevUsage?.modelId || ""
+          totalTokens:
+            (usageData.inputTokens || prevUsage?.inputTokens || 0) +
+            (usageData.outputTokens || prevUsage?.outputTokens || 0),
+          promptTokens:
+            usageData.promptTokens ||
+            usageData.inputTokens ||
+            prevUsage?.promptTokens ||
+            prevUsage?.inputTokens ||
+            0,
+          completionTokens:
+            usageData.completionTokens ||
+            usageData.outputTokens ||
+            prevUsage?.completionTokens ||
+            prevUsage?.outputTokens ||
+            0,
+          modelId: usageData.modelId || prevUsage?.modelId || "",
         }));
       } else {
         // Fallback to fetching from database if no usage data provided
         const latestUsageStats = await tokenUsageService.getUsageStats();
-        
+
         // Find the most recently used model to get its usage data
         let latestModelId = "";
-        let latestModelUsage = { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
-        
+        let latestModelUsage = {
+          inputTokens: 0,
+          outputTokens: 0,
+          totalTokens: 0,
+        };
+
         // Get the model with the most tokens
         let maxTokens = 0;
-        Object.entries(latestUsageStats.byModel).forEach(([modelId, stats]: [string, any]) => {
+        for (const [modelId, stats] of Object.entries(latestUsageStats.byModel)) {
           if (stats.tokens > maxTokens) {
             maxTokens = stats.tokens;
             latestModelId = modelId;
             latestModelUsage = {
               inputTokens: stats.inputTokens || 0,
               outputTokens: stats.outputTokens || 0,
-              totalTokens: stats.tokens || 0
+              totalTokens: stats.tokens || 0,
             };
           }
-        });
-        
+        }
+
         // Update the usage state with the latest aggregated data
         setUsage({
           inputTokens: latestModelUsage.inputTokens,
@@ -211,7 +235,7 @@ export function Chat({
           totalTokens: latestModelUsage.totalTokens,
           promptTokens: latestModelUsage.inputTokens,
           completionTokens: latestModelUsage.outputTokens,
-          modelId: latestModelId
+          modelId: latestModelId,
         });
       }
     },

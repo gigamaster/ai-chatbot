@@ -101,12 +101,12 @@ export async function recordModelUsage(
 ) {
   // Check if data stream usage is enabled
   const enableDataStreamUsage = await getPreference("enableDataStreamUsage");
-  
+
   // If disabled, don't record usage
   if (!enableDataStreamUsage) {
     return;
   }
-  
+
   const totalTokens = inputTokens + outputTokens;
 
   // Get cost estimation for the model
@@ -171,11 +171,11 @@ export async function getUsageStats() {
   const userId = getUserId();
   if (userId) {
     const savedUsage = await getTokenUsage(userId);
-    if (savedUsage && savedUsage.usageStats) {
+    if (savedUsage?.usageStats) {
       usageStatsCache = savedUsage.usageStats;
     }
   }
-  
+
   // If no data in database, initialize with default values
   if (!usageStatsCache) {
     usageStatsCache = {
@@ -222,14 +222,16 @@ const tokenUsageSync = {
     // For backward compatibility, return a sync version
     // Note: This may not have the latest data if called immediately after updates
     // Components that need fresh data should use the async version
-    return { ...usageStatsCache || {
-      totalRequests: 0,
-      totalInputTokens: 0,
-      totalOutputTokens: 0,
-      totalTokens: 0,
-      totalCost: 0,
-      byModel: {},
-    } };
+    return {
+      ...(usageStatsCache || {
+        totalRequests: 0,
+        totalInputTokens: 0,
+        totalOutputTokens: 0,
+        totalTokens: 0,
+        totalCost: 0,
+        byModel: {},
+      }),
+    };
   },
   resetUsageStats,
 };

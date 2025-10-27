@@ -291,23 +291,25 @@ export function useCustomChat(options: UseChatOptions): UseChatHelpers {
                   } else if (parsed.type === "data-usage") {
                     // Handle usage data from the stream
                     const usageData = parsed.data;
-                    const modelId = messageOptions?.selectedModelId || "unknown-model";
-                    
+                    const modelId =
+                      messageOptions?.selectedModelId || "unknown-model";
+
                     // Record the usage data
                     tokenUsage.recordModelUsage(
                       modelId,
                       usageData.inputTokens || 0,
                       usageData.outputTokens || 0
                     );
-                    
+
                     // Call onUsageUpdate callback if provided to notify UI of updated usage data
                     if (messageOptions?.onUsageUpdate) {
-                      const updateResult = messageOptions.onUsageUpdate(usageData);
+                      const updateResult =
+                        messageOptions.onUsageUpdate(usageData);
                       if (updateResult instanceof Promise) {
                         await updateResult;
                       }
                     }
-                    
+
                     // Call onData callback if provided
                     if (messageOptions?.onData) {
                       messageOptions.onData(parsed);

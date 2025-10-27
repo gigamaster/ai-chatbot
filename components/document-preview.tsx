@@ -215,6 +215,15 @@ const PureHitboxLayer = ({
       className="absolute top-0 left-0 z-10 size-full rounded-xl"
       inert={true}
       onClick={handleClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          // Create a mock event object with currentTarget
+          const mockEvent = {
+            currentTarget: e.currentTarget
+          } as unknown as MouseEvent<HTMLElement>;
+          handleClick(mockEvent);
+        }
+      }}
       ref={hitboxRef}
       role="button"
       tabIndex={0}
