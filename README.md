@@ -1,5 +1,5 @@
 <a href="https://github.com/gigamaster/ai-chatbot">
-  <img alt="AI Chatbot - Codemo Digital Nomad" src="app/(chat)/opengraph-image.png">
+  <img alt="AI Chatbot - Codemo Digital Nomad" src="app/(chat)/au-chatbot-codemo.png">
   <h1 align="center">AI Chatbot for Codemo Digital Nomad</h1>
 </a>
 
