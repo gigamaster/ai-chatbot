@@ -1,5 +1,5 @@
 <a href="https://github.com/gigamaster/ai-chatbot">
-  <img alt="AI Chatbot - Codemo Digital Nomad" src="app/(chat)/au-chatbot-codemo.png">
+  <img alt="AI Chatbot - Codemo Digital Nomad" src="app/(chat)/au-chatbot-codemo.jpg">
   <h1 align="center">AI Chatbot for Codemo Digital Nomad</h1>
 </a>
 
@@ -11,7 +11,8 @@
   <a href="#features"><strong>Features</strong></a> ·
   <a href="#how-to-use"><strong>How To Use</strong></a> ·
   <a href="#model-providers"><strong>Model Providers</strong></a> ·
-  <a href="#security"><strong>Local storage</strong></a>
+  <a href="#security"><strong>Local Storage</strong></a> ·
+  <a href="#to-do"><strong>To Do</strong></a>
 </p>
 
 Codemo provides a suite of open-source tools designed for digital nomads on GitHub,   
@@ -30,8 +31,8 @@ and adheres to European data privacy standards.
 - [shadcn/ui](https://ui.shadcn.com)
   - Styling with [Tailwind CSS](https://tailwindcss.com)
   - Component primitives from [Radix UI](https://radix-ui.com) for accessibility and flexibility
-- Code Collaboration Features
-  - Real-time code editing with [CodeMirror](https://codemirror.net/)
+- Code Features
+  - Real-time code editing with [Livecodes](https://github.com/live-codes/livecodes)
   - Syntax highlighting for multiple programming languages
   - Code execution and debugging capabilities
 - Data Persistence
@@ -39,6 +40,10 @@ and adheres to European data privacy standards.
   - Local database for saving chat history and user data
   - Local storage for efficient data privacy
   - Simple and secure authentication with lock option
+- Download 
+  - Chat: JSON, Text, Markdown, Zip
+  - Database Backup  
+
 
 ## Model Providers
 
@@ -63,10 +68,9 @@ To use the AI chatbot, you need to configure at least one AI provider in the set
    - Base URL for the API endpoint
    - API key for authentication
 
-**AI Model**  
-
-You can switch to direct LLM providers like [OpenAI Codex](https://openai.com/blog/openai-codex), [Anthropic Claude Code](https://anthropic.com), [Google Gemini](https://ai.google.dev/gemini-api/docs/openai),  
-and other models from the multi-modal frontend to access the best models for your specific needs.
+> [!TIP]  
+> You can switch to direct LLM providers like [Hugging Face](https://huggingface.co/), [Anthropic Claude Code](https://anthropic.com), [Google Gemini](https://ai.google.dev/gemini-api/docs/openai),  
+> and other models from the multi-modal frontend to access the best models for your specific needs.
 
 **Token Usage Tracking**
 
@@ -90,8 +94,8 @@ encrypts your data for protection against unauthorized access.
 
 To chat with AI-chatbot, follow these steps:
 1. **Start a New Chat**:
-   - Click the "New Chat" button in the sidebar
-   - Alternatively, you can use the "New Chat" option in the user menu
+   - From the start page send your message to create a new Chat in the sidebar
+   - Alternatively, you can use the "+" New Chat option in the top navigation bar
 
 
 
@@ -107,7 +111,7 @@ to protect your data on shared computers:
 
 2. **Lock the application**:
    - Once a password is set, you can lock the application in two ways:
-     - Click the lock icon button in the header (top right corner)
+     - Click the lock icon button in the top navigation bar (top right corner)
      - Use the "Lock Now" option in the user menu
    - The application will immediately lock and display the lock screen
 
@@ -124,7 +128,8 @@ Codemo AI-chatbot provides access to additional developer tools through the tool
    - **Live Code Editor**: Opens an interactive coding environment
    - **Codemo Digital Nomad**: Access tools designed for digital nomads
 
-Both tools open in a new browser tab for your convenience.
+> [!NOTE]
+> Both tools open in a new browser tab for your convenience.
 
 
 ## Security
@@ -183,6 +188,17 @@ Our implementation is actually following security best practices for a client-si
 The concern raised by the AI providers would be more relevant for applications that store and use  
 others' API keys on a server, which AI-chatbot application doesn't do.  
 The AI chatbot is working correctly and securely!
+
+## To Do
+
+- [x] Local database for user data 
+- [x] Query id for each Chat
+- [x] Lock Screen
+- [x] Download JSON, Text, Markdown, Zip
+- [x] Backup export user database 
+- [ ] Add UI prompt management
+- [ ] Add UI tools
+
 
 ## Running locally
 
